@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- token fragment -->
+    <dimen name="token_height">68dp</dimen>
+    <dimen name="token_width">68dp</dimen>
+    <dimen name="token_margin">24dp</dimen>
+    <dimen name="token_row_margin">16dp</dimen>
+
+    <!-- about fragment -->
+    <dimen name="image_me_margin">16dp</dimen>
+
+    <!-- settings fragment -->
+    <dimen name="divider_padding">12dp</dimen>
+    <dimen name="app_settings_padding">20dp</dimen>
+    <dimen name="about_app_margin">8dp</dimen>
+    <dimen name="app_settings_padding_top">12dp</dimen>
+    <dimen name="button_settings_corner_radius">16dp</dimen>
+    <dimen name="button_min_height">32dp</dimen>
+    <dimen name="photo_card_margin">8dp</dimen>
+
+    <dimen name="settings_item_margin">8dp</dimen>
+    <dimen name="settings_header_margin">16dp</dimen>
+    <dimen name="header_padding">4dp</dimen>
+
+    <!-- select color dialog -->
+    <dimen name="dialog_padding">20dp</dimen>
+    <dimen name="picker_view_diameter">200dp</dimen>
+</resources>

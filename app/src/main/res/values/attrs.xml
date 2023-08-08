@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="ChipView">
+        <attr name="baseColor" format="color"/>
+        <attr name="checkedColor" format="color"/>
+        <attr name="radius" format="integer"/>
+       <!-- <attr name="isChecked" format="boolean"/>-->
+
+    </declare-styleable>
+
+<!--     Token Attrs -->
+    <declare-styleable name="TokenView">
+        <attr name="notSelectedColor" format="reference"/>
+        <attr name="selectedColor" format="reference"/>
+        <attr name="isAnimated" format="boolean"/>
+        <attr name="isChecked" format="boolean"/>
+        <attr name="tokenWidth" format="dimension"/>
+        <attr name="tokenHeight" format="dimension"/>
+    </declare-styleable>
+</resources>

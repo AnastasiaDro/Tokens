@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Жетоны</string>
+    <string name="settings">Настройки</string>
+    <string name="changeChips">Кол-во жетонов</string>
+    <string name="clearChecked">Очистить</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Отмена</string>
+    <string name="change">Изменить</string>
+    <string name="aboutAppTV">""</string>
+    <string name="aboutAppTitle">О приложении</string>
+    <string name="aboutAppText">Всем привет!\n
+        Меня зовут Дрогунова Анастасия. Я - клинический нейро- и патопсихолог и онтогенетический кинезотерапевт.
+        Работаю с детьми с аутизмом около 11 лет. У меня была мечта - создавать полезные приложения для моей работы.
+        Поэтому я стала изучать мобильную разработку. В 2020-м году я поступила в Школу 21 (бесплатная школа программирования от Сбербанка), и
+        теперь работаю Android-разработчиком. В выходные и по вечерам - продолжаю вести онлайн-занятия.
+         Надеюсь, это простое приложение вам пригодится.\nИдею подал Гаврилов Артём
+       </string>
+
+    <string name="my_channel">Мой канал</string>
+    <string name="my_fb">Мой FB-профиль</string>
+    <string name="about_therapy">О терапии</string>
+
+    <string name="donate_description">Даже создание такого простого приложения требует усилий и времени. Вы можете поддержать меня, сделав донат</string>
+    <string name="youtube_link"><a href="https://www.youtube.com/channel/UCy-bYj7AH7QcmMxWWFklfkg">Мой YouTube канал</a></string>
+    <string name="donate_link"><a href="https://www.tinkoff.ru/rm/drogunova.anastasiya1/5ILsY28581">Сделать донат</a></string>
+
+    <!-- Animation -->
+    <string name="settings_animation">Анимация при победе</string>
+    <string name="settings_sound">Звук при победе</string>
+    <string name="settings_tokens_color">Цвет жетонов</string>
+    <string name="select_button_text">Выбрать</string>
+
+    <!-- Dialog -->
+    <string name="select_color">Select a color</string>
+</resources>

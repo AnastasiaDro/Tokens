@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/parent_settings_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:divider="@drawable/divider_settings_vertical"
+    android:dividerPadding="@dimen/divider_padding"
+    android:orientation="horizontal"
+    android:showDividers="middle">
+
+    <include
+        android:id="@+id/settings_app_layout"
+        layout="@layout/settings_app_layout" />
+
+    <include
+        android:id="@+id/about_app_layout"
+        layout="@layout/about_app_layout" />
+</LinearLayout>

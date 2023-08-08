@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="baseColor">#808080</color>
+    <color name="baseColor_50">#99808080</color>
+    <color name="baseStrokeColor">#666666</color>
+    <color name="checkedColor">#cc0000</color>
+    <color name="checkedStrokeColor">#ff0000</color>
+    <color name="linkColor">#00f0de</color>
+
+    <color name="colorTransparent">#00FFFFFF</color>
+    <color name="colorWhite">#FFFFFF</color>
+    <color name="colorAccent_60">#9903DAC5</color>
+</resources>

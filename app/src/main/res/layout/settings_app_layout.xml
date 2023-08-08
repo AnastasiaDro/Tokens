@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/app_settings_padding"
+    android:paddingTop="@dimen/app_settings_padding_top">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/settings_header_text_view"
+        style="@style/LightText.Header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/settings_header_margin"
+        android:gravity="center"
+        android:text="@string/settings"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@drawable/divider_settings_horizontal"
+        android:orientation="vertical"
+        android:showDividers="middle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <FrameLayout
+            android:id="@+id/tokens_number"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_min_height"
+            android:layout_margin="@dimen/settings_item_margin">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/SettingsText"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="start|center_vertical"
+                android:gravity="center"
+                android:text="@string/changeChips" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/currentTokensNumberTextView"
+                style="@style/SettingsText.TokensNumberText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|center_vertical"
+                android:layout_marginVertical="2dp"
+                android:gravity="center"
+                android:paddingHorizontal="4dp"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/changeTokensNumberButton"
+                style="@style/ButtonSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:text="@string/change" />
+        </FrameLayout>
+
+
+        <FrameLayout
+            android:id="@+id/tokens_color"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_min_height"
+            android:layout_margin="@dimen/settings_item_margin">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/SettingsText"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="start|center_vertical"
+                android:gravity="center"
+                android:text="@string/settings_tokens_color" />
+
+            <include
+                android:id="@+id/color_preview_card"
+                layout="@layout/settings_color_preview_card" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/changeTokensColorButton"
+                style="@style/ButtonSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:text="@string/select_button_text" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/animation"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_min_height"
+            android:layout_margin="@dimen/settings_item_margin">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/SettingsText"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="start|center_vertical"
+                android:gravity="center"
+                android:text="@string/settings_animation" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/animation_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/sound"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_min_height"
+            android:layout_margin="@dimen/settings_item_margin">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/SettingsText"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="start|center_vertical"
+                android:gravity="center"
+                android:text="@string/settings_sound" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sound_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical" />
+        </FrameLayout>
+    </LinearLayout>
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/changeChipsNum"
+        android:orderInCategory="100"
+        android:title="@string/changeChips"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/clearTokens"
+        android:orderInCategory="200"
+        android:title="@string/clearChecked"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/appSettings"
+        android:icon="@drawable/setting"
+        android:orderInCategory="300"
+        android:title="@string/settings"
+        app:showAsAction="never" />
+</menu>

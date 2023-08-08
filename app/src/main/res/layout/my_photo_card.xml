@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/my_photo_card_view"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="@dimen/token_row_margin"
+        android:elevation="12dp"
+        app:cardCornerRadius="40dp"
+        app:layout_constraintBottom_toTopOf="@id/about_app_text_view"
+        app:layout_constraintEnd_toStartOf="@id/youtube_link_text_view"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/me1" />
+    </androidx.cardview.widget.CardView>
+</merge>

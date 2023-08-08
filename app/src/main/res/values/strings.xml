@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">TokensApp</string>
+    <string name="settings">Settings</string>
+    <string name="changeChips">Tokens number</string>
+    <string name="clearChecked">Unmark</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="change">Change</string>
+    <string name="aboutAppTV">""</string>
+
+<!-- Settings -->
+    <!-- About app -->
+    <string name="aboutAppTitle">About app</string>
+    <string name="aboutAppText">Hello everyone!
+        My name is Anastasia Drogunova. I am working as neiropsychologist and ontogenetic kinesitherapist with children with ASD about 11 years.
+        One of my dreams is making good and useful apps for my students. That\'s why I started to learn mobileDev. I became an Echole 42 student in 2020 and now I am working as a professional Android Developer.
+        It is simple but very useful I hope =) Idea from Gavrilov Artem
+        </string>
+
+    <string name="my_channel">My youtube channel</string>
+    <string name="my_fb">My facebook profile</string>
+    <string name="about_therapy">About Ontogenetic Kinesitherapy</string>
+
+    <string name="donate_description">Even creating such a simple application requires effort and time. You can support me by sending a donation =)</string>
+    <string name="donate_link"><a href="https://www.tinkoff.ru/rm/drogunova.anastasiya1/5ILsY28581">Make a donation</a></string>
+    <string name="youtube_link"><a href="https://www.youtube.com/channel/UCy-bYj7AH7QcmMxWWFklfkg">My YouTube channel</a></string>
+
+    <!-- Tokens -->
+    <string name="settings_tokens_color">Tokens color</string>
+    <string name="select_button_text">Select</string>
+
+    <!-- Effects -->
+    <string name="settings_animation">Win animation</string>
+    <string name="settings_sound">Win sound</string>
+
+
+
+    <!-- Dialog -->
+    <string name="select_color">Select a color</string>
+</resources>

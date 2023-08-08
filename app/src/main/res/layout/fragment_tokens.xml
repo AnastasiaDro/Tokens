@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_tokens"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:divider="@drawable/tokens_row_divider"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:showDividers="middle">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/tokens_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!--A first tokens row -->
+    <include
+        android:id="@+id/first_row"
+        layout="@layout/tokens_row_first" />
+
+    <!--A second tokens row -->
+    <include
+        android:id="@+id/second_row"
+        layout="@layout/tokens_row_second" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/animation_view_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:lottie_rawRes="@raw/firework_left"
+        tools:visibility="visible" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/animation_view_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:lottie_rawRes="@raw/firework_right"
+        tools:visibility="visible" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/animation_view_center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:lottie_rawRes="@raw/firework_center"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

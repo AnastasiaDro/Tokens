@@ -1,0 +1,52 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorTransparent</item>
+        <item name="colorPrimaryDark">@color/baseColor</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="LightText">
+        <item name="android:fontFamily">@font/spasegrotesk_light_family</item>
+    </style>
+
+    <style name="SettingsText">
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="LightText.24">
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="LightText.20">
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="LightText.BackGround" parent="LightText">
+        <item name="android:textSize">20sp</item>
+        <item name="background">@color/colorAccent</item>
+    </style>
+
+    <style name="SettingsText.TokensNumberText">
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="android:fontFamily">"sans-serif-medium"</item>
+        <item name="android:background">@drawable/settings_tokens_number_background</item>
+    </style>
+
+    <style name="LightText.Header" parent="LightText.24">
+        <item name="android:padding">@dimen/header_padding</item>
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="android:background">@drawable/button_settings_background</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="ButtonSettings" parent="Base.TextAppearance.AppCompat.Button">
+        <item name="android:background">@drawable/button_settings_background</item>
+        <item name="android:minHeight">@dimen/button_min_height</item>
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+</resources>

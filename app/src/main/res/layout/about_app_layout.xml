@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:paddingTop="@dimen/app_settings_padding_top">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/about_app_header_text_view"
+        style="@style/LightText.Header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/app_settings_padding"
+        android:gravity="center"
+        android:text="@string/aboutAppTitle" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/app_settings_padding">
+
+            <include layout="@layout/my_photo_card" />
+
+            <TextView
+                android:id="@+id/youtube_link_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/youtube_link"
+                app:layout_constraintBottom_toTopOf="@id/donate_link_text_view"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/my_photo_card_view"
+                app:layout_constraintTop_toTopOf="@id/my_photo_card_view" />
+
+            <TextView
+                android:id="@+id/donate_link_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/donate_link"
+                app:layout_constraintBottom_toBottomOf="@id/my_photo_card_view"
+                app:layout_constraintEnd_toEndOf="@id/youtube_link_text_view"
+                app:layout_constraintStart_toStartOf="@id/youtube_link_text_view"
+                app:layout_constraintTop_toBottomOf="@id/youtube_link_text_view" />
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/about_app_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/aboutAppText"
+                app:layout_constraintBottom_toTopOf="@+id/donate_description_text_view"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/my_photo_card_view" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</LinearLayout>
