@@ -55,6 +55,7 @@ class SettingsViewModel : ViewModel() {
         tokensManager?.let { manager ->
             manager.setTokensNum(newNum)
             if (newNum < manager.getCheckedTokensNumber()) manager.setCheckedTokensNumber(newNum)
+
             changedTokensNumMutableLiveData.postValue(true)
         }
     }

@@ -2,6 +2,7 @@ package com.cerebus.tokens.settings_screen
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -57,6 +58,7 @@ class SelectColorDialogFragment: DialogFragment() {
                 .attachAlphaSlideBar(false)
                 .attachBrightnessSlideBar(false)
                 .create()
+        Log.d(TAG, "dialog was created")
         return dialog
     }
 

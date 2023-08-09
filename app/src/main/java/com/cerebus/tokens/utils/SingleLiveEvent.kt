@@ -25,7 +25,6 @@ class SingleLiveEvent<T> : MutableLiveData<T>() {
     override fun observe(owner: LifecycleOwner, observer: Observer<in T>) {
         if (hasActiveObservers()) { Log.w(TAG, SINGLE_OBSERVER_WARNING) }
 
-
         super.observe(owner) { t ->
             if (pending.compareAndSet(true, false)) {
                 observer.onChanged(t)
