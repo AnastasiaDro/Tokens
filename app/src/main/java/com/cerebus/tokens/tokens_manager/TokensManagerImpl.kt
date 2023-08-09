@@ -3,7 +3,6 @@ package com.cerebus.tokens.tokens_manager
 import android.content.SharedPreferences
 import androidx.annotation.ColorInt
 import com.cerebus.tokens.utils.PrefsConstants
-import com.cerebus.tokens.R
 import com.cerebus.tokens.tokens_screen.TokensViewModel
 import com.cerebus.tokens.settings_screen.SettingsViewModel
 
