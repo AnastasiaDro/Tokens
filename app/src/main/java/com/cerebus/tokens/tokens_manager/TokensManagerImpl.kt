@@ -76,15 +76,17 @@ class TokensManagerImpl(private val prefs: SharedPreferences) : TokensManager {
     }
 
     override suspend fun initTokensManager() {
-        prefs.getInt(PrefsConstants.TOKENS_NUMBER, 1).let { tokensNum = it }
+        prefs.getInt(PrefsConstants.TOKENS_NUMBER, 5).let { tokensNum = it }
         prefs.getInt(PrefsConstants.CHECKED_TOKENS_NUMBER, 0).let { checkedTokensNum = it }
-        prefs.getInt(PrefsConstants.CHECKED_TOKENS_COLOR, R.color.checkedColor).let { checkedTokensColor = it }
+        prefs.getInt(PrefsConstants.CHECKED_TOKENS_COLOR, defaultColor).let { checkedTokensColor = it }
         isReady = true
     }
 
     override fun isReady() = isReady
 
     companion object {
+        private const val defaultColor = -12517557  /** light green **/
+
         private var instance: TokensManager? = null
 
         fun create(prefs: SharedPreferences): TokensManager? {

@@ -41,8 +41,8 @@ class EffectsManagerImpl(private val prefs: SharedPreferences): EffectsManager {
     override fun getIsSoundWin() = isSoundWin
 
     override suspend fun initEffectsManager() {
-        prefs.getBoolean(PrefsConstants.ANIMATION_SHOWING, false).let { isAnimateWin = it }
-        prefs.getBoolean(PrefsConstants.SOUND_PLAYING, false).let { isSoundWin = it }
+        prefs.getBoolean(PrefsConstants.ANIMATION_SHOWING, true).let { isAnimateWin = it }
+        prefs.getBoolean(PrefsConstants.SOUND_PLAYING, true).let { isSoundWin = it }
         isReady = true
     }
 

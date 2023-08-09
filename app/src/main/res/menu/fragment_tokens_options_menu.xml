@@ -16,7 +16,6 @@
 
     <item
         android:id="@+id/appSettings"
-        android:icon="@drawable/setting"
         android:orderInCategory="300"
         android:title="@string/settings"
         app:showAsAction="never" />
