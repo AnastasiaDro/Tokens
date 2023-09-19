@@ -4,12 +4,15 @@ import androidx.annotation.ColorInt
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.cerebus.tokens.R
 import com.cerebus.tokens.effects_manager.EffectsManager
 import com.cerebus.tokens.effects_manager.EffectsManagerImpl
 import com.cerebus.tokens.tokens_manager.TokensManager
 import com.cerebus.tokens.tokens_manager.TokensManagerImpl
-import com.cerebus.tokens.utils.SingleLiveEvent
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 
 /**
  * [SettingsViewModel] - a view model for
@@ -30,8 +33,8 @@ class SettingsViewModel : ViewModel() {
     private val mutableColorLiveData = MutableLiveData(getTokensColor())
     val colorLiveData: LiveData<Int> = mutableColorLiveData
 
-    private val changeColorMutableLiveData = SingleLiveEvent<Boolean>()
-    val changeColorLiveData: LiveData<Boolean> = changeColorMutableLiveData
+    private val changeColorSharedFlow = MutableSharedFlow<Boolean>()
+    val changeColorFlow = changeColorSharedFlow.asSharedFlow()
 
     private val changedTokensNumMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val changedTokensNumLiveData: LiveData<Boolean> = changedTokensNumMutableLiveData
@@ -48,7 +51,9 @@ class SettingsViewModel : ViewModel() {
     }
 
     fun askForChangeTokensColor() {
-        changeColorMutableLiveData.value = true
+        viewModelScope.launch {
+            changeColorSharedFlow.emit(true)
+        }
     }
 
     fun changeTokensNum(newNum: Int) {

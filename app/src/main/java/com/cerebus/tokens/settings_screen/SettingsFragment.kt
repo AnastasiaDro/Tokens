@@ -6,11 +6,16 @@ import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.R
 import com.cerebus.tokens.databinding.FragmentSettingsBinding
 import com.cerebus.tokens.tokens_screen.SelectTokenNumberAlert
 import com.cerebus.tokens.tokens_screen.TokensNumberListener
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListener {
 
@@ -42,9 +47,12 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
     }
 
     private fun subscribeToViewModel() = with(viewModel) {
-        changeColorLiveData.observe(viewLifecycleOwner) {
-            if (it)
-                SelectColorDialogFragment().show(requireActivity().supportFragmentManager, SelectColorDialogFragment.TAG)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                changeColorFlow.collectLatest {
+                    SelectColorDialogFragment().show(requireActivity().supportFragmentManager, SelectColorDialogFragment.TAG)
+                }
+            }
         }
         colorLiveData.observe(viewLifecycleOwner) { newColor ->
             viewBinding.settingsAppLayout.colorPreviewCard.circleColorExample.setBackgroundColor(newColor)
