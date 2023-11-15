@@ -1,4 +1,4 @@
-package com.cerebus.tokens.tokens_screen
+package com.cerebus.tokens.presentation.tokens_screen
 
 import android.util.Log
 import android.view.MotionEvent

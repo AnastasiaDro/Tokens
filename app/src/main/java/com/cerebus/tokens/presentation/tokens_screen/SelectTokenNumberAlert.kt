@@ -1,4 +1,4 @@
-package com.cerebus.tokens.tokens_screen
+package com.cerebus.tokens.presentation.tokens_screen
 
 import android.os.Bundle
 import android.view.View
@@ -6,7 +6,7 @@ import androidx.fragment.app.DialogFragment
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.R
 import com.cerebus.tokens.databinding.AlertSelectTokensNumberBinding
-import com.cerebus.tokens.settings_screen.SettingsFragment
+import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 
 /**
  * [SelectTokenNumberAlert] - a dialog for selecting number of tokens

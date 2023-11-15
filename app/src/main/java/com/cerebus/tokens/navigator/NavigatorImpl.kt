@@ -3,10 +3,10 @@ package com.cerebus.tokens.navigator
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.cerebus.tokens.settings_screen.SettingsFragment
-import com.cerebus.tokens.MainActivity
+import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
+import com.cerebus.tokens.presentation.MainActivity
 import com.cerebus.tokens.R
-import com.cerebus.tokens.tokens_screen.TokensFragment
+import com.cerebus.tokens.presentation.tokens_screen.TokensFragment
 
 /**
  * [NavigatorImpl] - a realisation of the [Navigator] interface

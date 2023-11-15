@@ -2,8 +2,8 @@ package com.cerebus.tokens.effects_manager
 
 import android.content.SharedPreferences
 import com.cerebus.tokens.utils.PrefsConstants
-import com.cerebus.tokens.tokens_screen.TokensViewModel
-import com.cerebus.tokens.settings_screen.SettingsViewModel
+import com.cerebus.tokens.presentation.tokens_screen.TokensViewModel
+import com.cerebus.tokens.presentation.settings_screen.SettingsViewModel
 
 /**
  * [EffectsManagerImpl] - a realisation of the [EffectsManager] interface

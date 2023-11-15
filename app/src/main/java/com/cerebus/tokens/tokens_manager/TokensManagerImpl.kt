@@ -3,8 +3,8 @@ package com.cerebus.tokens.tokens_manager
 import android.content.SharedPreferences
 import androidx.annotation.ColorInt
 import com.cerebus.tokens.utils.PrefsConstants
-import com.cerebus.tokens.tokens_screen.TokensViewModel
-import com.cerebus.tokens.settings_screen.SettingsViewModel
+import com.cerebus.tokens.presentation.tokens_screen.TokensViewModel
+import com.cerebus.tokens.presentation.settings_screen.SettingsViewModel
 
 /**
  * [TokensManagerImpl] - a realisation of the [TokensManager] interface

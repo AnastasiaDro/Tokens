@@ -1,4 +1,4 @@
-package com.cerebus.tokens.settings_screen
+package com.cerebus.tokens.presentation.settings_screen
 
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
@@ -12,8 +12,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.R
 import com.cerebus.tokens.databinding.FragmentSettingsBinding
-import com.cerebus.tokens.tokens_screen.SelectTokenNumberAlert
-import com.cerebus.tokens.tokens_screen.TokensNumberListener
+import com.cerebus.tokens.presentation.tokens_screen.SelectTokenNumberAlert
+import com.cerebus.tokens.presentation.tokens_screen.TokensNumberListener
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -50,7 +50,9 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 changeColorFlow.collectLatest {
-                    SelectColorDialogFragment().show(requireActivity().supportFragmentManager, SelectColorDialogFragment.TAG)
+                    SelectColorDialogFragment().show(requireActivity().supportFragmentManager,
+                        SelectColorDialogFragment.TAG
+                    )
                 }
             }
         }

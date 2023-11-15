@@ -1,7 +1,8 @@
-package com.cerebus.tokens
+package com.cerebus.tokens.presentation
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.cerebus.tokens.R
 import com.cerebus.tokens.navigator.Destinations
 import com.cerebus.tokens.navigator.Modifiers
 import com.cerebus.tokens.navigator.Navigator

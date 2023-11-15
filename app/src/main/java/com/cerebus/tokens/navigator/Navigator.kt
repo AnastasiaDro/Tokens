@@ -1,7 +1,7 @@
 package com.cerebus.tokens.navigator
 
 import androidx.appcompat.app.AppCompatActivity
-import com.cerebus.tokens.MainActivity
+import com.cerebus.tokens.presentation.MainActivity
 
 /**
  * [Navigator] - an interface intended for screen navigation

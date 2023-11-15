@@ -1,6 +1,6 @@
-package com.cerebus.tokens.tokens_screen
+package com.cerebus.tokens.presentation.tokens_screen
 
-import com.cerebus.tokens.settings_screen.SettingsFragment
+import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 
 /**
  * [TokensNumberListener] a listener for changing number of tokens
