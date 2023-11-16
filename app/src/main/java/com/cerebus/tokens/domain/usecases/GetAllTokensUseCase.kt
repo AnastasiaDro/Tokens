@@ -6,5 +6,5 @@ import kotlinx.coroutines.flow.Flow
 
 class GetAllTokensUseCase(private val tokensRepository: TokensRepository) {
 
-    fun execute(): Flow<List<Token>> = tokensRepository.getAllTokens()
+    fun execute(): Flow<Token> = tokensRepository.getAllTokens()
 }

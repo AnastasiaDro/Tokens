@@ -91,30 +91,32 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
     }
 
     private fun showTokens(viewList: List<TokenView>) {
-        for (i in 0 until viewModel.getTokensNum()) {
-            if (i < viewModel.getCheckedTokensNum())
-                viewList[i].setChecked()
-            else
-                viewList[i].setUnchecked()
-            viewList[i].isVisible = true
-            viewList[i].setOnClickListener { onTokenClick(i) }
+        lifecycleScope.launch {
+            var index = 0
+            viewModel.getTokens().collect { token ->
+                    if (token.isChecked)
+                        viewList[index].setChecked()
+                    else
+                        viewList[index].setUnchecked()
+                    viewList[index].setOnClickListener { onTokenClick(index) }
+                    index++
+            }
+
+            for (i in index until viewList.size)
+                viewList[i].isVisible = false
         }
-        for (i in viewModel.getTokensNum() until viewModel.getMaxTokensNumber())
-            viewList[i].isVisible = false
         Log.d(TAG, "Tokens were initialized")
     }
 
     private fun refreshTokens(viewList: List<TokenView>) {
-        when(viewModel.getCheckedTokensNum()) {
-            NO_CHECKED_TOKENS ->  viewList.map { it.setUnchecked() }
-            viewModel.getTokensNum() -> viewList.map { it.setChecked() }
-            else -> {
-                for (i in 0 until viewModel.getTokensNum()) {
-                    if (i < viewModel.getCheckedTokensNum())
-                        viewList[i].setChecked()
-                    else
-                        viewList[i].setUnchecked()
-                }
+        lifecycleScope.launch {
+            var index = 0
+            viewModel.getTokens().collect { token ->
+                if (token.isChecked)
+                    viewList[index].setChecked()
+                else
+                    viewList[index].setUnchecked()
+                index++
             }
         }
         Log.d(TAG, "refreshed checking")
@@ -168,7 +170,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
     private fun onMenuItemClicked(item: MenuItem): Boolean {
         when(item.itemId) {
-            R.id.changeChipsNum -> SelectTokenNumberAlert(viewModel.getTokensNum(), viewModel.getMinTokensNumber(), viewModel.getMaxTokensNumber(), this@TokensFragment).show(requireActivity().supportFragmentManager,
+            R.id.changeChipsNum -> SelectTokenNumberAlert(viewModel.getTokensNum(), viewModel.getMinTokensNum(), viewModel.getMaxTokensNum(), this@TokensFragment).show(requireActivity().supportFragmentManager,
                 SelectTokenNumberAlert.TAG
             )
             R.id.clearTokens -> viewModel.clearTokens()

@@ -5,22 +5,29 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cerebus.tokens.R
-import com.cerebus.tokens.domain.repository.TokensRepository
-import com.cerebus.tokens.domain.usecases.ChangeCheckedColorUseCase
+import com.cerebus.tokens.domain.models.Token
+import com.cerebus.tokens.domain.usecases.ChangeTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.CheckTokenUseCase
+import com.cerebus.tokens.domain.usecases.CheckTokensAreGrappedUseCase
+import com.cerebus.tokens.domain.usecases.ClearAllTokensUseCase
+import com.cerebus.tokens.domain.usecases.GetAllTokensUseCase
+import com.cerebus.tokens.domain.usecases.GetCheckedColorUseCase
+import com.cerebus.tokens.domain.usecases.GetMaxTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.GetMinTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.GetTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.UncheckTokenUseCase
 import com.cerebus.tokens.effects_manager.EffectsManager
 import com.cerebus.tokens.effects_manager.EffectsManagerImpl
 import com.cerebus.tokens.navigator.Destinations
-import com.cerebus.tokens.tokens_manager.TokensManager
-import com.cerebus.tokens.tokens_manager.TokensManagerImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 /**
  * [TokensViewModel] - a view model for
  * [TokensFragment] screen
- * It communicates with shared preferences and helps to set
+ * It communicates with domain layer and helps to set
  * tokens views displaying
  *
  * @see TokensFragment
@@ -28,14 +35,20 @@ import kotlinx.coroutines.launch
  * @author Anastasia Drogunova
  * @since 28.04.2023
  */
-class TokensViewModel : ViewModel() {
+class TokensViewModel(
+    private val getCheckedColorUseCase: GetCheckedColorUseCase,
+    private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
+    private val clearAllTokensUseCase: ClearAllTokensUseCase,
+    private val checkTokenUseCase: CheckTokenUseCase,
+    private val uncheckTokenUseCase: UncheckTokenUseCase,
+    private val getTokensNumberUseCase: GetTokensNumberUseCase,
+    private val checkTokensAreGrappedUseCase: CheckTokensAreGrappedUseCase,
+    private val getAllTokensUseCase: GetAllTokensUseCase,
+    private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
+    private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase
+    ) : ViewModel() {
 
-    //tmp
 
-
-
-
-    private var tokensManager: TokensManager? = null
     private var effectsManager: EffectsManager? = null
     private var effectsDuration = DEFAULT_EFFECTS_DURATION
     private var isAnimationRunning = false
@@ -65,20 +78,16 @@ class TokensViewModel : ViewModel() {
     private val soundMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val soundLiveData: LiveData<Boolean> = soundMutableLiveData
 
-    fun getTokensNum() = tokensManager?.getTokensNum() ?: 1
-    fun getMaxTokensNumber() = tokensManager?.getMaxTokensNum() ?: 1
-    fun getMinTokensNumber() = tokensManager?.getMinTokensNum() ?: 1
+    fun getTokensNum() = getTokensNumberUseCase.execute()
 
-    fun getCheckedTokensNum() = tokensManager?.getCheckedTokensNumber() ?: 0
-    fun getCheckedColor() = tokensManager?.getTokensColor() ?: R.color.checkedColor
+    fun getCheckedColor() = getCheckedColorUseCase.execute()
+
+    fun getTokens(): Flow<Token> = getAllTokensUseCase.execute()
 
     fun initData(preferences: SharedPreferences) {
-        tokensManager = TokensManagerImpl.getInstance()
         effectsManager = EffectsManagerImpl.getInstance()
-        if (tokensManager == null) tokensManager = TokensManagerImpl.create(preferences)
         if (effectsManager == null) effectsManager = EffectsManagerImpl.create(preferences)
         viewModelScope.launch(Dispatchers.IO) {
-            tokensManager?.let { if (!it.isReady()) it.initTokensManager() }
             effectsManager?.let { if (!it.isReady()) it.initEffectsManager() }
             prefsLoadedMutableLiveData.postValue(true)
         }
@@ -86,17 +95,17 @@ class TokensViewModel : ViewModel() {
     }
 
     fun changeTokensNum(newNum: Int) {
-        tokensManager?.let { manager ->
-            manager.setTokensNum(newNum)
-            if (newNum < manager.getCheckedTokensNumber()) manager.setCheckedTokensNumber(newNum)
-            changedTokensNumMutableLiveData.postValue(true)
-        }
+        changeTokensNumberUseCase.execute(newNum)
+        changedTokensNumMutableLiveData.postValue(true)
     }
 
     fun clearTokens() {
-        tokensManager?.setCheckedTokensNumber(0)
+        clearAllTokensUseCase.execute()
         changeCheckedNumMutableLiveData.postValue(1)
     }
+
+    fun getMinTokensNum() = getMinTokensNumberUseCase.execute()
+    fun getMaxTokensNum() = getMaxTokensNumberUseCase.execute()
 
     fun onAboutAppPressed() {
         viewModelScope.launch {
@@ -105,10 +114,9 @@ class TokensViewModel : ViewModel() {
     }
 
     fun onTokenSelected(tokenIndex: Int) {
-        tokensManager?.let {
-            if (it.increaseCheckedTokensNum())
+            if (checkTokenUseCase.execute(tokenIndex))
                 viewModelScope.launch { selectedMutableLiveData.postValue(tokenIndex) }
-            if (it.getCheckedTokensNumber() == it.getTokensNum()) {
+            if (checkTokensAreGrappedUseCase.execute()) {
                 if (!isAnimationRunning && effectsManager?.getIsAnimateWin() == true) {
                     viewModelScope.launch {
                         isAnimationRunning = true
@@ -131,16 +139,12 @@ class TokensViewModel : ViewModel() {
                         isSoundPlaying = false
                     }
                 }
-
             }
-        }
     }
 
     fun onTokenUnselected(tokenIndex: Int) {
-        tokensManager?.let {
-            if (it.decreaseCheckedTokensNum())
-                viewModelScope.launch { unselectedMutableLiveData.postValue(tokenIndex) }
-        }
+        if (uncheckTokenUseCase.execute(tokenIndex))
+            viewModelScope.launch { unselectedMutableLiveData.postValue(tokenIndex) }
     }
 
 

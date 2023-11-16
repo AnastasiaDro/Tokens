@@ -11,15 +11,21 @@ interface TokensRepository {
 
     fun createTokens(number: Int)
 
-    fun checkToken(id: Int)
+    fun checkToken(id: Int): Boolean
 
-    fun uncheckToken(id: Int)
+    fun uncheckToken(id: Int): Boolean
 
     fun getCheckedColor(): Int
 
     fun changeCheckedColor(color: Int)
 
-    fun uncheckAllTokens()
+    fun uncheckAllTokens(): Boolean
 
     fun getTokensNumber(): Int
+
+    fun getCheckedTokensNumber(): Int
+
+    fun getMinTokensNumber(): Int
+
+    fun getMaxTokensNumber(): Int
 }

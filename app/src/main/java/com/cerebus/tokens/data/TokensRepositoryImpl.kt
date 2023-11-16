@@ -1,14 +1,16 @@
 package com.cerebus.tokens.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.cerebus.tokens.domain.models.Token
 import com.cerebus.tokens.domain.repository.TokensRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 
-class TokensRepositoryImpl(context: Context): TokensRepository {
+//class TokensRepositoryImpl(context: Context): TokensRepository {
+class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensRepository {
 
-    private val prefs = context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
+   // private val prefs = context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
     private val tokensList = mutableListOf<Token>()
     private var checkedColor = prefs.getInt(CHECKED_TOKENS_COLOR, defaultColor)
 
@@ -27,18 +29,20 @@ class TokensRepositoryImpl(context: Context): TokensRepository {
         tokensList.dropLast(number)
     }
 
-    override fun checkToken(id: Int) {
+    override fun checkToken(id: Int): Boolean {
         tokensList[id].isChecked = true
         var checkedTokensNumber = prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
         checkedTokensNumber++
         prefs.edit()?.putInt(CHECKED_TOKENS_NUMBER, checkedTokensNumber)?.apply()
+        return true
     }
 
-    override fun uncheckToken(id: Int) {
+    override fun uncheckToken(id: Int): Boolean {
         tokensList[id].isChecked = false
         var checkedTokensNumber = prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
         checkedTokensNumber--
         prefs.edit()?.putInt(CHECKED_TOKENS_NUMBER, checkedTokensNumber)?.apply()
+        return true
     }
 
     override fun getCheckedColor(): Int = checkedColor
@@ -48,13 +52,21 @@ class TokensRepositoryImpl(context: Context): TokensRepository {
         prefs.edit()?.putInt(CHECKED_TOKENS_COLOR, color)?.apply()
     }
 
-    override fun uncheckAllTokens() {
+    override fun uncheckAllTokens(): Boolean {
         tokensList.forEach {
             it.isChecked = false
         }
+        return true
+    }
+
+    override fun getCheckedTokensNumber(): Int {
+        return prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
     }
 
     override fun getTokensNumber() = tokensList.size
+    override fun getMinTokensNumber() = 1
+
+    override fun getMaxTokensNumber() = 10
 
     private fun checkTokens(num: Int) {
         for (i in 0 until num) {
