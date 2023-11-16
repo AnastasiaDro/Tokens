@@ -1,6 +1,8 @@
 package com.cerebus.tokens.domain.usecases
 
-class CheckTokenUseCase {
+import com.cerebus.tokens.domain.repository.TokensRepository
 
-    fun execute() {}
+class CheckTokenUseCase(private val tokensRepository: TokensRepository) {
+
+    fun execute(id: Int) = tokensRepository.checkToken(id)
 }
