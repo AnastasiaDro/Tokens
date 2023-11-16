@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asFlow
 //class TokensRepositoryImpl(context: Context): TokensRepository {
 class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensRepository {
 
-   // private val prefs = context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
+  // private val prefs = context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
     private val tokensList = mutableListOf<Token>()
     private var checkedColor = prefs.getInt(CHECKED_TOKENS_COLOR, defaultColor)
 
@@ -75,7 +75,6 @@ class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensReposito
     }
 
     private companion object {
-        const val TOKENS_PREFERENCES = "TokensPreferences"
         const val TOKENS_NUMBER = "TokensNumber"
         const val CHECKED_TOKENS_NUMBER = "CheckedTokensNumber"
         const val CHECKED_TOKENS_COLOR = "CheckedTokensColor"

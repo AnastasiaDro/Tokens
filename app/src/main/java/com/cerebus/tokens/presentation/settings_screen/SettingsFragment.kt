@@ -7,6 +7,8 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import by.kirich1409.viewbindingdelegate.viewBinding
@@ -19,7 +21,7 @@ import kotlinx.coroutines.launch
 
 class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListener {
 
-    private val viewModel: SettingsViewModel by activityViewModels()
+    private val viewModel = ViewModelProvider(this, SettingsViewModelFactory(requireContext())).get(SettingsViewModel::class.java)
     private val viewBinding: FragmentSettingsBinding by viewBinding()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
