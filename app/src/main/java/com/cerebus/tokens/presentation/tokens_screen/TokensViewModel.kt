@@ -6,6 +6,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cerebus.tokens.R
+import com.cerebus.tokens.domain.repository.TokensRepository
+import com.cerebus.tokens.domain.usecases.ChangeCheckedColorUseCase
 import com.cerebus.tokens.effects_manager.EffectsManager
 import com.cerebus.tokens.effects_manager.EffectsManagerImpl
 import com.cerebus.tokens.navigator.Destinations
@@ -27,6 +29,11 @@ import kotlinx.coroutines.launch
  * @since 28.04.2023
  */
 class TokensViewModel : ViewModel() {
+
+    //tmp
+
+
+
 
     private var tokensManager: TokensManager? = null
     private var effectsManager: EffectsManager? = null

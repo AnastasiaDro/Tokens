@@ -4,5 +4,8 @@ import com.cerebus.tokens.domain.repository.TokensRepository
 
 class ChangeCheckedColorUseCase(private val repository: TokensRepository) {
 
-    fun execute(color: Int) = repository.changeCheckedColor(color)
+    fun execute(color: Int) {
+        if (repository.getCheckedColor() != color) repository.changeCheckedColor(color)
+    }
+
 }
