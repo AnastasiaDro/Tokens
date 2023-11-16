@@ -5,11 +5,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cerebus.tokens.R
+import com.cerebus.tokens.domain.usecases.ChangeCheckedColorUseCase
+import com.cerebus.tokens.domain.usecases.ChangeTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.GetCheckedColorUseCase
+import com.cerebus.tokens.domain.usecases.GetMaxTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.GetMinTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.GetTokensNumberUseCase
 import com.cerebus.tokens.effects_manager.EffectsManager
 import com.cerebus.tokens.effects_manager.EffectsManagerImpl
-import com.cerebus.tokens.tokens_manager.TokensManager
-import com.cerebus.tokens.tokens_manager.TokensManagerImpl
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -17,7 +20,7 @@ import kotlinx.coroutines.launch
 /**
  * [SettingsViewModel] - a view model for
  * [SettingsFragment] screen
- * It communicates with shared preferences and helps to set
+ * It communicates with domain layer and helps to set
  * app preferences and displaying of app preferences
  *
  * @see SettingsFragment
@@ -25,9 +28,15 @@ import kotlinx.coroutines.launch
  * @author Anastasia Drogunova
  * @since 28.04.2023
  */
-class SettingsViewModel : ViewModel() {
+class SettingsViewModel(
+    private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
+    private val getTokensNumberUseCase: GetTokensNumberUseCase,
+    private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
+    private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
+    private val getChangeCheckedColorUseCase: ChangeCheckedColorUseCase,
+    private val getCheckedColorUseCase: GetCheckedColorUseCase
+) : ViewModel() {
 
-    private val tokensManager: TokensManager? = TokensManagerImpl.getInstance()
     private val effectsManager: EffectsManager? = EffectsManagerImpl.getInstance()
 
     private val mutableColorLiveData = MutableLiveData(getTokensColor())
@@ -57,23 +66,19 @@ class SettingsViewModel : ViewModel() {
     }
 
     fun changeTokensNum(newNum: Int) {
-        tokensManager?.let { manager ->
-            manager.setTokensNum(newNum)
-            if (newNum < manager.getCheckedTokensNumber()) manager.setCheckedTokensNumber(newNum)
-
-            changedTokensNumMutableLiveData.postValue(true)
-        }
+        changeTokensNumberUseCase.execute(newNum)
+        changedTokensNumMutableLiveData.postValue(true)
     }
 
-    fun getTokensNum() = tokensManager?.getTokensNum() ?: 1
-    fun getMaxTokensNumber() = tokensManager?.getMaxTokensNum() ?: 1
-    fun getMinTokensNumber() = tokensManager?.getMinTokensNum() ?: 1
+    fun getTokensNum() = getTokensNumberUseCase.execute()
+    fun getMaxTokensNumber() = getMaxTokensNumberUseCase.execute()
+    fun getMinTokensNumber() = getMinTokensNumberUseCase.execute()
 
     fun changeTokensColor(@ColorInt color: Int) {
-        tokensManager?.setTokensColor(color)
+        getChangeCheckedColorUseCase.execute(color)
         mutableColorLiveData.postValue(color)
     }
 
     @ColorInt
-    fun getTokensColor() = tokensManager?.getTokensColor() ?: R.color.checkedColor
+    fun getTokensColor() = getCheckedColorUseCase.execute()
 }
