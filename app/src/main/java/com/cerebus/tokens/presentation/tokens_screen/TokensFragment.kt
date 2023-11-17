@@ -50,7 +50,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()
         viewArray = getTokensList()
-        viewModel.initData(requireActivity().getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE))
+        viewModel.initData()
         subscribeToViewModel(viewArray)
 
         view.setOnTouchListener { v, event ->

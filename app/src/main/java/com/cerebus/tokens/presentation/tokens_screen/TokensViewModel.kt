@@ -1,11 +1,14 @@
 package com.cerebus.tokens.presentation.tokens_screen
 
-import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cerebus.tokens.domain.models.Token
+import com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase
+import com.cerebus.tokens.domain.usecases.effects.GetEffectsDurationUseCase
+import com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase
+import com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase
 import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.CheckTokenUseCase
 import com.cerebus.tokens.domain.usecases.tokens.CheckTokensAreGrappedUseCase
@@ -16,8 +19,6 @@ import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.UncheckTokenUseCase
-import com.cerebus.tokens.effects_manager.EffectsManager
-import com.cerebus.tokens.effects_manager.EffectsManagerImpl
 import com.cerebus.tokens.navigator.Destinations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -45,12 +46,14 @@ class TokensViewModel(
     private val checkTokensAreGrappedUseCase: CheckTokensAreGrappedUseCase,
     private val getAllTokensUseCase: GetAllTokensUseCase,
     private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
-    private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase
+    private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
+
+    private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
+    private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
+    private val getEffectsDurationUseCase: GetEffectsDurationUseCase,
+    private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase
     ) : ViewModel() {
 
-
-    private var effectsManager: EffectsManager? = null
-    private var effectsDuration = DEFAULT_EFFECTS_DURATION
     private var isAnimationRunning = false
     private var isSoundPlaying = false
 
@@ -84,11 +87,8 @@ class TokensViewModel(
 
     fun getTokens(): Flow<Token> = getAllTokensUseCase.execute()
 
-    fun initData(preferences: SharedPreferences) {
-        effectsManager = EffectsManagerImpl.getInstance()
-        if (effectsManager == null) effectsManager = EffectsManagerImpl.create(preferences)
+    fun initData() {
         viewModelScope.launch(Dispatchers.IO) {
-            effectsManager?.let { if (!it.isReady()) it.initEffectsManager() }
             prefsLoadedMutableLiveData.postValue(true)
         }
         navigateMutableLiveData.value = null
@@ -117,24 +117,22 @@ class TokensViewModel(
             if (checkTokenUseCase.execute(tokenIndex))
                 viewModelScope.launch { selectedMutableLiveData.postValue(tokenIndex) }
             if (checkTokensAreGrappedUseCase.execute()) {
-                if (!isAnimationRunning && effectsManager?.getIsAnimateWin() == true) {
+                if (!isAnimationRunning && isWinAnimationOnUseCase.execute()) {
                     viewModelScope.launch {
                         isAnimationRunning = true
-                        if (effectsManager?.getIsAnimateWin() == true) {
-                            for (i in 0 until ANIMATION_REPEAT_TIMES) {
-                                animationMutableLiveData.postValue(true)
-                                delay(effectsDuration)
-                            }
-                            animationMutableLiveData.postValue(false)
-                            isAnimationRunning = false
+                        for (i in 0 until getAnimationRepeatTimesUseCase.execute()) {
+                            animationMutableLiveData.postValue(true)
+                            delay(getEffectsDurationUseCase.execute())
                         }
+                        animationMutableLiveData.postValue(false)
+                        isAnimationRunning = false
                     }
                 }
-                if (!isSoundPlaying && effectsManager?.getIsSoundWin() == true) {
+                if (!isSoundPlaying && isWinSoundOnUseCase.execute()) {
                     viewModelScope.launch {
                         isSoundPlaying = true
                         soundMutableLiveData.postValue(true)
-                        delay(effectsDuration)
+                        delay(getEffectsDurationUseCase.execute())
                         soundMutableLiveData.postValue(false)
                         isSoundPlaying = false
                     }
@@ -148,8 +146,5 @@ class TokensViewModel(
     }
 
 
-    companion object {
-        private const val ANIMATION_REPEAT_TIMES = 1
-        private const val DEFAULT_EFFECTS_DURATION = 5000L
-    }
+
 }

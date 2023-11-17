@@ -3,7 +3,14 @@ package com.cerebus.tokens.presentation.tokens_screen
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.cerebus.tokens.data.EffectsRepositoryImpl
 import com.cerebus.tokens.data.TokensRepositoryImpl
+import com.cerebus.tokens.domain.repository.EffectsRepository
+import com.cerebus.tokens.domain.repository.TokensRepository
+import com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase
+import com.cerebus.tokens.domain.usecases.effects.GetEffectsDurationUseCase
+import com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase
+import com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase
 import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.CheckTokenUseCase
 import com.cerebus.tokens.domain.usecases.tokens.CheckTokensAreGrappedUseCase
@@ -18,47 +25,69 @@ import com.cerebus.tokens.presentation.settings_screen.SettingsViewModelFactory
 
 class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
-    private val repository = TokensRepositoryImpl(context.getSharedPreferences(
+    private val tokensRepository: TokensRepository = TokensRepositoryImpl(context.getSharedPreferences(
         SettingsViewModelFactory.TOKENS_PREFERENCES, Context.MODE_PRIVATE))
+    private val effectsRepository: EffectsRepository = EffectsRepositoryImpl(context.getSharedPreferences(
+        SettingsViewModelFactory.WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE
+    ))
 
+    /** tokens **/
     private val getCheckedColorUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        GetCheckedColorUseCase(repository)
+        GetCheckedColorUseCase(tokensRepository)
     }
 
     private val changeTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        ChangeTokensNumberUseCase(repository)
+        ChangeTokensNumberUseCase(tokensRepository)
     }
 
     private val clearAllTokensUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        ClearAllTokensUseCase(repository)
+        ClearAllTokensUseCase(tokensRepository)
     }
 
     private val checkTokenUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        CheckTokenUseCase(repository)
+        CheckTokenUseCase(tokensRepository)
     }
 
     private val uncheckTokenUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        UncheckTokenUseCase(repository)
+        UncheckTokenUseCase(tokensRepository)
     }
 
     private val getTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        GetTokensNumberUseCase(repository)
+        GetTokensNumberUseCase(tokensRepository)
     }
 
     private val checkTokensAreGrappedUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        CheckTokensAreGrappedUseCase(repository)
+        CheckTokensAreGrappedUseCase(tokensRepository)
     }
 
     private val getAllTokensUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        GetAllTokensUseCase(repository)
+        GetAllTokensUseCase(tokensRepository)
     }
 
     private val getMinTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        GetMinTokensNumberUseCase(repository)
+        GetMinTokensNumberUseCase(tokensRepository)
     }
 
     private val getMaxTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        GetMaxTokensNumberUseCase(repository)
+        GetMaxTokensNumberUseCase(tokensRepository)
+    }
+
+    /** effects **/
+
+    private val isWinAnimationOnUseCase by lazy(LazyThreadSafetyMode.NONE) {
+        IsWinAnimationOnUseCase(effectsRepository)
+    }
+
+    private val isWinSoundOnUseCase by lazy(LazyThreadSafetyMode.NONE) {
+        IsWinSoundOnUseCase(effectsRepository)
+    }
+
+    private val getEffectsDurationUseCase by lazy(LazyThreadSafetyMode.NONE) {
+        GetEffectsDurationUseCase(effectsRepository)
+    }
+
+    private val getAnimationRepeatTimesUseCase by lazy(LazyThreadSafetyMode.NONE) {
+        GetAnimationRepeatTimesUseCase(effectsRepository)
     }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -72,7 +101,12 @@ class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
             checkTokensAreGrappedUseCase = checkTokensAreGrappedUseCase,
             getAllTokensUseCase = getAllTokensUseCase,
             getMinTokensNumberUseCase = getMinTokensNumberUseCase,
-            getMaxTokensNumberUseCase = getMaxTokensNumberUseCase
+            getMaxTokensNumberUseCase = getMaxTokensNumberUseCase,
+
+            isWinAnimationOnUseCase = isWinAnimationOnUseCase,
+            isWinSoundOnUseCase = isWinSoundOnUseCase,
+            getEffectsDurationUseCase = getEffectsDurationUseCase,
+            getAnimationRepeatTimesUseCase = getAnimationRepeatTimesUseCase
         ) as T
     }
 }

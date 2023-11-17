@@ -5,14 +5,16 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase
+import com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase
+import com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimation
+import com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSound
 import com.cerebus.tokens.domain.usecases.tokens.ChangeCheckedColorUseCase
 import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetCheckedColorUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
-import com.cerebus.tokens.effects_manager.EffectsManager
-import com.cerebus.tokens.effects_manager.EffectsManagerImpl
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -34,10 +36,13 @@ class SettingsViewModel(
     private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
     private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
     private val getChangeCheckedColorUseCase: ChangeCheckedColorUseCase,
-    private val getCheckedColorUseCase: GetCheckedColorUseCase
-) : ViewModel() {
+    private val getCheckedColorUseCase: GetCheckedColorUseCase,
 
-    private val effectsManager: EffectsManager? = EffectsManagerImpl.getInstance()
+    private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
+    private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
+    private val plugOnOffWinAnimation: PlugOnOffWinAnimation,
+    private val plugOnOffWinSound: PlugOnOffWinSound
+) : ViewModel() {
 
     private val mutableColorLiveData = MutableLiveData(getTokensColor())
     val colorLiveData: LiveData<Int> = mutableColorLiveData
@@ -48,15 +53,15 @@ class SettingsViewModel(
     private val changedTokensNumMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val changedTokensNumLiveData: LiveData<Boolean> = changedTokensNumMutableLiveData
 
-    fun getIsAnimation() = effectsManager?.getIsAnimateWin() ?: false
-    fun getIsSound() = effectsManager?.getIsSoundWin() ?: false
+    fun getIsAnimation() = isWinAnimationOnUseCase.execute()
+    fun getIsSound() = isWinSoundOnUseCase.execute()
 
     fun changeAnimation(isAnimate: Boolean) {
-        effectsManager?.setIsAnimateWin(isAnimate)
+        plugOnOffWinAnimation.execute(isAnimate)
     }
 
     fun changeSound(isSound: Boolean) {
-        effectsManager?.setIsSoundWin(isSound)
+        plugOnOffWinSound.execute(isSound)
     }
 
     fun askForChangeTokensColor() {

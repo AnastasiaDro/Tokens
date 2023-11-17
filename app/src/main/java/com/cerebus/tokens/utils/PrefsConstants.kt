@@ -12,6 +12,5 @@ package com.cerebus.tokens.utils
  */
 object PrefsConstants {
     const val TOKENS_PREFERENCES = "TokensPreferences"
-    const val ANIMATION_SHOWING = "AnimationShowing"
-    const val SOUND_PLAYING = "SoundPlaying"
+
 }
