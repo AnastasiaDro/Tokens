@@ -35,11 +35,12 @@ import kotlinx.coroutines.launch
  */
 class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListener {
 
-    private val viewModel = ViewModelProvider(this, SettingsViewModelFactory(requireContext())).get(SettingsViewModel::class.java)
+    private lateinit var viewModel: SettingsViewModel
     private val viewBinding: FragmentSettingsBinding by viewBinding()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewModel = ViewModelProvider(this, SettingsViewModelFactory(requireContext())).get(SettingsViewModel::class.java)
         with(viewBinding.settingsAppLayout) {
             changeTokensColorButton.setOnClickListener { viewModel.askForChangeTokensColor() }
             changeTokensNumberButton.setOnClickListener { SelectTokenNumberAlert(viewModel.getTokensNum(), viewModel.getMinTokensNumber(), viewModel.getMaxTokensNumber(), this@SettingsFragment).show(requireActivity().supportFragmentManager,
