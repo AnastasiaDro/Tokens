@@ -1,6 +1,7 @@
 package com.cerebus.tokens.data
 
 import android.content.SharedPreferences
+import android.util.Log
 import com.cerebus.tokens.domain.models.Token
 import com.cerebus.tokens.domain.repository.TokensRepository
 import kotlinx.coroutines.flow.Flow
@@ -17,20 +18,23 @@ class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensReposito
     }
 
     override fun getAllTokens(): Flow<Token> = tokensList.asFlow()
+
+    override fun getTokenById(id: Int) = tokensList[id]
     override fun createTokens(number: Int) {
         for (i in 0 until number)
             tokensList += Token(false)
     }
 
     override fun removeTokens(number: Int) {
-        tokensList.dropLast(number)
+        repeat(number) { tokensList.removeLast() }
     }
 
     override fun checkToken(id: Int): Boolean {
         tokensList[id].isChecked = true
         var checkedTokensNumber = prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
         checkedTokensNumber++
-        prefs.edit()?.putInt(CHECKED_TOKENS_NUMBER, checkedTokensNumber)?.apply()
+        prefs.edit().putInt(CHECKED_TOKENS_NUMBER, checkedTokensNumber)?.apply()
+        Log.d(TAG, "Token $id was checked")
         return true
     }
 
@@ -38,7 +42,8 @@ class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensReposito
         tokensList[id].isChecked = false
         var checkedTokensNumber = prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
         checkedTokensNumber--
-        prefs.edit()?.putInt(CHECKED_TOKENS_NUMBER, checkedTokensNumber)?.apply()
+        prefs.edit().putInt(CHECKED_TOKENS_NUMBER, checkedTokensNumber)?.apply()
+        Log.d(TAG, "Token $id was unchecked")
         return true
     }
 
@@ -69,9 +74,12 @@ class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensReposito
         for (i in 0 until num) {
             tokensList[i].isChecked = true
         }
+        Log.d(TAG, "$num tokens marked as checked")
     }
 
     private companion object {
+        const val TAG = "TokensRepository"
+
         const val TOKENS_NUMBER = "TokensNumber"
         const val CHECKED_TOKENS_NUMBER = "CheckedTokensNumber"
         const val CHECKED_TOKENS_COLOR = "CheckedTokensColor"

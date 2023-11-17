@@ -7,6 +7,8 @@ interface TokensRepository {
 
     fun getAllTokens(): Flow<Token>
 
+    fun getTokenById(id: Int): Token
+
     fun removeTokens(number: Int)
 
     fun createTokens(number: Int)

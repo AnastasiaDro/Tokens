@@ -1,8 +1,5 @@
 package com.cerebus.tokens.utils
 
-import com.cerebus.tokens.tokens_manager.TokensManager
-import com.cerebus.tokens.tokens_manager.TokensManagerImpl
-
 /**
  * [PrefsConstants] - an object with constants for
  * saving app settings in SharedPreferences
@@ -15,9 +12,6 @@ import com.cerebus.tokens.tokens_manager.TokensManagerImpl
  */
 object PrefsConstants {
     const val TOKENS_PREFERENCES = "TokensPreferences"
-    const val TOKENS_NUMBER = "TokensNumber"
-    const val CHECKED_TOKENS_NUMBER = "CheckedTokensNumber"
-    const val CHECKED_TOKENS_COLOR = "CheckedTokensColor"
     const val ANIMATION_SHOWING = "AnimationShowing"
     const val SOUND_PLAYING = "SoundPlaying"
 }
