@@ -15,10 +15,24 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.R
 import com.cerebus.tokens.databinding.FragmentSettingsBinding
 import com.cerebus.tokens.presentation.tokens_screen.SelectTokenNumberAlert
+import com.cerebus.tokens.presentation.tokens_screen.TokenView
+import com.cerebus.tokens.presentation.tokens_screen.TokensFragment
 import com.cerebus.tokens.presentation.tokens_screen.TokensNumberListener
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/**
+ * [SettingsFragment] - a fragment for changing settings
+ * A user can change
+ * - number of tokens
+ * - tokens color
+ * - win animation on/off
+ * - win sound on/off
+ * @see TokenView
+ *
+ * @author Anastasia Drogunova
+ * @since 23.05.2023
+ */
 class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListener {
 
     private val viewModel = ViewModelProvider(this, SettingsViewModelFactory(requireContext())).get(SettingsViewModel::class.java)

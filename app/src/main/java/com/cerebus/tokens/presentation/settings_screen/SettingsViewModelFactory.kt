@@ -5,12 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.cerebus.tokens.data.TokensRepositoryImpl
 import com.cerebus.tokens.domain.repository.TokensRepository
-import com.cerebus.tokens.domain.usecases.ChangeCheckedColorUseCase
-import com.cerebus.tokens.domain.usecases.ChangeTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.GetCheckedColorUseCase
-import com.cerebus.tokens.domain.usecases.GetMaxTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.GetMinTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.GetTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.tokens.ChangeCheckedColorUseCase
+import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetCheckedColorUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
 
 class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
 

@@ -1,4 +1,4 @@
-package com.cerebus.tokens.domain.usecases
+package com.cerebus.tokens.domain.usecases.tokens
 
 import android.util.Log
 import com.cerebus.tokens.domain.repository.TokensRepository

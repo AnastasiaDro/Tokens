@@ -4,16 +4,16 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.cerebus.tokens.data.TokensRepositoryImpl
-import com.cerebus.tokens.domain.usecases.ChangeTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.CheckTokenUseCase
-import com.cerebus.tokens.domain.usecases.CheckTokensAreGrappedUseCase
-import com.cerebus.tokens.domain.usecases.ClearAllTokensUseCase
-import com.cerebus.tokens.domain.usecases.GetAllTokensUseCase
-import com.cerebus.tokens.domain.usecases.GetCheckedColorUseCase
-import com.cerebus.tokens.domain.usecases.GetMaxTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.GetMinTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.GetTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.UncheckTokenUseCase
+import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.tokens.CheckTokenUseCase
+import com.cerebus.tokens.domain.usecases.tokens.CheckTokensAreGrappedUseCase
+import com.cerebus.tokens.domain.usecases.tokens.ClearAllTokensUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetAllTokensUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetCheckedColorUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
+import com.cerebus.tokens.domain.usecases.tokens.UncheckTokenUseCase
 import com.cerebus.tokens.presentation.settings_screen.SettingsViewModelFactory
 
 class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
