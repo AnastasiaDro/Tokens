@@ -1,16 +1,13 @@
 package com.cerebus.tokens.data
 
-import android.content.Context
 import android.content.SharedPreferences
 import com.cerebus.tokens.domain.models.Token
 import com.cerebus.tokens.domain.repository.TokensRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 
-//class TokensRepositoryImpl(context: Context): TokensRepository {
 class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensRepository {
 
-  // private val prefs = context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
     private val tokensList = mutableListOf<Token>()
     private var checkedColor = prefs.getInt(CHECKED_TOKENS_COLOR, defaultColor)
 

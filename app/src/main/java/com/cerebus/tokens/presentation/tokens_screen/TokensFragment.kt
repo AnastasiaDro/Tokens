@@ -10,7 +10,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.cerebus.tokens.databinding.FragmentTokensBinding
 import by.kirich1409.viewbindingdelegate.viewBinding
@@ -18,7 +18,9 @@ import com.cerebus.tokens.presentation.MainActivity
 import com.cerebus.tokens.utils.PrefsConstants.TOKENS_PREFERENCES
 import com.cerebus.tokens.R
 import com.cerebus.tokens.navigator.Navigator
+import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 
 /**
@@ -33,7 +35,7 @@ import kotlinx.coroutines.launch
  */
 class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
-    private val viewModel: TokensViewModel by viewModels()
+    private lateinit var viewModel: TokensViewModel
     private val viewBinding: FragmentTokensBinding by viewBinding()
     private var viewArray: List<TokenView> = listOf()
 
@@ -43,6 +45,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewModel = ViewModelProvider(this, TokensViewModelFactory(requireContext())).get(TokensViewModel::class.java)
         navigator = (requireActivity() as? MainActivity)?.getNavigator()
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()
@@ -55,6 +58,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
             if (event.action == MotionEvent.ACTION_UP) v.performClick()
             return@setOnTouchListener true
         }
+        Log.d(SettingsFragment.TAG, "Views were initialized")
     }
 
     override fun onResume() {
@@ -92,34 +96,33 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
     private fun showTokens(viewList: List<TokenView>) {
         lifecycleScope.launch {
-            var index = 0
-            viewModel.getTokens().collect { token ->
-                    if (token.isChecked)
-                        viewList[index].setChecked()
-                    else
-                        viewList[index].setUnchecked()
-                    viewList[index].setOnClickListener { onTokenClick(index) }
-                    index++
-            }
-
-            for (i in index until viewList.size)
-                viewList[i].isVisible = false
-        }
-        Log.d(TAG, "Tokens were initialized")
-    }
-
-    private fun refreshTokens(viewList: List<TokenView>) {
-        lifecycleScope.launch {
-            var index = 0
-            viewModel.getTokens().collect { token ->
+            var i = 0
+            viewModel.getTokens().collectIndexed { index, token ->
+                viewList[index].visibility = View.VISIBLE
                 if (token.isChecked)
                     viewList[index].setChecked()
                 else
                     viewList[index].setUnchecked()
-                index++
+                viewList[index].setOnClickListener { onTokenClick(index) }
+                Log.d(TAG, "Token [$index] were initialized")
+                i = index + 1
             }
+            for (t in i until viewList.size)
+                viewList[t].isVisible = false
         }
-        Log.d(TAG, "refreshed checking")
+        Log.d(TAG, "All tokens were initialized")
+    }
+
+    private fun refreshTokens(viewList: List<TokenView>) {
+        lifecycleScope.launch {
+            viewModel.getTokens().collectIndexed { index, token ->
+                if (token.isChecked)
+                    viewList[index].setChecked()
+                else
+                    viewList[index].setUnchecked()
+            }
+            Log.d(TAG, "refreshed tokens' check")
+        }
     }
 
     private fun subscribeToViewModel(viewList: List<TokenView>) {
@@ -186,8 +189,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
     }
 
     companion object {
-        const val TAG = "TOKENS_FRAGMENT"
-        private const val NO_CHECKED_TOKENS = 0
+        const val TAG = "TokensFragment"
         const val ANIMATION_FIRST_DELAY = 500L
         const val ANIMATION_SECOND_DELAY = 300L
 

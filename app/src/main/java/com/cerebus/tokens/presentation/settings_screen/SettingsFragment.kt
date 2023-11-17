@@ -68,7 +68,7 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
     }
 
     companion object {
-        const val TAG = "AboutAppFragment"
+        const val TAG = "SettingsFragment"
 
         fun newInstance() = SettingsFragment()
     }
