@@ -1,6 +1,5 @@
 package com.cerebus.tokens.data.storage
 
-import android.content.Context
 import android.content.SharedPreferences
 
 class EffectsStorageImpl(private val prefs: SharedPreferences): EffectsStorage {

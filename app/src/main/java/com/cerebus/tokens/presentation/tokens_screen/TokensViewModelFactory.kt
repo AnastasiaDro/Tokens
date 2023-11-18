@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.cerebus.tokens.data.EffectsRepositoryImpl
 import com.cerebus.tokens.data.TokensRepositoryImpl
+import com.cerebus.tokens.data.storage.EffectsStorage
+import com.cerebus.tokens.data.storage.EffectsStorageImpl
 import com.cerebus.tokens.domain.repository.EffectsRepository
 import com.cerebus.tokens.domain.repository.TokensRepository
 import com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase
@@ -25,11 +27,12 @@ import com.cerebus.tokens.presentation.settings_screen.SettingsViewModelFactory
 
 class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
+    private val effectsStorage: EffectsStorage = EffectsStorageImpl(context.getSharedPreferences(
+        SettingsViewModelFactory.WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE))
+
     private val tokensRepository: TokensRepository = TokensRepositoryImpl(context.getSharedPreferences(
         SettingsViewModelFactory.TOKENS_PREFERENCES, Context.MODE_PRIVATE))
-    private val effectsRepository: EffectsRepository = EffectsRepositoryImpl(context.getSharedPreferences(
-        SettingsViewModelFactory.WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE
-    ))
+    private val effectsRepository: EffectsRepository = EffectsRepositoryImpl(effectsStorage)
 
     /** tokens **/
     private val getCheckedColorUseCase by lazy(LazyThreadSafetyMode.NONE) {
