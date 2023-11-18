@@ -2,19 +2,20 @@ package com.cerebus.tokens.data
 
 import android.content.SharedPreferences
 import android.util.Log
+import com.cerebus.tokens.data.storage.TokensStorage
 import com.cerebus.tokens.domain.models.Token
 import com.cerebus.tokens.domain.repository.TokensRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 
-class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensRepository {
+class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepository {
 
     private val tokensList = mutableListOf<Token>()
-    private var checkedColor = prefs.getInt(CHECKED_TOKENS_COLOR, defaultColor)
+    private var checkedColor = tokensStorage.getCheckedTokensColor()
 
     init {
-        createTokens(prefs.getInt(TOKENS_NUMBER, 5))
-        checkTokens(prefs.getInt(CHECKED_TOKENS_NUMBER, 0))
+        createTokens(tokensStorage.getTokensNumber())
+        checkTokens(tokensStorage.getCheckedTokensNumber())
     }
 
     override fun getAllTokens(): Flow<Token> = tokensList.asFlow()
@@ -31,18 +32,18 @@ class TokensRepositoryImpl(private val prefs: SharedPreferences): TokensReposito
 
     override fun checkToken(id: Int): Boolean {
         tokensList[id].isChecked = true
-        var checkedTokensNumber = prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
+        var checkedTokensNumber = tokensStorage.getCheckedTokensNumber()
         checkedTokensNumber++
-        prefs.edit().putInt(CHECKED_TOKENS_NUMBER, checkedTokensNumber)?.apply()
+        tokensStorage.saveCheckedTokensNumber(checkedTokensNumber)
         Log.d(TAG, "Token $id was checked")
         return true
     }
 
     override fun uncheckToken(id: Int): Boolean {
         tokensList[id].isChecked = false
-        var checkedTokensNumber = prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
+        var checkedTokensNumber = tokensStorage.getCheckedTokensNumber()
         checkedTokensNumber--
-        prefs.edit().putInt(CHECKED_TOKENS_NUMBER, checkedTokensNumber)?.apply()
+        tokensStorage.saveCheckedTokensNumber(checkedTokensNumber)
         Log.d(TAG, "Token $id was unchecked")
         return true
     }
