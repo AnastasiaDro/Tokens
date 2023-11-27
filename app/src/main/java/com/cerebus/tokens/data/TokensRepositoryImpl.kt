@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.asFlow
 class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepository {
 
     private val tokensList = mutableListOf<Token>()
-    private var checkedColor = tokensStorage.getCheckedTokensColor()
 
     init {
         createTokens(tokensStorage.getTokensNumber())
+        println("Настя tokensStorage.getCheckedTokensNumber() = ${tokensStorage.getCheckedTokensNumber()}")
         checkTokens(tokensStorage.getCheckedTokensNumber())
     }
 
@@ -24,6 +24,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     override fun createTokens(number: Int) {
         for (i in 0 until number)
             tokensList += Token(false)
+
     }
 
     override fun removeTokens(number: Int) {
@@ -48,25 +49,29 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
         return true
     }
 
-    override fun getCheckedColor(): Int = checkedColor
+    override fun getCheckedColor(): Int = if (tokensStorage.getCheckedTokensColor() == 0) defaultColor else tokensStorage.getCheckedTokensColor()
 
     override fun changeCheckedColor(color: Int) {
-        checkedColor = color
-        prefs.edit()?.putInt(CHECKED_TOKENS_COLOR, color)?.apply()
+        tokensStorage.saveCheckedTokensColor(color)
     }
 
     override fun uncheckAllTokens(): Boolean {
         tokensList.forEach {
             it.isChecked = false
         }
+        tokensStorage.saveCheckedTokensNumber(0)
         return true
     }
 
     override fun getCheckedTokensNumber(): Int {
-        return prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
+        return tokensStorage.getCheckedTokensNumber()
     }
 
     override fun getTokensNumber() = tokensList.size
+
+    override fun setTokensNumber(num: Int) {
+        tokensStorage.saveTokensNumber(num)
+    }
     override fun getMinTokensNumber() = 1
 
     override fun getMaxTokensNumber() = 10
@@ -80,10 +85,6 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
 
     private companion object {
         const val TAG = "TokensRepository"
-
-        const val TOKENS_NUMBER = "TokensNumber"
-        const val CHECKED_TOKENS_NUMBER = "CheckedTokensNumber"
-        const val CHECKED_TOKENS_COLOR = "CheckedTokensColor"
 
         private const val defaultColor = -12517557  /** light green **/
     }

@@ -7,6 +7,8 @@ import com.cerebus.tokens.data.EffectsRepositoryImpl
 import com.cerebus.tokens.data.TokensRepositoryImpl
 import com.cerebus.tokens.data.storage.EffectsStorage
 import com.cerebus.tokens.data.storage.EffectsStorageImpl
+import com.cerebus.tokens.data.storage.TokensStorage
+import com.cerebus.tokens.data.storage.TokensStorageImpl
 import com.cerebus.tokens.domain.repository.EffectsRepository
 import com.cerebus.tokens.domain.repository.TokensRepository
 import com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase
@@ -29,9 +31,11 @@ class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
     private val effectsStorage: EffectsStorage = EffectsStorageImpl(context.getSharedPreferences(
         SettingsViewModelFactory.WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE))
-
-    private val tokensRepository: TokensRepository = TokensRepositoryImpl(context.getSharedPreferences(
+    private val tokensStorage: TokensStorage = TokensStorageImpl(context.getSharedPreferences(
         SettingsViewModelFactory.TOKENS_PREFERENCES, Context.MODE_PRIVATE))
+
+
+    private val tokensRepository: TokensRepository = TokensRepositoryImpl(tokensStorage)
     private val effectsRepository: EffectsRepository = EffectsRepositoryImpl(effectsStorage)
 
     /** tokens **/

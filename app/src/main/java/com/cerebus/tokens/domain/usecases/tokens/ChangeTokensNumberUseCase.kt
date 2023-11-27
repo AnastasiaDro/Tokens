@@ -13,6 +13,7 @@ class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) 
             newNumber < currentTokensNumber -> decreaseTokensNumber(currentTokensNumber, newNumber)
             else ->  tokensRepository.createTokens(newNumber - currentTokensNumber)
         }
+        tokensRepository.setTokensNumber(newNumber)
     }
 
     /**

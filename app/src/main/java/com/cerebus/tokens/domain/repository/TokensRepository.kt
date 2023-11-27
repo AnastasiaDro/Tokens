@@ -25,6 +25,8 @@ interface TokensRepository {
 
     fun getTokensNumber(): Int
 
+    fun setTokensNumber(num: Int)
+
     fun getCheckedTokensNumber(): Int
 
     fun getMinTokensNumber(): Int

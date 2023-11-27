@@ -12,6 +12,6 @@ interface TokensStorage {
 
     fun getCheckedTokensColor(): Int
 
-    fun saveCheckedTokensColor(checkedNum: Int)
+    fun saveCheckedTokensColor(color: Int)
 
 }
