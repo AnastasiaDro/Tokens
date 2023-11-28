@@ -19,10 +19,12 @@ import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.UncheckTokenUseCase
-import com.cerebus.tokens.navigator.Destinations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -72,8 +74,8 @@ class TokensViewModel(
     private val changedTokensNumMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val changedTokensNumLiveData: LiveData<Boolean> = changedTokensNumMutableLiveData
 
-    private val navigateMutableLiveData: MutableLiveData<Destinations?> = MutableLiveData(null)
-    val navigateLiveData: LiveData<Destinations?> = navigateMutableLiveData
+    private val navigateToSettingsMutableFlow: MutableSharedFlow<Boolean> = MutableSharedFlow(replay = 0, extraBufferCapacity = 0)
+    val navigateToSettingsFlow = navigateToSettingsMutableFlow.asSharedFlow()
 
     private val animationMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val animationLiveData: LiveData<Boolean> = animationMutableLiveData
@@ -91,7 +93,6 @@ class TokensViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             prefsLoadedMutableLiveData.postValue(true)
         }
-        navigateMutableLiveData.value = null
     }
 
     fun changeTokensNum(newNum: Int) {
@@ -108,8 +109,15 @@ class TokensViewModel(
     fun getMaxTokensNum() = getMaxTokensNumberUseCase.execute()
 
     fun onAboutAppPressed() {
+        println("Настя onAboutAppPressed()")
         viewModelScope.launch {
-            navigateMutableLiveData.postValue(Destinations.ABOUT_APP_FRAGMENT)
+            navigateToSettingsMutableFlow.emit(true)
+        }
+    }
+
+    fun onChangeTokensNumPressed() {
+        viewModelScope.launch {
+
         }
     }
 

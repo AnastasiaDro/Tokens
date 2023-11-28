@@ -117,8 +117,8 @@ class TokenView : AppCompatImageButton {
         attrs.recycle()
     }
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas?.drawCircle(height/2, width/2, height/2, paint)
+        canvas.drawCircle(height/2, width/2, height/2, paint)
     }
 }

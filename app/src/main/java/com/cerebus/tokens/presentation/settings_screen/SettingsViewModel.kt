@@ -50,6 +50,9 @@ class SettingsViewModel(
     private val changeColorSharedFlow = MutableSharedFlow<Boolean>()
     val changeColorFlow = changeColorSharedFlow.asSharedFlow()
 
+    private val selectTokensNumberSharedFlow = MutableSharedFlow<Boolean>()
+    val selectTokensNumberFlow = selectTokensNumberSharedFlow.asSharedFlow()
+
     private val changedTokensNumMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val changedTokensNumLiveData: LiveData<Boolean> = changedTokensNumMutableLiveData
 
@@ -67,6 +70,12 @@ class SettingsViewModel(
     fun askForChangeTokensColor() {
         viewModelScope.launch {
             changeColorSharedFlow.emit(true)
+        }
+    }
+
+    fun askChangeTokensNumber() {
+        viewModelScope.launch {
+            selectTokensNumberSharedFlow.emit(true)
         }
     }
 

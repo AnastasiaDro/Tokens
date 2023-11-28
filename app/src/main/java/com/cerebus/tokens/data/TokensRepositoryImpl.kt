@@ -14,7 +14,6 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
 
     init {
         createTokens(tokensStorage.getTokensNumber())
-        println("Настя tokensStorage.getCheckedTokensNumber() = ${tokensStorage.getCheckedTokensNumber()}")
         checkTokens(tokensStorage.getCheckedTokensNumber())
     }
 
