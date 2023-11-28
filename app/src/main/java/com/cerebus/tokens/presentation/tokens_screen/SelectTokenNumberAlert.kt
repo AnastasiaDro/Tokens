@@ -61,5 +61,4 @@ class SelectTokenNumberAlert(private val currentTokensNumber: Int, private val m
     companion object {
         const val TAG = "SelectTokenNumberAlert"
     }
-
 }

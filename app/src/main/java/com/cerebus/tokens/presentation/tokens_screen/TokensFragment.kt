@@ -1,6 +1,5 @@
 package com.cerebus.tokens.presentation.tokens_screen
 
-import android.content.Context
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
@@ -15,7 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import com.cerebus.tokens.databinding.FragmentTokensBinding
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.presentation.MainActivity
-import com.cerebus.tokens.utils.PrefsConstants.TOKENS_PREFERENCES
 import com.cerebus.tokens.R
 import com.cerebus.tokens.navigator.Navigator
 import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
