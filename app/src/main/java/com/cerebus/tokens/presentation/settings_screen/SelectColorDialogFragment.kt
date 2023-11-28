@@ -25,7 +25,6 @@ import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
  */
 class SelectColorDialogFragment: DialogFragment() {
 
-    //private val viewModel: SettingsViewModel by activityViewModels()
     private lateinit var viewModel: SettingsViewModel
 
     private var checkedTokensColor: Int = 0
