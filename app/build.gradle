@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'com.cerebus.tokens'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.cerebus.tokens"
@@ -62,8 +62,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
 
-    implementation "androidx.activity:activity-ktx:1.7.2"
-    implementation "androidx.fragment:fragment-ktx:1.6.1"
+    implementation "androidx.activity:activity-ktx:1.8.1"
+    implementation "androidx.fragment:fragment-ktx:1.6.2"
 
     implementation 'com.github.kirich1409:viewbindingpropertydelegate-full:1.5.9'
 

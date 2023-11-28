@@ -9,8 +9,11 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.cerebus.tokens.databinding.FragmentTokensBinding
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.presentation.MainActivity
@@ -19,6 +22,7 @@ import com.cerebus.tokens.navigator.Navigator
 import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -44,7 +48,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(this, TokensViewModelFactory(requireContext())).get(TokensViewModel::class.java)
-        navigator = (requireActivity() as? MainActivity)?.getNavigator()
+
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()
         viewArray = getTokensList()
@@ -123,19 +127,28 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
         }
     }
 
+
     private fun subscribeToViewModel(viewList: List<TokenView>) {
+        println("Настя subscribe to viewmodel")
         with(viewModel) {
             prefsLoadedLiveData.observe(viewLifecycleOwner) { if (it == true) showTokens(viewList) }
             selectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setChecked() }
             unselectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setUnchecked() }
             changedTokensNumLiveData.observe(viewLifecycleOwner) { showTokens(viewList) }
             changeCheckedTokensNumLiveData.observe(viewLifecycleOwner) { refreshTokens(viewList) }
-            navigateLiveData.observe(viewLifecycleOwner) { it?.let { navigator?.navigate(it, requireActivity() as? AppCompatActivity)}}
+
             animationLiveData.observe(viewLifecycleOwner) { animate ->
                 if (animate) playAnimation() else pauseAnimation()
             }
             soundLiveData.observe(viewLifecycleOwner) { sound ->
                 if (sound) soundPlayer?.start()
+            }
+            viewLifecycleOwner.lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    viewModel.navigateToSettingsFlow.collect {
+                        findNavController().navigate(R.id.action_tokensFragment_to_settingsFragment)
+                    }
+                }
             }
         }
         Log.d(TAG, "subscribed to viewModel")

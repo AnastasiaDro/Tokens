@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.R
 import com.cerebus.tokens.databinding.FragmentSettingsBinding
@@ -43,8 +44,11 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
         viewModel = ViewModelProvider(requireActivity(), SettingsViewModelFactory(requireContext())).get(SettingsViewModel::class.java)
         with(viewBinding.settingsAppLayout) {
             changeTokensColorButton.setOnClickListener { viewModel.askForChangeTokensColor() }
-            changeTokensNumberButton.setOnClickListener { SelectTokenNumberAlert(viewModel.getTokensNum(), viewModel.getMinTokensNumber(), viewModel.getMaxTokensNumber(), this@SettingsFragment).show(requireActivity().supportFragmentManager,
-                SelectTokenNumberAlert.TAG) }
+            changeTokensNumberButton.setOnClickListener {
+//                SelectTokenNumberAlert(viewModel.getTokensNum(), viewModel.getMinTokensNumber(), viewModel.getMaxTokensNumber(), this@SettingsFragment).show(requireActivity().supportFragmentManager,
+//                SelectTokenNumberAlert.TAG)
+                viewModel.askChangeTokensNumber()
+            }
             currentTokensNumberTextView.text = viewModel.getTokensNum().toString()
             animationSwitch.isChecked = viewModel.getIsAnimation()
             soundSwitch.isChecked = viewModel.getIsSound()
@@ -67,9 +71,10 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 changeColorFlow.collectLatest {
-                    SelectColorDialogFragment().show(requireActivity().supportFragmentManager,
-                        SelectColorDialogFragment.TAG
-                    )
+                    findNavController().navigate(R.id.action_settingsFragment_to_selectColorDialogFragment)
+                }
+                selectTokensNumberFlow.collectLatest {
+                    findNavController().navigate(R.id.action_settingsFragment_to_selectTokenNumberAlert)
                 }
             }
         }
