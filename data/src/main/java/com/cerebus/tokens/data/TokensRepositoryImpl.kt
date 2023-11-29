@@ -1,6 +1,5 @@
 package com.cerebus.tokens.data
 
-import android.content.SharedPreferences
 import android.util.Log
 import com.cerebus.tokens.data.storage.TokensStorage
 import com.cerebus.tokens.domain.models.Token

@@ -3,7 +3,7 @@ package com.cerebus.tokens.domain.usecases.tokens
 import android.util.Log
 import com.cerebus.tokens.domain.repository.TokensRepository
 
-class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) {
+class ChangeTokensNumberUseCase(private val tokensRepository: com.cerebus.tokens.domain.repository.TokensRepository) {
 
     fun execute(newNumber: Int) {
         val currentTokensNumber = tokensRepository.getTokensNumber()
@@ -35,7 +35,7 @@ class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) 
             }
         }
         tokensRepository.removeTokens(currentNumber - newNumber)
-        Log.d(TAG, "tokens were decreased from $currentNumber to $newNumber")
+        Log.d(com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase.Companion.TAG, "tokens were decreased from $currentNumber to $newNumber")
     }
 
     companion object {

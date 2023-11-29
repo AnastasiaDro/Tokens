@@ -6,15 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.cerebus.tokens.data.EffectsRepositoryImpl
 import com.cerebus.tokens.data.TokensRepositoryImpl
 import com.cerebus.tokens.data.storage.EffectsStorage
-import com.cerebus.tokens.data.storage.EffectsStorageImpl
 import com.cerebus.tokens.data.storage.TokensStorage
-import com.cerebus.tokens.data.storage.TokensStorageImpl
 import com.cerebus.tokens.domain.repository.EffectsRepository
 import com.cerebus.tokens.domain.repository.TokensRepository
-import com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase
-import com.cerebus.tokens.domain.usecases.effects.GetEffectsDurationUseCase
-import com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase
-import com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase
 import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.CheckTokenUseCase
 import com.cerebus.tokens.domain.usecases.tokens.CheckTokensAreGrappedUseCase
@@ -29,13 +23,13 @@ import com.cerebus.tokens.presentation.settings_screen.SettingsViewModelFactory
 
 class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
-    private val effectsStorage: com.cerebus.tokens.data.storage.EffectsStorage =
+    private val effectsStorage: EffectsStorage =
         com.cerebus.tokens.data.storage.EffectsStorageImpl(
             context.getSharedPreferences(
                 SettingsViewModelFactory.WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE
             )
         )
-    private val tokensStorage: com.cerebus.tokens.data.storage.TokensStorage =
+    private val tokensStorage: TokensStorage =
         com.cerebus.tokens.data.storage.TokensStorageImpl(
             context.getSharedPreferences(
                 SettingsViewModelFactory.TOKENS_PREFERENCES, Context.MODE_PRIVATE
@@ -44,9 +38,9 @@ class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
 
     private val tokensRepository: TokensRepository =
-        com.cerebus.tokens.data.TokensRepositoryImpl(tokensStorage)
+        TokensRepositoryImpl(tokensStorage)
     private val effectsRepository: EffectsRepository =
-        com.cerebus.tokens.data.EffectsRepositoryImpl(effectsStorage)
+        EffectsRepositoryImpl(effectsStorage)
 
     /** tokens **/
     private val getCheckedColorUseCase by lazy(LazyThreadSafetyMode.NONE) {
@@ -92,19 +86,19 @@ class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
     /** effects **/
 
     private val isWinAnimationOnUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        IsWinAnimationOnUseCase(effectsRepository)
+        com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase(effectsRepository)
     }
 
     private val isWinSoundOnUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        IsWinSoundOnUseCase(effectsRepository)
+        com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase(effectsRepository)
     }
 
     private val getEffectsDurationUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        GetEffectsDurationUseCase(effectsRepository)
+        com.cerebus.tokens.domain.usecases.effects.GetEffectsDurationUseCase(effectsRepository)
     }
 
     private val getAnimationRepeatTimesUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        GetAnimationRepeatTimesUseCase(effectsRepository)
+        com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase(effectsRepository)
     }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
