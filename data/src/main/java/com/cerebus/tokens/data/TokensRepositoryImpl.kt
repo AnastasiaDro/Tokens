@@ -66,7 +66,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
         return tokensStorage.getCheckedTokensNumber()
     }
 
-    override fun getTokensNumber() = tokensList.size
+    override fun getTokensNumber() = tokensStorage.getTokensNumber()
 
     override fun setTokensNumber(num: Int) {
         tokensStorage.saveTokensNumber(num)

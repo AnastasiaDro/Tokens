@@ -69,6 +69,12 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
             for (token in viewArray) token.setCheckedColor(viewModel.getCheckedColor())
             refreshTokens(viewArray)
         }
+        //TODO исправить с приходом коина
+        println("Nastya viewModel.getTokensNum() = ${viewModel.getTokensNum()} и число видимых = ${viewArray.count { it.isVisible }}")
+        if (viewModel.getTokensNum() != viewArray.count { it.isVisible }) {
+            showTokens(viewArray)
+        }
+
     }
 
     private fun initOptionsMenu() {
