@@ -13,12 +13,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.cerebus.tokens.databinding.FragmentTokensBinding
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.presentation.MainActivity
 import com.cerebus.tokens.R
 import com.cerebus.tokens.navigator.Navigator
+import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
+import com.cerebus.tokens.presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import com.cerebus.tokens.presentation.getNavigationResult
+import com.cerebus.tokens.presentation.getNavigationResultLiveData
 import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectIndexed
@@ -41,7 +46,6 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
     private val viewBinding: FragmentTokensBinding by viewBinding()
     private var viewArray: List<TokenView> = listOf()
 
-    private var navigator: Navigator? = null
     private var soundPlayer: MediaPlayer? = null
     private val swipeParser: SwipeParser = SwipeParserImpl(TAG)
 
@@ -53,6 +57,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
         initOptionsMenu()
         viewArray = getTokensList()
         viewModel.initData()
+        subscribeToNavigationResultLiveData()
         subscribeToViewModel(viewArray)
 
         view.setOnTouchListener { v, event ->
@@ -69,10 +74,6 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
             for (token in viewArray) token.setCheckedColor(viewModel.getCheckedColor())
             refreshTokens(viewArray)
         }
-    }
-
-    override fun changeTokensNumber(newNumber: Int) {
-        viewModel.changeTokensNum(newNumber)
     }
 
     private fun initOptionsMenu() {
@@ -127,9 +128,14 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
         }
     }
 
+    override fun subscribeToNavigationResultLiveData() {
+        val result = getNavigationResultLiveData<Int>(CURRENT_TOKENS_NUMBER_RESULT_KEY)
+        result?.observe(viewLifecycleOwner) {
+                newNum -> viewModel.changeTokensNum(newNum)
+        }
+    }
 
     private fun subscribeToViewModel(viewList: List<TokenView>) {
-        println("Настя subscribe to viewmodel")
         with(viewModel) {
             prefsLoadedLiveData.observe(viewLifecycleOwner) { if (it == true) showTokens(viewList) }
             selectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setChecked() }
@@ -184,9 +190,15 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
     private fun onMenuItemClicked(item: MenuItem): Boolean {
         when(item.itemId) {
-            R.id.changeChipsNum -> SelectTokenNumberAlert(viewModel.getTokensNum(), viewModel.getMinTokensNum(), viewModel.getMaxTokensNum(), this@TokensFragment).show(requireActivity().supportFragmentManager,
-                SelectTokenNumberAlert.TAG
-            )
+            R.id.changeChipsNum -> {
+                findNavController().navigate(
+                    getTokensNumberAlertNavAction(
+                        minTokensNum = viewModel.getMinTokensNum(),
+                        maxTokensNum = viewModel.getMaxTokensNum(),
+                        currentTokensNum = viewModel.getTokensNum()
+                    )
+                )
+            }
             R.id.clearTokens -> viewModel.clearTokens()
             R.id.appSettings -> viewModel.onAboutAppPressed()
         }
@@ -197,6 +209,16 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
     private fun onTokenClick(index: Int) {
         Log.d(TAG, "token $index was clicked")
         if (viewArray[index].getIsChecked()) viewModel.onTokenUnselected(index) else viewModel.onTokenSelected(index)
+    }
+
+    override fun getTokensNumberAlertNavAction(
+        minTokensNum: Int,
+        maxTokensNum: Int,
+        currentTokensNum: Int
+    ): NavDirections {
+        return TokensFragmentDirections.actionTokensFragmentToSelectTokenNumberAlert(
+            SelectTokensNumberAlertData(minTokensNum, maxTokensNum, currentTokensNum)
+        )
     }
 
     companion object {

@@ -1,5 +1,6 @@
 package com.cerebus.tokens.presentation.tokens_screen
 
+import androidx.navigation.NavDirections
 import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 
 /**
@@ -12,5 +13,11 @@ import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
  */
 interface TokensNumberListener {
 
-    fun changeTokensNumber(newNumber: Int)
+    fun subscribeToNavigationResultLiveData()
+
+    fun getTokensNumberAlertNavAction(
+        minTokensNum: Int,
+        maxTokensNum: Int,
+        currentTokensNum: Int
+    ): NavDirections
 }

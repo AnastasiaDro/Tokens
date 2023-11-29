@@ -11,13 +11,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.R
 import com.cerebus.tokens.databinding.FragmentSettingsBinding
+import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
+import com.cerebus.tokens.presentation.getNavigationResultLiveData
 import com.cerebus.tokens.presentation.tokens_screen.SelectTokenNumberAlert
 import com.cerebus.tokens.presentation.tokens_screen.TokenView
 import com.cerebus.tokens.presentation.tokens_screen.TokensFragment
+import com.cerebus.tokens.presentation.tokens_screen.TokensFragmentDirections
 import com.cerebus.tokens.presentation.tokens_screen.TokensNumberListener
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -45,8 +49,6 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
         with(viewBinding.settingsAppLayout) {
             changeTokensColorButton.setOnClickListener { viewModel.askForChangeTokensColor() }
             changeTokensNumberButton.setOnClickListener {
-//                SelectTokenNumberAlert(viewModel.getTokensNum(), viewModel.getMinTokensNumber(), viewModel.getMaxTokensNumber(), this@SettingsFragment).show(requireActivity().supportFragmentManager,
-//                SelectTokenNumberAlert.TAG)
                 viewModel.askChangeTokensNumber()
             }
             currentTokensNumberTextView.text = viewModel.getTokensNum().toString()
@@ -60,21 +62,25 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
             donateLinkTextView.movementMethod = LinkMovementMethod.getInstance()
         }
         Log.d(TAG, "Views were initialized")
+        subscribeToNavigationResultLiveData()
         subscribeToViewModel()
-    }
-
-    override fun changeTokensNumber(newNumber: Int) {
-        viewModel.changeTokensNum(newNumber)
     }
 
     private fun subscribeToViewModel() = with(viewModel) {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                changeColorFlow.collectLatest {
-                    findNavController().navigate(R.id.action_settingsFragment_to_selectColorDialogFragment)
-                }
+//                changeColorFlow.collectLatest {
+//                    findNavController().navigate(R.id.action_settingsFragment_to_selectColorDialogFragment)
+//                }
                 selectTokensNumberFlow.collectLatest {
-                    findNavController().navigate(R.id.action_settingsFragment_to_selectTokenNumberAlert)
+                    findNavController().navigate(
+                        getTokensNumberAlertNavAction(
+                            minTokensNum = viewModel.getMinTokensNum(),
+                            maxTokensNum = viewModel.getMaxTokensNum(),
+                            currentTokensNum = viewModel.getTokensNum()
+                        )
+                    )
+                    println("Настя i am here")
                 }
             }
         }
@@ -87,9 +93,26 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
         Log.d(TAG, "subscribed to viewModel's data")
     }
 
+    override fun getTokensNumberAlertNavAction(
+        minTokensNum: Int,
+        maxTokensNum: Int,
+        currentTokensNum: Int
+    ): NavDirections {
+        return SettingsFragmentDirections.actionSettingsFragmentToSelectTokenNumberAlert(
+            SelectTokensNumberAlertData(minTokensNum, maxTokensNum, currentTokensNum)
+        )
+    }
+
     companion object {
         const val TAG = "SettingsFragment"
 
         fun newInstance() = SettingsFragment()
+    }
+
+    override fun subscribeToNavigationResultLiveData() {
+        val result = getNavigationResultLiveData<Int>(SelectTokensNumberAlertData.CURRENT_TOKENS_NUMBER_RESULT_KEY)
+        result?.observe(viewLifecycleOwner) {newNum ->
+            viewModel.changeTokensNum(newNum)
+        }
     }
 }
