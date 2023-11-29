@@ -85,8 +85,8 @@ class SettingsViewModel(
     }
 
     fun getTokensNum() = getTokensNumberUseCase.execute()
-    fun getMaxTokensNumber() = getMaxTokensNumberUseCase.execute()
-    fun getMinTokensNumber() = getMinTokensNumberUseCase.execute()
+    fun getMaxTokensNum() = getMaxTokensNumberUseCase.execute()
+    fun getMinTokensNum() = getMinTokensNumberUseCase.execute()
 
     fun changeTokensColor(@ColorInt color: Int) {
         getChangeCheckedColorUseCase.execute(color)

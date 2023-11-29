@@ -16,6 +16,7 @@
         <action
             android:id="@+id/action_tokensFragment_to_selectTokenNumberAlert"
             app:destination="@id/selectTokenNumberAlert" />
+
     </fragment>
     <fragment
         android:id="@+id/settingsFragment"
@@ -36,7 +37,11 @@
         android:id="@+id/selectTokenNumberAlert"
         android:name="com.cerebus.tokens.presentation.tokens_screen.SelectTokenNumberAlert"
         android:label="SelectTokenNumberAlert"
-        tools:layout="@layout/alert_select_tokens_number"/>
+        tools:layout="@layout/alert_select_tokens_number">
+        <argument
+            android:name="tokensNumberData"
+            app:argType="com.cerebus.tokens.presentation.SelectTokensNumberAlertData" />
+    </dialog>
     <dialog
         android:id="@+id/selectColorDialogFragment"
         android:name="com.cerebus.tokens.presentation.settings_screen.SelectColorDialogFragment"

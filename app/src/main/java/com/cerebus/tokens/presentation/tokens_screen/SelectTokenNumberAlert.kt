@@ -3,9 +3,19 @@ package com.cerebus.tokens.presentation.tokens_screen
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavController
+import androidx.navigation.NavDirections
+import androidx.navigation.fragment.NavHostFragment.Companion.findNavController
+import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
+import androidx.navigation.fragment.navArgs
 import com.cerebus.tokens.R
 import com.cerebus.tokens.databinding.AlertSelectTokensNumberBinding
+import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
+import com.cerebus.tokens.presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import com.cerebus.tokens.presentation.getNavigationResultLiveData
+import com.cerebus.tokens.presentation.setNavigationResult
 import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 
 /**
@@ -24,24 +34,23 @@ import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
  * @author Anastasia Drogunova
  * @since 25.05.2023
  */
-class SelectTokenNumberAlert(private val currentTokensNumber: Int, private val minTokensValue: Int, private val maxTokensValue: Int, private val tokensNumberListener: TokensNumberListener): DialogFragment(
-    R.layout.alert_select_tokens_number
-) {
-
+class SelectTokenNumberAlert: DialogFragment(R.layout.alert_select_tokens_number)
+{
     private var newTokensNumber = 1
     private val viewBinding: AlertSelectTokensNumberBinding by viewBinding()
-
+    private val navArgs: SelectTokenNumberAlertArgs by navArgs()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initNumPicker()
         initButtons()
     }
 
+
     private fun initNumPicker() {
         with(viewBinding.tokensNumPicker) {
-            minValue = minTokensValue
-            maxValue = maxTokensValue
-            value = currentTokensNumber
+            minValue = navArgs.tokensNumberData.minTokensNum
+            maxValue = navArgs.tokensNumberData.maxTokensNum
+            value = navArgs.tokensNumberData.currentTokensNum
             setOnValueChangedListener { _, _, newVal ->
                 newTokensNumber = newVal
             }
@@ -51,7 +60,7 @@ class SelectTokenNumberAlert(private val currentTokensNumber: Int, private val m
     private fun initButtons() {
         with(viewBinding) {
             okBtn.setOnClickListener {
-                tokensNumberListener.changeTokensNumber(newTokensNumber)
+                setNavigationResult(tokensNumPicker.value, CURRENT_TOKENS_NUMBER_RESULT_KEY)
                 dismiss()
             }
             cancelBtn.setOnClickListener { dismiss() }
