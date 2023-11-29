@@ -23,7 +23,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
@@ -108,15 +107,9 @@ class TokensViewModel(
     fun getMinTokensNum() = getMinTokensNumberUseCase.execute()
     fun getMaxTokensNum() = getMaxTokensNumberUseCase.execute()
 
-    fun onAboutAppPressed() {
+    fun onSettingsPressed() {
         viewModelScope.launch {
             navigateToSettingsMutableFlow.emit(true)
-        }
-    }
-
-    fun onChangeTokensNumPressed() {
-        viewModelScope.launch {
-
         }
     }
 

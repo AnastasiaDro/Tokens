@@ -67,6 +67,10 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
                 changeColorFlow.collectLatest {
                     findNavController().navigate(R.id.action_settingsFragment_to_selectColorDialogFragment)
                 }
+            }
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 selectTokensNumberFlow.collectLatest {
                     findNavController().navigate(
                         getTokensNumberAlertNavAction(

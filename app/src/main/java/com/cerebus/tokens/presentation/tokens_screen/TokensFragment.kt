@@ -195,7 +195,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
                 )
             }
             R.id.clearTokens -> viewModel.clearTokens()
-            R.id.appSettings -> viewModel.onAboutAppPressed()
+            R.id.appSettings -> viewModel.onSettingsPressed()
         }
         Log.d(TAG, "onMenuItem was clicked")
         return true
