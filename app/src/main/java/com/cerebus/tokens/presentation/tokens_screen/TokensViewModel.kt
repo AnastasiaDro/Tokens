@@ -109,7 +109,6 @@ class TokensViewModel(
     fun getMaxTokensNum() = getMaxTokensNumberUseCase.execute()
 
     fun onAboutAppPressed() {
-        println("Настя onAboutAppPressed()")
         viewModelScope.launch {
             navigateToSettingsMutableFlow.emit(true)
         }
