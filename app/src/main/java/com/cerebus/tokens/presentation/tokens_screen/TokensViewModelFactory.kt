@@ -29,14 +29,24 @@ import com.cerebus.tokens.presentation.settings_screen.SettingsViewModelFactory
 
 class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
-    private val effectsStorage: EffectsStorage = EffectsStorageImpl(context.getSharedPreferences(
-        SettingsViewModelFactory.WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE))
-    private val tokensStorage: TokensStorage = TokensStorageImpl(context.getSharedPreferences(
-        SettingsViewModelFactory.TOKENS_PREFERENCES, Context.MODE_PRIVATE))
+    private val effectsStorage: com.cerebus.tokens.data.storage.EffectsStorage =
+        com.cerebus.tokens.data.storage.EffectsStorageImpl(
+            context.getSharedPreferences(
+                SettingsViewModelFactory.WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE
+            )
+        )
+    private val tokensStorage: com.cerebus.tokens.data.storage.TokensStorage =
+        com.cerebus.tokens.data.storage.TokensStorageImpl(
+            context.getSharedPreferences(
+                SettingsViewModelFactory.TOKENS_PREFERENCES, Context.MODE_PRIVATE
+            )
+        )
 
 
-    private val tokensRepository: TokensRepository = TokensRepositoryImpl(tokensStorage)
-    private val effectsRepository: EffectsRepository = EffectsRepositoryImpl(effectsStorage)
+    private val tokensRepository: TokensRepository =
+        com.cerebus.tokens.data.TokensRepositoryImpl(tokensStorage)
+    private val effectsRepository: EffectsRepository =
+        com.cerebus.tokens.data.EffectsRepositoryImpl(effectsStorage)
 
     /** tokens **/
     private val getCheckedColorUseCase by lazy(LazyThreadSafetyMode.NONE) {
