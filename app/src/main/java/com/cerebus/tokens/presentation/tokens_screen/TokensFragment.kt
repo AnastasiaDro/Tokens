@@ -6,7 +6,6 @@ import android.util.Log
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -15,19 +14,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
-import com.cerebus.tokens.databinding.FragmentTokensBinding
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.presentation.MainActivity
 import com.cerebus.tokens.R
-import com.cerebus.tokens.navigator.Navigator
+import com.cerebus.tokens.databinding.FragmentTokensBinding
 import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
 import com.cerebus.tokens.presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
-import com.cerebus.tokens.presentation.getNavigationResult
 import com.cerebus.tokens.presentation.getNavigationResultLiveData
 import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectIndexed
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**

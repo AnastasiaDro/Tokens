@@ -4,25 +4,23 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupActionBarWithNavController
 import com.cerebus.tokens.R
 
 
+/**
+ * [MainActivity]
+ * It contains a nav_container for all fragments
+ *
+ * @see R.layout.activity_main
+ * @see R.navigation.nav_graph
+ *
+ * @author Anastasia Drogunova
+ * @since last update: 29.11.2023
+ */
 class MainActivity : AppCompatActivity() {
-
-    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main2)
-
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
-        navController = navHostFragment.navController
-
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        println("Настя onSupportNavigateUp()")
-        return navController.navigateUp() || super.onSupportNavigateUp()
+        setContentView(R.layout.activity_main)
     }
 }
