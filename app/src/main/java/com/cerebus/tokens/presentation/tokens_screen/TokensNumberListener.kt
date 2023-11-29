@@ -6,6 +6,7 @@ import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 /**
  * [TokensNumberListener] a listener for changing number of tokens
  *
+ * @see TokensFragment
  * @see SettingsFragment
  *
  * @author Anastasia Drogunova

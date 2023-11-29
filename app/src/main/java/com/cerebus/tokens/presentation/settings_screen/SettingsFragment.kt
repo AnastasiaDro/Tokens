@@ -5,9 +5,7 @@ import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -18,10 +16,7 @@ import com.cerebus.tokens.R
 import com.cerebus.tokens.databinding.FragmentSettingsBinding
 import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
 import com.cerebus.tokens.presentation.getNavigationResultLiveData
-import com.cerebus.tokens.presentation.tokens_screen.SelectTokenNumberAlert
 import com.cerebus.tokens.presentation.tokens_screen.TokenView
-import com.cerebus.tokens.presentation.tokens_screen.TokensFragment
-import com.cerebus.tokens.presentation.tokens_screen.TokensFragmentDirections
 import com.cerebus.tokens.presentation.tokens_screen.TokensNumberListener
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -69,9 +64,9 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
     private fun subscribeToViewModel() = with(viewModel) {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                changeColorFlow.collectLatest {
-//                    findNavController().navigate(R.id.action_settingsFragment_to_selectColorDialogFragment)
-//                }
+                changeColorFlow.collectLatest {
+                    findNavController().navigate(R.id.action_settingsFragment_to_selectColorDialogFragment)
+                }
                 selectTokensNumberFlow.collectLatest {
                     findNavController().navigate(
                         getTokensNumberAlertNavAction(
@@ -80,7 +75,6 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
                             currentTokensNum = viewModel.getTokensNum()
                         )
                     )
-                    println("Настя i am here")
                 }
             }
         }
