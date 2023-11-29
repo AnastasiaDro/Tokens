@@ -83,4 +83,9 @@ dependencies {
 
     // Testing Navigation
     androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
+
+    //domain
+    implementation project(path: ':domain')
+    //temporary!!!
+    implementation project(path: ':data')
 }

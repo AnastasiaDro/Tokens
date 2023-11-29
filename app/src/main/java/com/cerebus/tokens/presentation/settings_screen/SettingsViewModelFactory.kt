@@ -39,14 +39,14 @@ class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
             )
         )
 
-    private val tokensRepository: TokensRepository =
+    private val tokensRepository: com.cerebus.tokens.domain.repository.TokensRepository =
         com.cerebus.tokens.data.TokensRepositoryImpl(tokensStorage)
-    private val effectsRepository: EffectsRepository =
+    private val effectsRepository: com.cerebus.tokens.domain.repository.EffectsRepository =
         com.cerebus.tokens.data.EffectsRepositoryImpl(effectsStorage)
 
     /** tokens **/
     private val changeTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        ChangeTokensNumberUseCase(tokensRepository)
+        com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase(tokensRepository)
     }
 
     private val getTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
@@ -62,7 +62,7 @@ class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
     }
 
     private val getChangeCheckedColorUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        ChangeCheckedColorUseCase(tokensRepository)
+        com.cerebus.tokens.domain.usecases.tokens.ChangeCheckedColorUseCase(tokensRepository)
     }
 
     private val getCheckedColorUseCase by lazy(LazyThreadSafetyMode.NONE) {
@@ -72,19 +72,19 @@ class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
     /** effects **/
 
     private val isWinAnimationOnUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        IsWinAnimationOnUseCase(effectsRepository)
+        com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase(effectsRepository)
     }
 
     private val isWinSoundOnUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        IsWinSoundOnUseCase(effectsRepository)
+        com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase(effectsRepository)
     }
 
     private val plugOnOffWinAnimation by lazy(LazyThreadSafetyMode.NONE) {
-        PlugOnOffWinAnimation(effectsRepository)
+        com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimation(effectsRepository)
     }
 
     private val plugOnOffWinSound by lazy(LazyThreadSafetyMode.NONE) {
-        PlugOnOffWinSound(effectsRepository)
+        com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSound(effectsRepository)
     }
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return SettingsViewModel(

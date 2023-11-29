@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
  */
 class TokensViewModel(
     private val getCheckedColorUseCase: GetCheckedColorUseCase,
-    private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
+    private val changeTokensNumberUseCase: com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase,
     private val clearAllTokensUseCase: ClearAllTokensUseCase,
     private val checkTokenUseCase: CheckTokenUseCase,
     private val uncheckTokenUseCase: UncheckTokenUseCase,
@@ -49,10 +49,10 @@ class TokensViewModel(
     private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
     private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
 
-    private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
-    private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
-    private val getEffectsDurationUseCase: GetEffectsDurationUseCase,
-    private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase
+    private val isWinAnimationOnUseCase: com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase,
+    private val isWinSoundOnUseCase: com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase,
+    private val getEffectsDurationUseCase: com.cerebus.tokens.domain.usecases.effects.GetEffectsDurationUseCase,
+    private val getAnimationRepeatTimesUseCase: com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase
     ) : ViewModel() {
 
     private var isAnimationRunning = false
@@ -86,7 +86,7 @@ class TokensViewModel(
 
     fun getCheckedColor() = getCheckedColorUseCase.execute()
 
-    fun getTokens(): Flow<Token> = getAllTokensUseCase.execute()
+    fun getTokens(): Flow<com.cerebus.tokens.domain.models.Token> = getAllTokensUseCase.execute()
 
     fun initData() {
         viewModelScope.launch(Dispatchers.IO) {

@@ -31,17 +31,17 @@ import kotlinx.coroutines.launch
  * @since 28.04.2023
  */
 class SettingsViewModel(
-    private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
+    private val changeTokensNumberUseCase: com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase,
     private val getTokensNumberUseCase: GetTokensNumberUseCase,
     private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
     private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
-    private val getChangeCheckedColorUseCase: ChangeCheckedColorUseCase,
+    private val getChangeCheckedColorUseCase: com.cerebus.tokens.domain.usecases.tokens.ChangeCheckedColorUseCase,
     private val getCheckedColorUseCase: GetCheckedColorUseCase,
 
-    private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
-    private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
-    private val plugOnOffWinAnimation: PlugOnOffWinAnimation,
-    private val plugOnOffWinSound: PlugOnOffWinSound
+    private val isWinAnimationOnUseCase: com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase,
+    private val isWinSoundOnUseCase: com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase,
+    private val plugOnOffWinAnimation: com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimation,
+    private val plugOnOffWinSound: com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSound
 ) : ViewModel() {
 
     private val mutableColorLiveData = MutableLiveData(getTokensColor())

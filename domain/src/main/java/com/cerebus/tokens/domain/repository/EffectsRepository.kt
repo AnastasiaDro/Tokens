@@ -12,5 +12,5 @@ interface EffectsRepository {
 
     fun plugWinSoundOff()
 
-    fun getWinEffects(): WinEffects
+    fun getWinEffects(): com.cerebus.tokens.domain.models.WinEffects
 }
