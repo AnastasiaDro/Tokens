@@ -5,12 +5,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase
-import com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase
-import com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimation
-import com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSound
-import com.cerebus.tokens.domain.usecases.tokens.ChangeCheckedColorUseCase
-import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetCheckedColorUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
@@ -40,8 +34,8 @@ class SettingsViewModel(
 
     private val isWinAnimationOnUseCase: com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase,
     private val isWinSoundOnUseCase: com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase,
-    private val plugOnOffWinAnimation: com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimation,
-    private val plugOnOffWinSound: com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSound
+    private val plugOnOffWinAnimationUseCase: com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimationUseCase,
+    private val plugOnOffWinSoundUseCase: com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSoundUseCase
 ) : ViewModel() {
 
     private val mutableColorLiveData = MutableLiveData(getTokensColor())
@@ -60,11 +54,11 @@ class SettingsViewModel(
     fun getIsSound() = isWinSoundOnUseCase.execute()
 
     fun changeAnimation(isAnimate: Boolean) {
-        plugOnOffWinAnimation.execute(isAnimate)
+        plugOnOffWinAnimationUseCase.execute(isAnimate)
     }
 
     fun changeSound(isSound: Boolean) {
-        plugOnOffWinSound.execute(isSound)
+        plugOnOffWinSoundUseCase.execute(isSound)
     }
 
     fun askForChangeTokensColor() {

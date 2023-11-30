@@ -11,6 +11,10 @@ import com.cerebus.tokens.domain.repository.EffectsRepository
 import com.cerebus.tokens.domain.repository.TokensRepository
 import com.cerebus.tokens.data.storage.EffectsStorage
 import com.cerebus.tokens.data.storage.EffectsStorageImpl
+import com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase
+import com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase
+import com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimationUseCase
+import com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSoundUseCase
 import com.cerebus.tokens.domain.usecases.tokens.ChangeCheckedColorUseCase
 import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetCheckedColorUseCase
@@ -57,19 +61,19 @@ class SettingsViewModelFactory(context: Context) : ViewModelProvider.Factory {
     /** effects **/
 
     private val isWinAnimationOnUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase(effectsRepository)
+        IsWinAnimationOnUseCase(effectsRepository)
     }
 
     private val isWinSoundOnUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase(effectsRepository)
+        IsWinSoundOnUseCase(effectsRepository)
     }
 
-    private val plugOnOffWinAnimation by lazy(LazyThreadSafetyMode.NONE) {
-        com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimation(effectsRepository)
+    private val plugOnOffWinAnimationUseCase by lazy(LazyThreadSafetyMode.NONE) {
+        PlugOnOffWinAnimationUseCase(effectsRepository)
     }
 
-    private val plugOnOffWinSound by lazy(LazyThreadSafetyMode.NONE) {
-        com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSound(effectsRepository)
+    private val plugOnOffWinSoundUseCase by lazy(LazyThreadSafetyMode.NONE) {
+        PlugOnOffWinSoundUseCase(effectsRepository)
     }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -83,8 +87,8 @@ class SettingsViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
             isWinAnimationOnUseCase = isWinAnimationOnUseCase,
             isWinSoundOnUseCase = isWinSoundOnUseCase,
-            plugOnOffWinAnimation = plugOnOffWinAnimation,
-            plugOnOffWinSound = plugOnOffWinSound
+            plugOnOffWinAnimationUseCase = plugOnOffWinAnimationUseCase,
+            plugOnOffWinSoundUseCase = plugOnOffWinSoundUseCase
 
         ) as T
     }
