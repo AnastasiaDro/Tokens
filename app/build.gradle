@@ -45,6 +45,7 @@ dependencies {
     def lifecycle_version = "2.3.1"
     def lottieVersion = "3.4.0"
     def nav_version = "2.7.5"
+    def koin_version = "3.5.0"
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -88,4 +89,9 @@ dependencies {
     implementation project(path: ':domain')
     //temporary!!!
     implementation project(path: ':data')
+
+    //Koin
+    implementation "io.insert-koin:koin-core:$koin_version"
+    implementation "io.insert-koin:koin-android:$koin_version"
+    implementation "io.insert-koin:koin-test:$koin_version"
 }

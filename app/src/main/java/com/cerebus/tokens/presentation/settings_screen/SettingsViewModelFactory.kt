@@ -5,16 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.cerebus.tokens.data.EffectsRepositoryImpl
 import com.cerebus.tokens.data.TokensRepositoryImpl
-import com.cerebus.tokens.data.storage.EffectsStorage
-import com.cerebus.tokens.data.storage.EffectsStorageImpl
 import com.cerebus.tokens.data.storage.TokensStorage
 import com.cerebus.tokens.data.storage.TokensStorageImpl
 import com.cerebus.tokens.domain.repository.EffectsRepository
 import com.cerebus.tokens.domain.repository.TokensRepository
-import com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase
-import com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase
-import com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinAnimation
-import com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSound
+import com.cerebus.tokens.data.storage.EffectsStorage
+import com.cerebus.tokens.data.storage.EffectsStorageImpl
 import com.cerebus.tokens.domain.usecases.tokens.ChangeCheckedColorUseCase
 import com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetCheckedColorUseCase
@@ -24,29 +20,29 @@ import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
 
 class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
 
-    private val effectsStorage: com.cerebus.tokens.data.storage.EffectsStorage =
-        com.cerebus.tokens.data.storage.EffectsStorageImpl(
+    private val effectsStorage: EffectsStorage =
+        EffectsStorageImpl(
             context.getSharedPreferences(
                 WIN_EFFECTS_PREFERENCES,
                 Context.MODE_PRIVATE
             )
         )
-    private val tokensStorage: com.cerebus.tokens.data.storage.TokensStorage =
-        com.cerebus.tokens.data.storage.TokensStorageImpl(
+    private val tokensStorage: TokensStorage =
+        TokensStorageImpl(
             context.getSharedPreferences(
                 TOKENS_PREFERENCES,
                 Context.MODE_PRIVATE
             )
         )
 
-    private val tokensRepository: com.cerebus.tokens.domain.repository.TokensRepository =
-        com.cerebus.tokens.data.TokensRepositoryImpl(tokensStorage)
-    private val effectsRepository: com.cerebus.tokens.domain.repository.EffectsRepository =
-        com.cerebus.tokens.data.EffectsRepositoryImpl(effectsStorage)
+    private val tokensRepository: TokensRepository =
+        TokensRepositoryImpl(tokensStorage)
+    private val effectsRepository: EffectsRepository =
+        EffectsRepositoryImpl(effectsStorage)
 
     /** tokens **/
     private val changeTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase(tokensRepository)
+        ChangeTokensNumberUseCase(tokensRepository)
     }
 
     private val getTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
@@ -62,7 +58,7 @@ class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
     }
 
     private val getChangeCheckedColorUseCase by lazy(LazyThreadSafetyMode.NONE) {
-        com.cerebus.tokens.domain.usecases.tokens.ChangeCheckedColorUseCase(tokensRepository)
+        ChangeCheckedColorUseCase(tokensRepository)
     }
 
     private val getCheckedColorUseCase by lazy(LazyThreadSafetyMode.NONE) {
