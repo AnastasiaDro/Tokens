@@ -1,8 +1,10 @@
 package com.cerebus.tokens.data.storage
 
-import android.content.SharedPreferences
+import android.content.Context
 
-class EffectsStorageImpl(private val prefs: SharedPreferences): EffectsStorage {
+class EffectsStorageImpl(context: Context): EffectsStorage {
+
+   private val prefs = context.getSharedPreferences(WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE)
     override fun plugWinAnimationOn() {
         prefs.edit().putBoolean(ANIMATION_SHOWING, true).apply()
     }
@@ -35,5 +37,7 @@ class EffectsStorageImpl(private val prefs: SharedPreferences): EffectsStorage {
 
         const val DEFAULT_EFFECTS_DURATION = 5000L
         const val ANIMATION_REPEAT_TIMES = 1
+
+        const val WIN_EFFECTS_PREFERENCES = "WinEffectsPreferences"
     }
 }

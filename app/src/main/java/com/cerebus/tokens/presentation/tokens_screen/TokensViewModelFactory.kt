@@ -25,22 +25,14 @@ import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.UncheckTokenUseCase
-import com.cerebus.tokens.presentation.settings_screen.SettingsViewModelFactory
 
 class TokensViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
     private val effectsStorage: EffectsStorage =
-        EffectsStorageImpl(
-            context.getSharedPreferences(
-                SettingsViewModelFactory.WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE
-            )
-        )
+        EffectsStorageImpl(context)
+
     private val tokensStorage: TokensStorage =
-        TokensStorageImpl(
-            context.getSharedPreferences(
-                SettingsViewModelFactory.TOKENS_PREFERENCES, Context.MODE_PRIVATE
-            )
-        )
+        TokensStorageImpl(context)
 
 
     private val tokensRepository: TokensRepository =

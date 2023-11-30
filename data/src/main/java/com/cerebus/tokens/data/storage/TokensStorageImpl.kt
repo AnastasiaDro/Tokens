@@ -1,8 +1,10 @@
 package com.cerebus.tokens.data.storage
 
-import android.content.SharedPreferences
+import android.content.Context
 
-class TokensStorageImpl(private val prefs: SharedPreferences) : TokensStorage {
+class TokensStorageImpl(context: Context) : TokensStorage {
+
+    private val prefs =  context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
     override fun getTokensNumber(): Int {
        return prefs.getInt(TOKENS_NUMBER, 1)
     }
@@ -35,5 +37,6 @@ class TokensStorageImpl(private val prefs: SharedPreferences) : TokensStorage {
         const val CHECKED_TOKENS_COLOR = "CheckedTokensColor"
 
         private const val defaultColor = -12517557  /** light green **/
+        const val TOKENS_PREFERENCES = "TokensPreferences"
     }
 }

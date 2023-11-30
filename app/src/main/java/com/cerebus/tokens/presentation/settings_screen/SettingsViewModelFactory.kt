@@ -21,14 +21,10 @@ import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
 class SettingsViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
     private val effectsStorage: EffectsStorage =
-        EffectsStorageImpl(
-            context.getSharedPreferences(WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE)
-        )
+        EffectsStorageImpl(context)
 
     private val tokensStorage: TokensStorage =
-        TokensStorageImpl(
-            context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
-        )
+        TokensStorageImpl(context)
 
     private val tokensRepository: TokensRepository = TokensRepositoryImpl(tokensStorage)
     private val effectsRepository: EffectsRepository = EffectsRepositoryImpl(effectsStorage)
@@ -91,10 +87,5 @@ class SettingsViewModelFactory(context: Context) : ViewModelProvider.Factory {
             plugOnOffWinSound = plugOnOffWinSound
 
         ) as T
-    }
-
-    companion object {
-        const val TOKENS_PREFERENCES = "TokensPreferences"
-        const val WIN_EFFECTS_PREFERENCES = "WinEffectsPreferences"
     }
 }
