@@ -18,27 +18,20 @@ import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
 import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
 
-class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
+class SettingsViewModelFactory(context: Context) : ViewModelProvider.Factory {
 
     private val effectsStorage: EffectsStorage =
         EffectsStorageImpl(
-            context.getSharedPreferences(
-                WIN_EFFECTS_PREFERENCES,
-                Context.MODE_PRIVATE
-            )
-        )
-    private val tokensStorage: TokensStorage =
-        TokensStorageImpl(
-            context.getSharedPreferences(
-                TOKENS_PREFERENCES,
-                Context.MODE_PRIVATE
-            )
+            context.getSharedPreferences(WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE)
         )
 
-    private val tokensRepository: TokensRepository =
-        TokensRepositoryImpl(tokensStorage)
-    private val effectsRepository: EffectsRepository =
-        EffectsRepositoryImpl(effectsStorage)
+    private val tokensStorage: TokensStorage =
+        TokensStorageImpl(
+            context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
+        )
+
+    private val tokensRepository: TokensRepository = TokensRepositoryImpl(tokensStorage)
+    private val effectsRepository: EffectsRepository = EffectsRepositoryImpl(effectsStorage)
 
     /** tokens **/
     private val changeTokensNumberUseCase by lazy(LazyThreadSafetyMode.NONE) {
@@ -82,6 +75,7 @@ class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
     private val plugOnOffWinSound by lazy(LazyThreadSafetyMode.NONE) {
         com.cerebus.tokens.domain.usecases.effects.PlugOnOffWinSound(effectsRepository)
     }
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return SettingsViewModel(
             changeTokensNumberUseCase = changeTokensNumberUseCase,
@@ -99,7 +93,7 @@ class SettingsViewModelFactory(context: Context): ViewModelProvider.Factory {
         ) as T
     }
 
-   companion object {
+    companion object {
         const val TOKENS_PREFERENCES = "TokensPreferences"
         const val WIN_EFFECTS_PREFERENCES = "WinEffectsPreferences"
     }
