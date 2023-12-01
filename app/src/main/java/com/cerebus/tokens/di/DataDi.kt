@@ -1,7 +1,5 @@
 package com.cerebus.tokens.di
 
-import android.content.SharedPreferences
-import android.media.session.MediaSession.Token
 import com.cerebus.tokens.data.EffectsRepositoryImpl
 import com.cerebus.tokens.data.TokensRepositoryImpl
 import com.cerebus.tokens.data.storage.EffectsStorage

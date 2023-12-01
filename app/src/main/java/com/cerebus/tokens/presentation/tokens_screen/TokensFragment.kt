@@ -9,7 +9,6 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
@@ -24,6 +23,7 @@ import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * [TokensFragment] - a fragment for tokens displaying
@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
  */
 class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
-    private lateinit var viewModel: TokensViewModel
+    private val viewModel: TokensViewModel by viewModel<TokensViewModel>()
     private val viewBinding: FragmentTokensBinding by viewBinding()
     private var viewArray: List<TokenView> = listOf()
 
@@ -46,7 +46,6 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(this, TokensViewModelFactory(requireContext())).get(TokensViewModel::class.java)
 
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()

@@ -6,7 +6,6 @@ import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
@@ -20,6 +19,7 @@ import com.cerebus.tokens.presentation.tokens_screen.TokenView
 import com.cerebus.tokens.presentation.tokens_screen.TokensNumberListener
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * [SettingsFragment] - a fragment for changing settings
@@ -35,12 +35,11 @@ import kotlinx.coroutines.launch
  */
 class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListener {
 
-    private lateinit var viewModel: SettingsViewModel
+    private val viewModel: SettingsViewModel by viewModel<SettingsViewModel>()
     private val viewBinding: FragmentSettingsBinding by viewBinding()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity(), SettingsViewModelFactory(requireContext())).get(SettingsViewModel::class.java)
         with(viewBinding.settingsAppLayout) {
             changeTokensColorButton.setOnClickListener { viewModel.askForChangeTokensColor() }
             changeTokensNumberButton.setOnClickListener {
