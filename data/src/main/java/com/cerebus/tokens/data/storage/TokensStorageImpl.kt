@@ -2,6 +2,15 @@ package com.cerebus.tokens.data.storage
 
 import android.content.Context
 
+/**
+ * [TokensStorageImpl] - a realisation of [TokensStorage] interface for storage of tokens data
+ * Uses SharedPreferences as DataHolder
+ *
+ * @see TokensStorage
+ *
+ * @since 18.11.2023
+ * @author Anastasia Drogunova
+ */
 class TokensStorageImpl(context: Context) : TokensStorage {
 
     private val prefs =  context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)

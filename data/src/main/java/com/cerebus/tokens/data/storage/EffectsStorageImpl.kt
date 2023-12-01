@@ -2,6 +2,17 @@ package com.cerebus.tokens.data.storage
 
 import android.content.Context
 
+/**
+ * [EffectsStorageImpl] - a realisation interface for storage of effects data:
+ * a data about animation and sound which used here
+ * is it on or off for example
+ * Uses SharedPreferences as DataHolder
+ *
+ * @see EffectsStorage
+ *
+ * @since 18.11.2023
+ * @author Anastasia Drogunova
+ */
 class EffectsStorageImpl(context: Context): EffectsStorage {
 
    private val prefs = context.getSharedPreferences(WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE)
