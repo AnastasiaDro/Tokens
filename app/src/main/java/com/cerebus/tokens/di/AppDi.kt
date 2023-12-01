@@ -1,14 +1,5 @@
 package com.cerebus.tokens.di
 
-import com.cerebus.tokens.domain.usecases.tokens.CheckTokenUseCase
-import com.cerebus.tokens.domain.usecases.tokens.CheckTokensAreGrappedUseCase
-import com.cerebus.tokens.domain.usecases.tokens.ClearAllTokensUseCase
-import com.cerebus.tokens.domain.usecases.tokens.GetAllTokensUseCase
-import com.cerebus.tokens.domain.usecases.tokens.GetCheckedColorUseCase
-import com.cerebus.tokens.domain.usecases.tokens.GetMaxTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.tokens.GetMinTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.tokens.GetTokensNumberUseCase
-import com.cerebus.tokens.domain.usecases.tokens.UncheckTokenUseCase
 import com.cerebus.tokens.presentation.settings_screen.SettingsViewModel
 import com.cerebus.tokens.presentation.tokens_screen.TokensViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
