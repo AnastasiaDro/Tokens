@@ -19,7 +19,7 @@ import com.cerebus.tokens.presentation.tokens_screen.TokenView
 import com.cerebus.tokens.presentation.tokens_screen.TokensNumberListener
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 /**
  * [SettingsFragment] - a fragment for changing settings
@@ -35,7 +35,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  */
 class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListener {
 
-    private val viewModel: SettingsViewModel by viewModel<SettingsViewModel>()
+    private val viewModel: SettingsViewModel by activityViewModel<SettingsViewModel>()
     private val viewBinding: FragmentSettingsBinding by viewBinding()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -102,8 +102,6 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
 
     companion object {
         const val TAG = "SettingsFragment"
-
-        fun newInstance() = SettingsFragment()
     }
 
     override fun subscribeToNavigationResultLiveData() {

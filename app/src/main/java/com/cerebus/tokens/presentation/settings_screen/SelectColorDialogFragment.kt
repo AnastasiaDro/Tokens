@@ -5,13 +5,12 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import com.cerebus.tokens.R
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 /**
  * [SelectColorDialogFragment] - a dialog with [ColorPickerView]
@@ -25,14 +24,13 @@ import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
  */
 class SelectColorDialogFragment: DialogFragment() {
 
-    private lateinit var viewModel: SettingsViewModel
+    private val viewModel: SettingsViewModel by activityViewModel<SettingsViewModel>()
 
     private var checkedTokensColor: Int = 0
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         checkedTokensColor = context.getColor(R.color.checkedColor)
-        viewModel = ViewModelProvider(requireActivity(), SettingsViewModelFactory(requireContext())).get(SettingsViewModel::class.java)
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): AlertDialog {

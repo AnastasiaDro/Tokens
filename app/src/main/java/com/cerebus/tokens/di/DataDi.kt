@@ -8,6 +8,7 @@ import com.cerebus.tokens.data.storage.TokensStorage
 import com.cerebus.tokens.data.storage.TokensStorageImpl
 import com.cerebus.tokens.domain.repository.EffectsRepository
 import com.cerebus.tokens.domain.repository.TokensRepository
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 
