@@ -39,7 +39,7 @@
             android:layout_marginBottom="2dp"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:text="@string/ok"
+            android:text="@string/OK"
             style="?android:attr/buttonBarButtonStyle" />
     </LinearLayout>
 

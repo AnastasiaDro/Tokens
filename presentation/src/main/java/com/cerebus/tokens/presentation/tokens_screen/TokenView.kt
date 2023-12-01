@@ -9,7 +9,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatImageButton
-import com.cerebus.tokens.R
+import com.cerebus.tokens.presentation.R
 
 /**
  * [TokenView] - a class for tokens. It draws imageView and circle inside it

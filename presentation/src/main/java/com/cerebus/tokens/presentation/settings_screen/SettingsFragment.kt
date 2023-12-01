@@ -11,9 +11,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.R
-import com.cerebus.tokens.databinding.FragmentSettingsBinding
+import com.cerebus.tokens.presentation.R
 import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
+import com.cerebus.tokens.presentation.databinding.FragmentSettingsBinding
 import com.cerebus.tokens.presentation.getNavigationResultLiveData
 import com.cerebus.tokens.presentation.tokens_screen.TokenView
 import com.cerebus.tokens.presentation.tokens_screen.TokensNumberListener

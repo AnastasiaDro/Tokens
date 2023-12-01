@@ -14,10 +14,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.R
-import com.cerebus.tokens.databinding.FragmentTokensBinding
+import com.cerebus.tokens.presentation.R
 import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
 import com.cerebus.tokens.presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import com.cerebus.tokens.presentation.databinding.FragmentTokensBinding
 import com.cerebus.tokens.presentation.getNavigationResultLiveData
 import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
@@ -60,20 +60,6 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
             return@setOnTouchListener true
         }
         Log.d(SettingsFragment.TAG, "Views were initialized")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (viewModel.getCheckedColor() != viewArray[0].getCheckedColor()) {
-            for (token in viewArray) token.setCheckedColor(viewModel.getCheckedColor())
-            refreshTokens(viewArray)
-        }
-        //TODO исправить с приходом коина
-        println("Nastya viewModel.getTokensNum() = ${viewModel.getTokensNum()} и число видимых = ${viewArray.count { it.isVisible }}")
-        if (viewModel.getTokensNum() != viewArray.count { it.isVisible }) {
-            showTokens(viewArray)
-        }
-
     }
 
     private fun initOptionsMenu() {
@@ -225,7 +211,5 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
         const val TAG = "TokensFragment"
         const val ANIMATION_FIRST_DELAY = 500L
         const val ANIMATION_SECOND_DELAY = 300L
-
-        fun newInstance() = TokensFragment()
     }
 }

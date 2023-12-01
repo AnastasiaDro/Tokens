@@ -7,7 +7,7 @@ import android.view.View
  * [SwipeParser] - an interface for parsing swipes cases
  * in different places
  *
- * @see  SwipeParserImpl
+ * @see SwipeParserImpl
  *
  * @author Anastasia Drogunova
  * @since 14.07.2023

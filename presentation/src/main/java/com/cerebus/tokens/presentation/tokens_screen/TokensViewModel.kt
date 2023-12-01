@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cerebus.tokens.domain.models.Token
 import com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase
 import com.cerebus.tokens.domain.usecases.effects.GetEffectsDurationUseCase
 import com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase
@@ -39,7 +38,7 @@ import kotlinx.coroutines.launch
  */
 class TokensViewModel(
     private val getCheckedColorUseCase: GetCheckedColorUseCase,
-    private val changeTokensNumberUseCase: com.cerebus.tokens.domain.usecases.tokens.ChangeTokensNumberUseCase,
+    private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
     private val clearAllTokensUseCase: ClearAllTokensUseCase,
     private val checkTokenUseCase: CheckTokenUseCase,
     private val uncheckTokenUseCase: UncheckTokenUseCase,
@@ -49,10 +48,10 @@ class TokensViewModel(
     private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
     private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
 
-    private val isWinAnimationOnUseCase: com.cerebus.tokens.domain.usecases.effects.IsWinAnimationOnUseCase,
-    private val isWinSoundOnUseCase: com.cerebus.tokens.domain.usecases.effects.IsWinSoundOnUseCase,
-    private val getEffectsDurationUseCase: com.cerebus.tokens.domain.usecases.effects.GetEffectsDurationUseCase,
-    private val getAnimationRepeatTimesUseCase: com.cerebus.tokens.domain.usecases.effects.GetAnimationRepeatTimesUseCase
+    private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
+    private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
+    private val getEffectsDurationUseCase: GetEffectsDurationUseCase,
+    private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase
     ) : ViewModel() {
 
     private var isAnimationRunning = false
@@ -73,7 +72,7 @@ class TokensViewModel(
     private val changedTokensNumMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val changedTokensNumLiveData: LiveData<Boolean> = changedTokensNumMutableLiveData
 
-    private val navigateToSettingsMutableFlow: MutableSharedFlow<Boolean> = MutableSharedFlow(replay = 0, extraBufferCapacity = 0)
+    private val navigateToSettingsMutableFlow: MutableSharedFlow<Boolean> = MutableSharedFlow()
     val navigateToSettingsFlow = navigateToSettingsMutableFlow.asSharedFlow()
 
     private val animationMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -144,7 +143,4 @@ class TokensViewModel(
         if (uncheckTokenUseCase.execute(tokenIndex))
             viewModelScope.launch { unselectedMutableLiveData.postValue(tokenIndex) }
     }
-
-
-
 }
