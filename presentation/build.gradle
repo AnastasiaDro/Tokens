@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'androidx.navigation.safeargs.kotlin'
     id 'kotlin-parcelize'
@@ -10,7 +10,6 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.cerebus.tokens.presentation"
         minSdk 24
         targetSdk 33
         versionCode 1

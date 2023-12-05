@@ -1,9 +1,9 @@
 package com.cerebus.tokens.app
 
 import android.app.Application
-import com.cerebus.tokens.di.appModule
 import com.cerebus.tokens.di.dataModule
 import com.cerebus.tokens.di.domainModule
+import com.cerebus.tokens.di.presentationModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -17,7 +17,7 @@ class App: Application() {
         startKoin {
             androidLogger(Level.DEBUG)
             androidContext(this@App)
-            modules(appModule, domainModule, dataModule)
+            modules(presentationModule, domainModule, dataModule)
         }
     }
 }
