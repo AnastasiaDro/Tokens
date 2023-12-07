@@ -1,12 +1,36 @@
 package com.cerebus.tokens.di.feature
 
-import settings_screen.SettingsViewModel
-import tokens_screen.TokensViewModel
+import data.effects.EffectsRepositoryImpl
+import data.effects.storage.EffectsStorage
+import data.effects.storage.EffectsStorageImpl
+import data.tokens.TokensRepositoryImpl
+import data.tokens.storage.TokensStorage
+import data.tokens.storage.TokensStorageImpl
+import domain.usecases.effects.GetAnimationRepeatTimesUseCase
+import domain.usecases.effects.GetEffectsDurationUseCase
+import domain.usecases.effects.IsWinAnimationOnUseCase
+import domain.usecases.effects.IsWinSoundOnUseCase
+import domain.usecases.effects.PlugOnOffWinAnimationUseCase
+import domain.usecases.effects.PlugOnOffWinSoundUseCase
+import domain.usecases.tokens.ChangeCheckedColorUseCase
+import domain.usecases.tokens.ChangeTokensNumberUseCase
+import domain.usecases.tokens.CheckTokenUseCase
+import domain.usecases.tokens.CheckTokensAreGrappedUseCase
+import domain.usecases.tokens.ClearAllTokensUseCase
+import domain.usecases.tokens.GetAllTokensUseCase
+import domain.usecases.tokens.GetCheckedColorUseCase
+import domain.usecases.tokens.GetMaxTokensNumberUseCase
+import domain.usecases.tokens.GetMinTokensNumberUseCase
+import domain.usecases.tokens.GetTokensNumberUseCase
+import domain.usecases.tokens.UncheckTokenUseCase
+import presentation.settings_screen.SettingsViewModel
+import presentation.tokens_screen.TokensViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
-val tokensModule = module {
+val tokensFeatureModule = module {
 
+    /** presentation **/
     viewModel<TokensViewModel> {
         TokensViewModel(
             getCheckedColorUseCase = get(),
@@ -41,4 +65,101 @@ val tokensModule = module {
             plugOnOffWinSoundUseCase = get(),
         )
     }
+
+
+
+    /** Domain **/
+    /* Tokens */
+    factory<GetCheckedColorUseCase> {
+        GetCheckedColorUseCase(tokensRepository = get())
+    }
+
+    factory<ChangeTokensNumberUseCase> {
+        ChangeTokensNumberUseCase(tokensRepository = get())
+    }
+
+    factory<ClearAllTokensUseCase> {
+        ClearAllTokensUseCase(tokensRepository = get())
+    }
+
+    factory<CheckTokenUseCase> {
+        CheckTokenUseCase(tokensRepository = get())
+    }
+
+    factory<UncheckTokenUseCase> {
+        UncheckTokenUseCase(tokensRepository = get())
+    }
+
+    factory<GetTokensNumberUseCase> {
+        GetTokensNumberUseCase(tokensRepository = get())
+    }
+
+    factory<CheckTokensAreGrappedUseCase> {
+        CheckTokensAreGrappedUseCase(tokensRepository = get())
+    }
+
+    factory<GetAllTokensUseCase> {
+        GetAllTokensUseCase(tokensRepository = get())
+    }
+
+    factory<GetMinTokensNumberUseCase> {
+        GetMinTokensNumberUseCase(tokensRepository = get())
+    }
+
+    factory<GetMaxTokensNumberUseCase> {
+        GetMaxTokensNumberUseCase(tokensRepository = get())
+    }
+
+    factory<ChangeCheckedColorUseCase> {
+        ChangeCheckedColorUseCase(tokensRepository = get())
+    }
+
+
+    /* Effects */
+
+    factory<IsWinAnimationOnUseCase> {
+        IsWinAnimationOnUseCase(effectsRepository = get())
+    }
+
+    factory<IsWinSoundOnUseCase> {
+        IsWinSoundOnUseCase(effectsRepository = get())
+    }
+
+    factory<GetEffectsDurationUseCase> {
+        GetEffectsDurationUseCase(effectsRepository = get())
+    }
+
+    factory<GetAnimationRepeatTimesUseCase> {
+        GetAnimationRepeatTimesUseCase(effectsRepository = get())
+    }
+
+
+    factory<PlugOnOffWinAnimationUseCase> {
+        PlugOnOffWinAnimationUseCase(effectsRepository = get())
+    }
+
+    factory<PlugOnOffWinSoundUseCase> {
+        PlugOnOffWinSoundUseCase(effectsRepository = get())
+    }
+
+    /** Data **/
+    /* Tokens */
+    single<TokensStorage> {
+        TokensStorageImpl(context = get()) //контекст встроен в коин, а что делать с префами?
+    }
+
+    single<domain.repository.TokensRepository> {
+        TokensRepositoryImpl(tokensStorage = get())
+    }
+
+    /* Effects */
+    single<EffectsStorage> {
+        EffectsStorageImpl(context = get())
+    }
+
+    single<domain.repository.EffectsRepository> {
+        EffectsRepositoryImpl(effectsStorage = get())
+    }
+
+
 }

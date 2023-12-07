@@ -81,8 +81,8 @@ dependencies {
     androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
 
     //domain
-    implementation project(path: ':domain')
     implementation project(path: ':core:ui')
+    implementation project(path: ':core:logger')
 
     //Koin
     implementation "io.insert-koin:koin-core:$koin_version"

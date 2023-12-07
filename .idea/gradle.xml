@@ -15,10 +15,6 @@
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core/logger" />
             <option value="$PROJECT_DIR$/core/ui" />
-            <option value="$PROJECT_DIR$/data" />
-            <option value="$PROJECT_DIR$/data/effects_data" />
-            <option value="$PROJECT_DIR$/data/tokens_data" />
-            <option value="$PROJECT_DIR$/domain" />
             <option value="$PROJECT_DIR$/feature" />
             <option value="$PROJECT_DIR$/feature/tokens_feature" />
           </set>

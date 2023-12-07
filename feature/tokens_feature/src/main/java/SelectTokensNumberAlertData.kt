@@ -1,6 +1,6 @@
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
-import tokens_screen.SelectTokenNumberAlert
+import presentation.tokens_screen.SelectTokenNumberAlert
 
 /**
  * [SelectTokensNumberAlertData] - a class with data for
