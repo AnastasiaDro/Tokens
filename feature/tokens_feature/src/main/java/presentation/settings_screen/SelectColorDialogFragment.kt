@@ -24,14 +24,7 @@ import org.koin.androidx.viewmodel.ext.android.activityViewModel
  */
 class SelectColorDialogFragment: DialogFragment() {
 
-    private val viewModel: SettingsViewModel by activityViewModel<SettingsViewModel>()
-
-    private var checkedTokensColor: Int = 0
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        checkedTokensColor = context.getColor(R.color.checkedColor)
-    }
+    private val viewModel: SettingsViewModel by activityViewModel()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): AlertDialog {
 
