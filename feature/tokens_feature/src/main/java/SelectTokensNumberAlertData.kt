@@ -1,8 +1,6 @@
-package com.cerebus.tokens.presentation
-
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
-import com.cerebus.tokens.presentation.tokens_screen.SelectTokenNumberAlert
+import tokens_screen.SelectTokenNumberAlert
 
 /**
  * [SelectTokensNumberAlertData] - a class with data for

@@ -1,4 +1,4 @@
-package com.cerebus.tokens.presentation.tokens_screen
+package tokens_screen
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

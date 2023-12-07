@@ -1,4 +1,4 @@
-package com.cerebus.tokens.presentation.tokens_screen
+package tokens_screen
 
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -15,11 +15,11 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.presentation.R
-import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
-import com.cerebus.tokens.presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import SelectTokensNumberAlertData
+import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import com.cerebus.tokens.presentation.databinding.FragmentTokensBinding
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
-import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
+import settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch

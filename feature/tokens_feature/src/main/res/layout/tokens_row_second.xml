@@ -12,7 +12,7 @@
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintStart_toStartOf="@id/first_row">
 
-    <com.cerebus.tokens.presentation.tokens_screen.TokenView
+    <tokens_screen.TokenView
         android:id="@+id/tokenButton1"
         android:layout_width="@dimen/token_width"
         android:layout_height="@dimen/token_height"
@@ -26,7 +26,7 @@
         android:contentDescription="token1"
         tools:visibility="visible"/>
 
-    <com.cerebus.tokens.presentation.tokens_screen.TokenView
+    <tokens_screen.TokenView
         android:id="@+id/tokenButton2"
         android:layout_width="@dimen/token_width"
         android:layout_height="@dimen/token_height"
@@ -40,7 +40,7 @@
         android:contentDescription="token2"
         tools:visibility="visible"/>
 
-    <com.cerebus.tokens.presentation.tokens_screen.TokenView
+    <tokens_screen.TokenView
         android:id="@+id/tokenButton3"
         android:layout_width="@dimen/token_width"
         android:layout_height="@dimen/token_height"
@@ -54,7 +54,7 @@
         android:contentDescription="token3"
         tools:visibility="visible"/>
 
-    <com.cerebus.tokens.presentation.tokens_screen.TokenView
+    <tokens_screen.TokenView
         android:id="@+id/tokenButton4"
         android:layout_width="@dimen/token_width"
         android:layout_height="@dimen/token_height"
@@ -68,7 +68,7 @@
         android:contentDescription="token4"
         tools:visibility="visible"/>
 
-    <com.cerebus.tokens.presentation.tokens_screen.TokenView
+    <tokens_screen.TokenView
         android:id="@+id/tokenButton5"
         android:layout_width="@dimen/token_width"
         android:layout_height="@dimen/token_height"

@@ -1,5 +1,6 @@
-package com.cerebus.tokens.presentation.settings_screen
+package settings_screen
 
+import SelectTokensNumberAlertData
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.util.Log
@@ -11,15 +12,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.presentation.R
-import com.cerebus.tokens.presentation.SelectTokensNumberAlertData
-import com.cerebus.tokens.presentation.databinding.FragmentSettingsBinding
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
-import com.cerebus.tokens.presentation.tokens_screen.TokenView
-import com.cerebus.tokens.presentation.tokens_screen.TokensNumberListener
+import com.cerebus.tokens.feature.tokens_feature.R
+import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import tokens_screen.TokenView
+import tokens_screen.TokensNumberListener
 
 /**
  * [SettingsFragment] - a fragment for changing settings

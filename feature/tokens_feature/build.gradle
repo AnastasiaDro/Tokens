@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace 'com.cerebus.tokens.presentation'
+    namespace 'com.cerebus.tokens.feature.tokens_feature'
     compileSdk 34
 
     defaultConfig {

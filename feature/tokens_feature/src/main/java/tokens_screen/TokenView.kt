@@ -1,4 +1,4 @@
-package com.cerebus.tokens.presentation.tokens_screen
+package tokens_screen
 
 import android.content.Context
 import android.content.res.TypedArray

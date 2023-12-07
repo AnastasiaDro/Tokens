@@ -1,7 +1,7 @@
 package com.cerebus.tokens.di
 
-import com.cerebus.tokens.presentation.settings_screen.SettingsViewModel
-import com.cerebus.tokens.presentation.tokens_screen.TokensViewModel
+import settings_screen.SettingsViewModel
+import tokens_screen.TokensViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 

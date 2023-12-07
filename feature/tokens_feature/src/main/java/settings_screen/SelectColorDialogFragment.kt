@@ -1,11 +1,11 @@
-package com.cerebus.tokens.presentation.settings_screen
+package settings_screen
 
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import com.cerebus.tokens.presentation.R
+import com.cerebus.tokens.feature.tokens_feature.R
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.ColorPickerView

@@ -1,7 +1,7 @@
-package com.cerebus.tokens.presentation.tokens_screen
+package tokens_screen
 
 import androidx.navigation.NavDirections
-import com.cerebus.tokens.presentation.settings_screen.SettingsFragment
+import settings_screen.SettingsFragment
 
 /**
  * [TokensNumberListener] a listener for changing number of tokens

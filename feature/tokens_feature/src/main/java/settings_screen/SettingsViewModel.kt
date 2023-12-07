@@ -1,4 +1,4 @@
-package com.cerebus.tokens.presentation.settings_screen
+package settings_screen
 
 import androidx.annotation.ColorInt
 import androidx.lifecycle.LiveData
