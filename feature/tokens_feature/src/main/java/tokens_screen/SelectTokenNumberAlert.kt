@@ -1,15 +1,15 @@
 package tokens_screen
 
+import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.fragment.app.DialogFragment
 import androidx.navigation.fragment.navArgs
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.presentation.R
-import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
-import com.cerebus.tokens.presentation.databinding.AlertSelectTokensNumberBinding
 import com.cerebus.tokens.core.ui.setNavigationResult
+import com.cerebus.tokens.feature.tokens_feature.R
+import com.cerebus.tokens.feature.tokens_feature.databinding.AlertSelectTokensNumberBinding
 import settings_screen.SettingsFragment
 
 /**

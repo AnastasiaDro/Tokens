@@ -1,11 +1,11 @@
-package com.cerebus.tokens.di
+package com.cerebus.tokens.di.feature
 
 import settings_screen.SettingsViewModel
 import tokens_screen.TokensViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
-val appModule = module {
+val tokensModule = module {
 
     viewModel<TokensViewModel> {
         TokensViewModel(

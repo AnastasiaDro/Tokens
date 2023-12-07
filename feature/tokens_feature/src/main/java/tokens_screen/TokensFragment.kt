@@ -14,11 +14,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.presentation.R
 import SelectTokensNumberAlertData
 import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
-import com.cerebus.tokens.presentation.databinding.FragmentTokensBinding
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
+import com.cerebus.tokens.feature.tokens_feature.R
+import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentTokensBinding
 import settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectIndexed

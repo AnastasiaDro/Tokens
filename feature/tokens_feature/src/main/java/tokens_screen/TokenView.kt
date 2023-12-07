@@ -3,13 +3,13 @@ package tokens_screen
 import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.Canvas
-import android.util.AttributeSet
-import androidx.core.content.ContextCompat
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.AttributeSet
 import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatImageButton
-import com.cerebus.tokens.presentation.R
+import androidx.core.content.ContextCompat
+import com.cerebus.tokens.feature.tokens_feature.R
 
 /**
  * [TokenView] - a class for tokens. It draws imageView and circle inside it
