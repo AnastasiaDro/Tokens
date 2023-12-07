@@ -87,7 +87,8 @@ dependencies {
 
     //Clean layers
     implementation project(path: ':domain')
-    implementation project(path: ':data')
+    implementation project(path: ':data:tokens_data')
+    implementation project(path: ':data:effects_data')
     implementation project(path: ':presentation')
 
     //Koin

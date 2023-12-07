@@ -1,6 +1,6 @@
-package com.cerebus.tokens.data
+package com.cerebus.tokens.data.effects_data
 
-import com.cerebus.tokens.data.storage.EffectsStorage
+import com.cerebus.tokens.data.effects_data.storage.EffectsStorage
 import com.cerebus.tokens.domain.models.WinEffects
 import com.cerebus.tokens.domain.repository.EffectsRepository
 

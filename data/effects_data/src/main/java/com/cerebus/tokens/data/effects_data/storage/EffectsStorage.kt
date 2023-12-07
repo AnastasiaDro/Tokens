@@ -1,4 +1,4 @@
-package com.cerebus.tokens.data.storage
+package com.cerebus.tokens.data.effects_data.storage
 
 /**
  * [EffectsStorage] - an interface for storage of effects data:

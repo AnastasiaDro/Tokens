@@ -1,7 +1,7 @@
-package com.cerebus.tokens.data
+package com.cerebus.tokens.data.tokens_data
 
 import android.util.Log
-import com.cerebus.tokens.data.storage.TokensStorage
+import com.cerebus.tokens.data.tokens_data.storage.TokensStorage
 import com.cerebus.tokens.domain.models.Token
 import com.cerebus.tokens.domain.repository.TokensRepository
 import kotlinx.coroutines.flow.Flow

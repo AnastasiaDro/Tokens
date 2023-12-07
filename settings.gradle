@@ -14,6 +14,10 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Tokens"
 include ':app'
-include ':data'
 include ':domain'
 include ':presentation'
+
+//data layer
+//
+include ':data:tokens_data'
+include ':data:effects_data'
