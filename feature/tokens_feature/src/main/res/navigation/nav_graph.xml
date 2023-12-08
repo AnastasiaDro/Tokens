@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/tokensFragment">
+
+    <fragment
+        android:id="@+id/tokensFragment"
+        android:name="presentation.tokens_screen.TokensFragment"
+        android:label="TokensFragment"
+        tools:layout="@layout/fragment_tokens">
+        <action
+            android:id="@+id/action_tokensFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/action_tokensFragment_to_selectTokenNumberAlert"
+            app:destination="@id/selectTokenNumberAlert" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="presentation.settings_screen.SettingsFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings">
+        <action
+            android:id="@+id/action_settingsFragment_to_tokensFragment"
+            app:destination="@id/tokensFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_selectTokenNumberAlert"
+            app:destination="@id/selectTokenNumberAlert" />
+        <action
+            android:id="@+id/action_settingsFragment_to_selectColorDialogFragment"
+            app:destination="@id/selectColorDialogFragment" />
+    </fragment>
+    <dialog
+        android:id="@+id/selectTokenNumberAlert"
+        android:name="presentation.tokens_screen.SelectTokenNumberAlert"
+        android:label="SelectTokenNumberAlert"
+        tools:layout="@layout/alert_select_tokens_number">
+        <argument
+            android:name="tokensNumberData"
+            app:argType="SelectTokensNumberAlertData" />
+    </dialog>
+    <dialog
+        android:id="@+id/selectColorDialogFragment"
+        android:name="presentation.settings_screen.SelectColorDialogFragment"
+        android:label="SelectColorDialogFragment"
+        tools:layout="@layout/dialog_select_color"/>
+</navigation>

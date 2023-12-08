@@ -1,25 +1,18 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'androidx.navigation.safeargs.kotlin'
     id 'kotlin-parcelize'
 }
 
 android {
-    namespace 'com.cerebus.tokens'
+    namespace 'com.cerebus.tokens.feature.tokens_feature'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.cerebus.tokens"
-        minSdk 28
-        targetSdk 33
-        versionCode 2
-        versionName "1.1"
+        minSdk 24
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary true
-        }
     }
 
     buildTypes {
@@ -35,12 +28,14 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
     buildFeatures {
         viewBinding true
     }
 }
 
 dependencies {
+
     implementation 'androidx.cardview:cardview:1.0.0'
     def lifecycle_version = "2.3.1"
     def lottieVersion = "3.4.0"
@@ -85,13 +80,12 @@ dependencies {
     // Testing Navigation
     androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
 
-    //Clean layers
-    implementation project(path: ':feature:tokens_feature')
+    //domain
+    implementation project(path: ':core:ui')
     implementation project(path: ':core:logger')
 
     //Koin
     implementation "io.insert-koin:koin-core:$koin_version"
     implementation "io.insert-koin:koin-android:$koin_version"
     implementation "io.insert-koin:koin-test:$koin_version"
-
 }
