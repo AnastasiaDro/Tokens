@@ -2,25 +2,26 @@ package data.tokens
 
 import android.util.Log
 import data.tokens.storage.TokensStorage
+import domain.models.Token
+import domain.repository.TokensRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 
-class TokensRepositoryImpl(private val tokensStorage: TokensStorage):
-    domain.repository.TokensRepository {
+class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepository {
 
-    private val tokensList = mutableListOf<domain.models.Token>()
+    private val tokensList = mutableListOf<Token>()
 
     init {
         createTokens(tokensStorage.getTokensNumber())
         checkTokens(tokensStorage.getCheckedTokensNumber())
     }
 
-    override fun getAllTokens(): Flow<domain.models.Token> = tokensList.asFlow()
+    override fun getAllTokens(): Flow<Token> = tokensList.asFlow()
 
     override fun getTokenById(id: Int) = tokensList[id]
     override fun createTokens(number: Int) {
         for (i in 0 until number)
-            tokensList += domain.models.Token(false)
+            tokensList += Token(false)
 
     }
 

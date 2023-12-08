@@ -1,6 +1,8 @@
 package domain.usecases.effects
 
-class PlugOnOffWinSoundUseCase(private val effectsRepository: domain.repository.EffectsRepository) {
+import domain.repository.EffectsRepository
+
+class PlugOnOffWinSoundUseCase(private val effectsRepository: EffectsRepository) {
 
     fun execute(isOn: Boolean) {
         if (isOn)

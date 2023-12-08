@@ -9,6 +9,7 @@ import domain.usecases.effects.GetAnimationRepeatTimesUseCase
 import domain.usecases.effects.GetEffectsDurationUseCase
 import domain.usecases.effects.IsWinAnimationOnUseCase
 import domain.usecases.effects.IsWinSoundOnUseCase
+import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
 import domain.usecases.tokens.ChangeTokensNumberUseCase
 import domain.usecases.tokens.CheckTokenUseCase
 import domain.usecases.tokens.CheckTokensAreGrappedUseCase
@@ -52,7 +53,9 @@ class TokensViewModel(
     private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
     private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
     private val getEffectsDurationUseCase: GetEffectsDurationUseCase,
-    private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase
+    private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase,
+
+    private val getIsReinforcementShowUseCase: GetIsReinforcementShowUseCase,
     ) : ViewModel() {
 
     private var isAnimationRunning = false

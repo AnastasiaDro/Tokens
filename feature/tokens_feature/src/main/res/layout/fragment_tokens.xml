@@ -28,6 +28,18 @@
         android:id="@+id/second_row"
         layout="@layout/tokens_row_second" />
 
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/reinforcement_image"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="24dp"
+        android:visibility="gone"
+        app:srcCompat="@drawable/baseline_add_a_photo_24"
+        app:layout_constraintTop_toTopOf="@+id/first_row"
+        app:layout_constraintBottom_toBottomOf="@+id/second_row"
+        app:layout_constraintStart_toEndOf="@id/first_row"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/animation_view_left"
         android:layout_width="wrap_content"

@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface TokensRepository {
 
-    fun getAllTokens(): Flow<domain.models.Token>
+    fun getAllTokens(): Flow<Token>
 
-    fun getTokenById(id: Int): domain.models.Token
+    fun getTokenById(id: Int): Token
 
     fun removeTokens(number: Int)
 
