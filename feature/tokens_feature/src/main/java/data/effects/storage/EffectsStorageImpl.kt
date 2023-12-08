@@ -1,6 +1,8 @@
 package data.effects.storage
 
 import android.content.Context
+import com.cerebus.tokens.logger.api.LoggerFactory
+import java.util.logging.Logger
 
 /**
  * [EffectsStorageImpl] - a realisation interface for storage of effects data:
@@ -13,9 +15,11 @@ import android.content.Context
  * @since 18.11.2023
  * @author Anastasia Drogunova
  */
-class EffectsStorageImpl(context: Context): EffectsStorage {
+class EffectsStorageImpl(context: Context, loggerFactory: LoggerFactory): EffectsStorage {
 
-   private val prefs = context.getSharedPreferences(WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE)
+    private val logger = loggerFactory.createLogger(this::class.java.simpleName)
+
+    private val prefs = context.getSharedPreferences(WIN_EFFECTS_PREFERENCES, Context.MODE_PRIVATE)
     override fun plugWinAnimationOn() {
         prefs.edit().putBoolean(ANIMATION_SHOWING, true).apply()
     }

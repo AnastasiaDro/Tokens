@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import domain.models.Token
 import domain.usecases.effects.GetAnimationRepeatTimesUseCase
 import domain.usecases.effects.GetEffectsDurationUseCase
 import domain.usecases.effects.IsWinAnimationOnUseCase
@@ -85,7 +86,7 @@ class TokensViewModel(
 
     fun getCheckedColor() = getCheckedColorUseCase.execute()
 
-    fun getTokens(): Flow<domain.models.Token> = getAllTokensUseCase.execute()
+    fun getTokens(): Flow<Token> = getAllTokensUseCase.execute()
 
     fun initData() {
         viewModelScope.launch(Dispatchers.IO) {

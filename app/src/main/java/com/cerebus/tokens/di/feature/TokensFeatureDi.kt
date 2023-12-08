@@ -145,7 +145,7 @@ val tokensFeatureModule = module {
     /** Data **/
     /* Tokens */
     single<TokensStorage> {
-        TokensStorageImpl(context = get()) //контекст встроен в коин, а что делать с префами?
+        TokensStorageImpl(context = get(), loggerFactory = get())
     }
 
     single<domain.repository.TokensRepository> {
@@ -154,12 +154,10 @@ val tokensFeatureModule = module {
 
     /* Effects */
     single<EffectsStorage> {
-        EffectsStorageImpl(context = get())
+        EffectsStorageImpl(context = get(), loggerFactory = get())
     }
 
     single<domain.repository.EffectsRepository> {
         EffectsRepositoryImpl(effectsStorage = get())
     }
-
-
 }

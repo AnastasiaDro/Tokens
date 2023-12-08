@@ -2,7 +2,6 @@ package com.cerebus.tokens.logger.impl
 
 import android.util.Log
 import com.cerebus.tokens.logger.api.Logger
-import kotlin.math.log
 
 class LoggerImpl(tag: String): Logger {
 
