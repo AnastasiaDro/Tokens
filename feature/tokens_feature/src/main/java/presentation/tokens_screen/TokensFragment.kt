@@ -1,8 +1,9 @@
 package presentation.tokens_screen
 
+import SelectTokensNumberAlertData
+import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import android.media.MediaPlayer
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -14,17 +15,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
-import SelectTokensNumberAlertData
-import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import com.cerebus.tokens.core.ui.SwipeParser
 import com.cerebus.tokens.core.ui.SwipeParserImpl
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentTokensBinding
 import com.cerebus.tokens.logger.api.LoggerFactory
-import presentation.settings_screen.SettingsFragment
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -40,7 +37,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  * @author Anastasia Drogunova
  * @since 23.05.2023
  */
-class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
+class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
     private val viewModel: TokensViewModel by viewModel<TokensViewModel>()
     private val viewBinding: FragmentTokensBinding by viewBinding()
@@ -102,8 +99,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
                         viewList[index].setCheckedColor(color)
                     }
                     viewList[index].setChecked()
-                }
-                else
+                } else
                     viewList[index].setUnchecked()
                 viewList[index].setOnClickListener { onTokenClick(index) }
                 i = index + 1
@@ -124,8 +120,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
                         viewList[index].setCheckedColor(color)
                     }
                     viewList[index].setChecked()
-                }
-                else
+                } else
                     viewList[index].setUnchecked()
             }
             logger.d("Tokens are refreshed")
@@ -134,9 +129,9 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
     override fun subscribeToNavigationResultLiveData() {
         val result = getNavigationResultLiveData<Int>(CURRENT_TOKENS_NUMBER_RESULT_KEY)
-        result?.observe(viewLifecycleOwner) {
-                newNum -> viewModel.changeTokensNum(newNum)
-                logger.d("$CURRENT_TOKENS_NUMBER_RESULT_KEY navigation result is taken NEW NUMBER = $newNum")
+        result?.observe(viewLifecycleOwner) { newNum ->
+            viewModel.changeTokensNum(newNum)
+            logger.d("$CURRENT_TOKENS_NUMBER_RESULT_KEY navigation result is taken NEW NUMBER = $newNum")
         }
     }
 
@@ -201,7 +196,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
     }
 
     private fun onMenuItemClicked(item: MenuItem): Boolean {
-        when(item.itemId) {
+        when (item.itemId) {
             R.id.changeChipsNum -> {
                 findNavController().navigate(
                     getTokensNumberAlertNavAction(
@@ -211,6 +206,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
                     )
                 )
             }
+
             R.id.clearTokens -> viewModel.clearTokens()
             R.id.appSettings -> viewModel.onSettingsPressed()
         }
@@ -220,7 +216,9 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
 
     private fun onTokenClick(index: Int) {
         logger.d("token $index was clicked")
-        if (viewArray[index].getIsChecked()) viewModel.onTokenUnselected(index) else viewModel.onTokenSelected(index)
+        if (viewArray[index].getIsChecked()) viewModel.onTokenUnselected(index) else viewModel.onTokenSelected(
+            index
+        )
     }
 
     override fun getTokensNumberAlertNavAction(

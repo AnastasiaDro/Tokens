@@ -4,9 +4,6 @@
     <string name="settings">Настройки</string>
     <string name="changeChips">Кол-во жетонов</string>
     <string name="clearChecked">Очистить</string>
-    <string name="OK">OK</string>
-    <string name="cancel">Отмена</string>
-    <string name="change">Изменить</string>
     <string name="aboutAppTV">""</string>
     <string name="aboutAppTitle">О приложении</string>
     <string name="aboutAppText">Всем привет!\n

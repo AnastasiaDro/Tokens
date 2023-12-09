@@ -1,10 +1,8 @@
 package com.cerebus.tokens.reinforcement_photo.domain.repository
 
-interface ReinforcementRepository {
+interface PhotoRepository {
 
     fun makePhoto()
 
-    fun getPhoto()
-
-    fun takePhotoFromGallery()
+    fun getPhotoFromStorage()
 }

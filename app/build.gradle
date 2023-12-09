@@ -87,6 +87,7 @@ dependencies {
 
     //Clean layers
     implementation project(path: ':feature:tokens_feature')
+    implementation project(path: ':feature:reinforcement_photo')
     implementation project(path: ':core:logger')
 
     //Koin
