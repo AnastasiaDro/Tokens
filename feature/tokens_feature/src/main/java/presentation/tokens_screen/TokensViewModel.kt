@@ -24,6 +24,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
@@ -85,6 +87,9 @@ class TokensViewModel(
     private val soundMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val soundLiveData: LiveData<Boolean> = soundMutableLiveData
 
+    private val getIsReinforcementShowFlow = MutableStateFlow(getIsReinforcementShowUseCase.execute())
+    val isReinforcementFlow: StateFlow<Boolean> = getIsReinforcementShowFlow
+
     fun getTokensNum() = getTokensNumberUseCase.execute()
 
     fun getCheckedColor() = getCheckedColorUseCase.execute()
@@ -92,8 +97,11 @@ class TokensViewModel(
     fun getTokens(): Flow<Token> = getAllTokensUseCase.execute()
 
     fun initData() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             prefsLoadedMutableLiveData.postValue(true)
+        }
+        viewModelScope.launch {
+            getIsReinforcementShowFlow.emit(getIsReinforcementShowUseCase.execute())
         }
     }
 

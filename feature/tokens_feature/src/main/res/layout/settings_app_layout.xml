@@ -133,6 +133,27 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="end|center_vertical" />
         </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/reinforcement"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_min_height"
+            android:layout_margin="@dimen/settings_item_margin">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/SettingsText"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="start|center_vertical"
+                android:gravity="center"
+                android:text="@string/settings_sound" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/reinforcement_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical" />
+        </FrameLayout>
     </LinearLayout>
 
 

@@ -8,7 +8,7 @@ class ReinforcementStorageImpl(context: Context, loggerFactory: LoggerFactory) :
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
 
     private val prefs = context.getSharedPreferences(REINFORCEMENT_SETTINGS_PREFERENCES, Context.MODE_PRIVATE)
-    override fun isReinforcementShow() = prefs.getBoolean(REINFORCEMENT_IMAGE_SHOWING, true)
+    override fun isReinforcementShow() = prefs.getBoolean(REINFORCEMENT_IMAGE_SHOWING, false)
 
     override fun setReinforcementShow(isShow: Boolean) {
         prefs.edit().putBoolean(REINFORCEMENT_IMAGE_SHOWING, isShow).apply()

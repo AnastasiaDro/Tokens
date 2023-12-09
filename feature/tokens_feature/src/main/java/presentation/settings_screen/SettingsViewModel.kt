@@ -64,12 +64,18 @@ class SettingsViewModel(
     fun getIsAnimation() = isWinAnimationOnUseCase.execute()
     fun getIsSound() = isWinSoundOnUseCase.execute()
 
+    fun getIsReinforcement() = getIsReinforcementShowUseCase.execute()
+
     fun changeAnimation(isAnimate: Boolean) {
         plugOnOffWinAnimationUseCase.execute(isAnimate)
     }
 
     fun changeSound(isSound: Boolean) {
         plugOnOffWinSoundUseCase.execute(isSound)
+    }
+
+    fun changeReinforcement(checked: Boolean) {
+        setIsReinforcementShowUseCase.execute(checked)
     }
 
     fun askForChangeTokensColor() {
