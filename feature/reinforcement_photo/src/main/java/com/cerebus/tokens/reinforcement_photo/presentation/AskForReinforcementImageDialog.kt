@@ -34,5 +34,16 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
             logger.d("cancel photo selection")
         }
 
+        makePhotoButton.setOnClickListener {
+            //TODO
+            logger.d("ask to make a photo")
+
+        }
+
+        getFromGalleryButton.setOnClickListener {
+            //TODO
+            logger.d("ask to get a photo from gallery")
+        }
+
     }
 }
