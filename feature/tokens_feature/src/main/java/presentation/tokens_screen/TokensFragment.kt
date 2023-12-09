@@ -16,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import SelectTokensNumberAlertData
 import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import com.cerebus.tokens.core.ui.SwipeParser
 import com.cerebus.tokens.core.ui.SwipeParserImpl
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
 import com.cerebus.tokens.feature.tokens_feature.R
@@ -46,7 +47,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens), TokensNumberListener {
     private var viewArray: List<TokenView> = listOf()
 
     private var soundPlayer: MediaPlayer? = null
-    private val swipeParser: com.cerebus.tokens.core.ui.SwipeParser = SwipeParserImpl(this::class.java.simpleName)
+    private val swipeParser: SwipeParser = SwipeParserImpl(this::class.java.simpleName)
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
 
