@@ -10,7 +10,7 @@ import data.tokens.TokensRepositoryImpl
 import data.tokens.storage.TokensStorage
 import data.tokens.storage.TokensStorageImpl
 import domain.repository.EffectsRepository
-import domain.repository.ReinforcementRepository
+import domain.repository.ReinforcementSettingsRepository
 import domain.repository.TokensRepository
 import domain.usecases.effects.GetAnimationRepeatTimesUseCase
 import domain.usecases.effects.GetEffectsDurationUseCase
@@ -157,11 +157,11 @@ val tokensFeatureModule = module {
 
     /* Reinforcement settings */
     factory<GetIsReinforcementShowUseCase> {
-        GetIsReinforcementShowUseCase(reinforcementRepository = get())
+        GetIsReinforcementShowUseCase(reinforcementSettingsRepository = get())
     }
 
     factory<SetIsReinforcementShowUseCase> {
-        SetIsReinforcementShowUseCase(reinforcementRepository = get())
+        SetIsReinforcementShowUseCase(reinforcementSettingsRepository = get())
     }
 
     /** Data **/
@@ -184,7 +184,7 @@ val tokensFeatureModule = module {
     }
 
     /* Reinforcement */
-    single<ReinforcementRepository> {
+    single<ReinforcementSettingsRepository> {
         ReinforcementRepositoryImpl(reinforcementStorage = get())
     }
 

@@ -1,10 +1,9 @@
 package data.reinforcement
 
-import android.content.pm.PackageManager
 import data.reinforcement.storage.ReinforcementStorage
-import domain.repository.ReinforcementRepository
+import domain.repository.ReinforcementSettingsRepository
 
-class ReinforcementRepositoryImpl(private val reinforcementStorage: ReinforcementStorage) : ReinforcementRepository {
+class ReinforcementRepositoryImpl(private val reinforcementStorage: ReinforcementStorage) : ReinforcementSettingsRepository {
     override fun getIsReinforcementShown() = reinforcementStorage.isReinforcementShow()
 
     override fun setIsReinforcementShown(isShow: Boolean) {

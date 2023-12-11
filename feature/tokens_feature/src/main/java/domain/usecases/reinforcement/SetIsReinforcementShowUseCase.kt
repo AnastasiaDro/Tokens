@@ -1,8 +1,8 @@
 package domain.usecases.reinforcement
 
-import domain.repository.ReinforcementRepository
+import domain.repository.ReinforcementSettingsRepository
 
-class SetIsReinforcementShowUseCase(private val reinforcementRepository: ReinforcementRepository) {
+class SetIsReinforcementShowUseCase(private val reinforcementSettingsRepository: ReinforcementSettingsRepository) {
 
-    fun execute(isShown: Boolean) = reinforcementRepository.setIsReinforcementShown(isShown)
+    fun execute(isShown: Boolean) = reinforcementSettingsRepository.setIsReinforcementShown(isShown)
 }

@@ -1,6 +1,6 @@
 package domain.repository
 
-interface ReinforcementRepository {
+interface ReinforcementSettingsRepository {
 
     fun getIsReinforcementShown(): Boolean
 

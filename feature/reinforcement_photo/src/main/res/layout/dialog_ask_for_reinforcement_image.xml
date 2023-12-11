@@ -7,9 +7,9 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/reinforcement_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="24dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:padding="12dp"
         android:layout_gravity="center"
         app:srcCompat="@drawable/baseline_add_a_photo_24" />
 
