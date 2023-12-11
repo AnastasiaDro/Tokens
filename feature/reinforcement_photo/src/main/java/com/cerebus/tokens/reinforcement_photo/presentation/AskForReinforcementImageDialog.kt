@@ -1,7 +1,14 @@
 package com.cerebus.tokens.reinforcement_photo.presentation
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.View
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import by.kirich1409.viewbindingdelegate.viewBinding
@@ -22,6 +29,15 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
     private val viewModel: ChangePhotoViewModel by viewModel()
+
+    private val getFromGalleryResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        try {
+           val image: Uri? = result.data?.data
+            viewBinding.reinforcementImage.setImageURI(image)
+        } catch (e: Exception) {
+            Toast.makeText(requireActivity(), "No imageselected", Toast.LENGTH_LONG).show()
+        }
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         logger.d("dialog view created")
@@ -41,9 +57,9 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
         }
 
         getFromGalleryButton.setOnClickListener {
+            getFromGalleryResultLauncher.launch(Intent(MediaStore.ACTION_PICK_IMAGES))
             //TODO
             logger.d("ask to get a photo from gallery")
         }
-
     }
 }
