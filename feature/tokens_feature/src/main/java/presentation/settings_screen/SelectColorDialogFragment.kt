@@ -48,7 +48,7 @@ class SelectColorDialogFragment: DialogFragment() {
                         viewModel.changeTokensColor(envelope.color)
                     }
                 })
-                .setNegativeButton(R.string.cancel) { dialog, _ -> dialog.cancel() }
+                .setNegativeButton(com.cerebus.tokens.core.ui.R.string.cancel) { dialog, _ -> dialog.cancel() }
                 .attachAlphaSlideBar(false)
                 .attachBrightnessSlideBar(false)
                 .create()

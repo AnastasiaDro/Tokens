@@ -12,5 +12,7 @@
         tools:layout="@layout/dialog_ask_for_reinforcement_image">
         <action
             android:id="@+id/action_ask_for_photo_to_make_photo"/>
+        <deepLink
+            app:uri="android-app://com.cerebus.tokens.reinforcement_photo.presentation.dialog" />
     </dialog>
 </navigation>

@@ -7,11 +7,13 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDeepLinkRequest
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
@@ -57,6 +59,14 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
         subscribeToNavigationResultLiveData()
         subscribeToViewModel(viewArray)
+
+        viewBinding.reinforcementImage.setOnClickListener {
+            val request = NavDeepLinkRequest.Builder
+                .fromUri("android-app://com.cerebus.tokens.reinforcement_photo.presentation.dialog".toUri())
+                .build()
+            findNavController().navigate(request)
+        }
+
         viewModel.initData()
         view.setOnTouchListener { v, event ->
             if (swipeParser.onSwipeHorizontal(v, event)) viewModel.clearTokens()
