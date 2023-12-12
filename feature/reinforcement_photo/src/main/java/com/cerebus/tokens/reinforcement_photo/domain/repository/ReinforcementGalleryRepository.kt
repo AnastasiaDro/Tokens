@@ -1,6 +1,6 @@
 package com.cerebus.tokens.reinforcement_photo.domain.repository
 
-interface GalleryRepository {
+interface ReinforcementGalleryRepository {
 
     fun saveSelectedPhotoUri(uri: String)
 

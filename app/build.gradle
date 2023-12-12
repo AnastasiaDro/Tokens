@@ -89,6 +89,7 @@ dependencies {
     implementation project(path: ':feature:tokens_feature')
     implementation project(path: ':feature:reinforcement_photo')
     implementation project(path: ':core:logger')
+    implementation project(path: ':data:reinforcement')
 
     //Koin
     implementation "io.insert-koin:koin-core:$koin_version"

@@ -4,8 +4,8 @@ import data.effects.EffectsRepositoryImpl
 import data.effects.storage.EffectsStorage
 import data.effects.storage.EffectsStorageImpl
 import data.reinforcement.ReinforcementRepositoryImpl
-import data.reinforcement.storage.ReinforcementStorage
-import data.reinforcement.storage.ReinforcementStorageImpl
+import com.cerebus.tokens.data.reinforcement.storage.ReinforcementStorage
+import com.cerebus.tokens.data.reinforcement.storage.ReinforcementStorageImpl
 import data.tokens.TokensRepositoryImpl
 import data.tokens.storage.TokensStorage
 import data.tokens.storage.TokensStorageImpl
@@ -19,6 +19,7 @@ import domain.usecases.effects.IsWinSoundOnUseCase
 import domain.usecases.effects.PlugOnOffWinAnimationUseCase
 import domain.usecases.effects.PlugOnOffWinSoundUseCase
 import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
+import domain.usecases.reinforcement.GetReinforcementUriStringUseCase
 import domain.usecases.reinforcement.SetIsReinforcementShowUseCase
 import domain.usecases.tokens.ChangeCheckedColorUseCase
 import domain.usecases.tokens.ChangeTokensNumberUseCase
@@ -57,7 +58,8 @@ val tokensFeatureModule = module {
             getEffectsDurationUseCase = get(),
             getAnimationRepeatTimesUseCase = get(),
 
-            getIsReinforcementShowUseCase = get()
+            getIsReinforcementShowUseCase = get(),
+            getReinforcementUriStringUseCase = get()
         )
     }
 
@@ -164,6 +166,10 @@ val tokensFeatureModule = module {
         SetIsReinforcementShowUseCase(reinforcementSettingsRepository = get())
     }
 
+    factory<GetReinforcementUriStringUseCase> {
+        GetReinforcementUriStringUseCase(reinforcementSettingsRepository = get())
+    }
+
     /** Data **/
     /* Tokens */
     single<TokensStorage> {
@@ -188,7 +194,5 @@ val tokensFeatureModule = module {
         ReinforcementRepositoryImpl(reinforcementStorage = get())
     }
 
-    single<ReinforcementStorage> {
-        ReinforcementStorageImpl(context = get(), loggerFactory = get())
-    }
+
 }

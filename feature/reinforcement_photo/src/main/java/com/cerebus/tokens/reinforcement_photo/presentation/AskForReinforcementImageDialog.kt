@@ -1,6 +1,7 @@
 package com.cerebus.tokens.reinforcement_photo.presentation
 
 import android.content.Intent
+import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -14,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import by.kirich1409.viewbindingdelegate.viewBinding
+import com.cerebus.tokens.core.ui.getImageByFilePath
 import com.cerebus.tokens.logger.api.LoggerFactory
 import com.cerebus.tokens.reinforcement_photo.R
 import com.cerebus.tokens.reinforcement_photo.databinding.DialogAskForReinforcementImageBinding
@@ -35,7 +37,7 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
 
     private val getFromGalleryResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         try {
-            viewModel.savePhotoUri(result.data?.data)
+            viewModel.savePhotoUri(requireContext(), result.data?.data)
         } catch (e: Exception) {
             Toast.makeText(requireActivity(), "No image selected", Toast.LENGTH_LONG).show()
         }
@@ -84,9 +86,10 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    viewModel.photoUriStateFlow.collect {
-                        viewBinding.reinforcementImage.setImageURI(it)
+                viewModel.photoUriStateFlow.collect {
+                    it?.let {
+                        val bitmap = getImageByFilePath(it)
+                        viewBinding.reinforcementImage.setImageBitmap(bitmap)
                     }
                 }
             }

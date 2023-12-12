@@ -2,11 +2,16 @@ package presentation.tokens_screen
 
 import SelectTokensNumberAlertData
 import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -19,6 +24,7 @@ import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.SwipeParser
 import com.cerebus.tokens.core.ui.SwipeParserImpl
+import com.cerebus.tokens.core.ui.getImageByFilePath
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentTokensBinding
@@ -28,6 +34,7 @@ import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.util.jar.Manifest
 
 /**
  * [TokensFragment] - a fragment for tokens displaying
@@ -50,6 +57,19 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                // Permission is granted. Continue the action or workflow in your
+                // app.
+                goToImageSelecting()
+            } else {
+                Toast.makeText(requireActivity(), "Can't show image without permission", Toast.LENGTH_LONG).show()
+            }
+        }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -61,10 +81,17 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         subscribeToViewModel(viewArray)
 
         viewBinding.reinforcementImage.setOnClickListener {
-            val request = NavDeepLinkRequest.Builder
-                .fromUri("android-app://com.cerebus.tokens.reinforcement_photo.presentation.dialog".toUri())
-                .build()
-            findNavController().navigate(request)
+            if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+                goToImageSelecting()
+            else
+                requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+
+//           // goToImageSelecting()
+//            requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+//            val request = NavDeepLinkRequest.Builder
+//                .fromUri("android-app://com.cerebus.tokens.reinforcement_photo.presentation.dialog".toUri())
+//                .build()
+//            findNavController().navigate(request)
         }
 
         viewModel.initData()
@@ -80,6 +107,13 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         viewBinding.tokensToolbar.inflateMenu(R.menu.fragment_tokens_options_menu)
         viewBinding.tokensToolbar.setOnMenuItemClickListener { onMenuItemClicked(it) }
         logger.d("Menu is initialized")
+    }
+
+    private fun goToImageSelecting() {
+        val request = NavDeepLinkRequest.Builder
+            .fromUri("android-app://com.cerebus.tokens.reinforcement_photo.presentation.dialog".toUri())
+            .build()
+        findNavController().navigate(request)
     }
 
     private fun getTokensList() = with(viewBinding) {
@@ -170,6 +204,16 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
                 repeatOnLifecycle((Lifecycle.State.STARTED)) {
                     viewModel.isReinforcementFlow.collect { isVisible ->
                         viewBinding.reinforcementImage.isVisible = isVisible
+                    }
+                }
+            }
+            viewLifecycleOwner.lifecycleScope.launch {
+                repeatOnLifecycle((Lifecycle.State.STARTED)) {
+                    viewModel.getReinforcementImageStateFlow.collect { path ->
+                        path?.let {
+                            val bitmap = getImageByFilePath(it)
+                            viewBinding.reinforcementImage.setImageBitmap(bitmap)
+                        }
                     }
                 }
             }

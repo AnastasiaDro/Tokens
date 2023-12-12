@@ -1,5 +1,7 @@
 package presentation.tokens_screen
 
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,6 +12,7 @@ import domain.usecases.effects.GetEffectsDurationUseCase
 import domain.usecases.effects.IsWinAnimationOnUseCase
 import domain.usecases.effects.IsWinSoundOnUseCase
 import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
+import domain.usecases.reinforcement.GetReinforcementUriStringUseCase
 import domain.usecases.tokens.ChangeTokensNumberUseCase
 import domain.usecases.tokens.CheckTokenUseCase
 import domain.usecases.tokens.CheckTokensAreGrappedUseCase
@@ -58,6 +61,7 @@ class TokensViewModel(
     private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase,
 
     private val getIsReinforcementShowUseCase: GetIsReinforcementShowUseCase,
+    private val getReinforcementUriStringUseCase: GetReinforcementUriStringUseCase
     ) : ViewModel() {
 
     private var isAnimationRunning = false
@@ -90,6 +94,8 @@ class TokensViewModel(
     private val getIsReinforcementShowFlow = MutableStateFlow(getIsReinforcementShowUseCase.execute())
     val isReinforcementFlow: StateFlow<Boolean> = getIsReinforcementShowFlow
 
+    private val getReinforcementImageMutableFlow: MutableStateFlow<String?> = MutableStateFlow(getReinforcementUriStringUseCase.execute())
+    val getReinforcementImageStateFlow: StateFlow<String?> = getReinforcementImageMutableFlow
     fun getTokensNum() = getTokensNumberUseCase.execute()
 
     fun getCheckedColor() = getCheckedColorUseCase.execute()

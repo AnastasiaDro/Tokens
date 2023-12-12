@@ -15,6 +15,8 @@
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core/logger" />
             <option value="$PROJECT_DIR$/core/ui" />
+            <option value="$PROJECT_DIR$/data" />
+            <option value="$PROJECT_DIR$/data/reinforcement" />
             <option value="$PROJECT_DIR$/feature" />
             <option value="$PROJECT_DIR$/feature/reinforcement_photo" />
             <option value="$PROJECT_DIR$/feature/tokens_feature" />
