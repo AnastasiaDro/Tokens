@@ -85,13 +85,6 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
                 goToImageSelecting()
             else
                 requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-
-//           // goToImageSelecting()
-//            requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-//            val request = NavDeepLinkRequest.Builder
-//                .fromUri("android-app://com.cerebus.tokens.reinforcement_photo.presentation.dialog".toUri())
-//                .build()
-//            findNavController().navigate(request)
         }
 
         viewModel.initData()
@@ -203,7 +196,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
             viewLifecycleOwner.lifecycleScope.launch {
                 repeatOnLifecycle((Lifecycle.State.STARTED)) {
                     viewModel.isReinforcementFlow.collect { isVisible ->
-                        viewBinding.reinforcementImage.isVisible = isVisible
+                        viewBinding.reinforcementImageCardView.isVisible = isVisible
                     }
                 }
             }

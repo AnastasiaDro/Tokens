@@ -11,7 +11,7 @@
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintBottom_toTopOf="@id/second_row"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toStartOf="@+id/reinforcement_image"
+    app:layout_constraintEnd_toStartOf="@+id/reinforcement_image_card_view"
     app:layout_constraintVertical_chainStyle="packed">
 
     <presentation.tokens_screen.TokenView
