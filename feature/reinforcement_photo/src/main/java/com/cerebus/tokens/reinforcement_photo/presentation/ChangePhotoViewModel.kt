@@ -1,7 +1,9 @@
 package com.cerebus.tokens.reinforcement_photo.presentation
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cerebus.tokens.core.ui.getRealPathFromURI
@@ -20,7 +22,7 @@ class ChangePhotoViewModel(
     private val mutableChangePhotoSharedFlow = MutableSharedFlow<ChangingPhoto>()
     val changePhotoSharedFlow: SharedFlow<ChangingPhoto> = mutableChangePhotoSharedFlow
 
-    private val placePhotoStateFlow = MutableStateFlow<String?>(getSelectedPhotoPathUseCase.execute())
+    private val placePhotoStateFlow = MutableStateFlow<Uri?>(getSelectedPhotoPathUseCase.execute()?.toUri())
     val photoUriStateFlow = placePhotoStateFlow
     fun askPhotoFromCamera() = viewModelScope.launch {
         mutableChangePhotoSharedFlow.emit(ChangingPhoto.GET_FROM_CAMERA)
@@ -32,10 +34,10 @@ class ChangePhotoViewModel(
 
     fun savePhotoUri(context: Context, uri: Uri?) {
         uri?.let {
-            getRealPathFromURI(context, uri)?.let {
-                saveSelectedPhotoPathUseCase.execute(it)
-            }
-            viewModelScope.launch { placePhotoStateFlow.emit(getSelectedPhotoPathUseCase.execute()) }
+            val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            context.contentResolver.takePersistableUriPermission(uri, flag)
+            saveSelectedPhotoPathUseCase.execute(it.toString())
+            viewModelScope.launch { placePhotoStateFlow.emit(getSelectedPhotoPathUseCase.execute()?.toUri()) }
         }
     }
 }

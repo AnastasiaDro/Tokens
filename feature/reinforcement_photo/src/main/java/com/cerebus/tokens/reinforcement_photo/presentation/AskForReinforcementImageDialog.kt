@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
@@ -35,9 +36,11 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
     private val viewModel: ChangePhotoViewModel by viewModel()
 
-    private val getFromGalleryResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val getFromGalleryResultLauncher = registerForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { result ->
         try {
-            viewModel.savePhotoUri(requireContext(), result.data?.data)
+            viewModel.savePhotoUri(requireContext(), result)
         } catch (e: Exception) {
             Toast.makeText(requireActivity(), "No image selected", Toast.LENGTH_LONG).show()
         }
@@ -66,11 +69,7 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
     }
 
     private fun openGallery() {
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            Intent(MediaStore.ACTION_PICK_IMAGES)
-        else
-            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        getFromGalleryResultLauncher.launch(intent)
+        getFromGalleryResultLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
     private fun subscribeToViewModel() {
@@ -88,8 +87,7 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.photoUriStateFlow.collect {
                     it?.let {
-                        val bitmap = getImageByFilePath(it)
-                        viewBinding.reinforcementImage.setImageBitmap(bitmap)
+                        viewBinding.reinforcementImage.setImageURI(it)
                     }
                 }
             }

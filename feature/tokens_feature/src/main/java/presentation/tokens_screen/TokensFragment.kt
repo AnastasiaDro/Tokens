@@ -209,10 +209,9 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
             }
             viewLifecycleOwner.lifecycleScope.launch {
                 repeatOnLifecycle((Lifecycle.State.STARTED)) {
-                    viewModel.getReinforcementImageStateFlow.collect { path ->
-                        path?.let {
-                            val bitmap = getImageByFilePath(it)
-                            viewBinding.reinforcementImage.setImageBitmap(bitmap)
+                    viewModel.getReinforcementImageStateFlow.collect { uri ->
+                       uri?.let {
+                            viewBinding.reinforcementImage.setImageURI(uri)
                         }
                     }
                 }

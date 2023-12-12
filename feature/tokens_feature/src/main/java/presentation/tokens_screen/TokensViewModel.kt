@@ -94,8 +94,8 @@ class TokensViewModel(
     private val getIsReinforcementShowFlow = MutableStateFlow(getIsReinforcementShowUseCase.execute())
     val isReinforcementFlow: StateFlow<Boolean> = getIsReinforcementShowFlow
 
-    private val getReinforcementImageMutableFlow: MutableStateFlow<String?> = MutableStateFlow(getReinforcementUriStringUseCase.execute())
-    val getReinforcementImageStateFlow: StateFlow<String?> = getReinforcementImageMutableFlow
+    private val getReinforcementImageMutableFlow: MutableStateFlow<Uri?> = MutableStateFlow(getReinforcementUriStringUseCase.execute()?.toUri())
+    val getReinforcementImageStateFlow: StateFlow<Uri?> = getReinforcementImageMutableFlow
     fun getTokensNum() = getTokensNumberUseCase.execute()
 
     fun getCheckedColor() = getCheckedColorUseCase.execute()
