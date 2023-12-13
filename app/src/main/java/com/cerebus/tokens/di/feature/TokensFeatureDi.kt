@@ -42,7 +42,6 @@ val tokensFeatureModule = module {
     /** presentation **/
     viewModel<TokensViewModel> {
         TokensViewModel(
-            getCheckedColorUseCase = get(),
             changeTokensNumberUseCase = get(),
             clearAllTokensUseCase = get(),
             checkTokenUseCase = get(),

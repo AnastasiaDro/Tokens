@@ -23,7 +23,6 @@ import domain.usecases.tokens.GetMaxTokensNumberUseCase
 import domain.usecases.tokens.GetMinTokensNumberUseCase
 import domain.usecases.tokens.GetTokensNumberUseCase
 import domain.usecases.tokens.UncheckTokenUseCase
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,7 +43,6 @@ import kotlinx.coroutines.launch
  * @since 28.04.2023
  */
 class TokensViewModel(
-    private val getCheckedColorUseCase: GetCheckedColorUseCase,
     private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
     private val clearAllTokensUseCase: ClearAllTokensUseCase,
     private val checkTokenUseCase: CheckTokenUseCase,
@@ -98,8 +96,6 @@ class TokensViewModel(
     val getReinforcementImageStateFlow: StateFlow<Uri?> = getReinforcementImageMutableFlow
     fun getTokensNum() = getTokensNumberUseCase.execute()
 
-    fun getCheckedColor() = getCheckedColorUseCase.execute()
-
     fun getTokens(): Flow<Token> = getAllTokensUseCase.execute()
 
     fun initData() {
@@ -109,12 +105,22 @@ class TokensViewModel(
         viewModelScope.launch {
             getIsReinforcementShowFlow.emit(getIsReinforcementShowUseCase.execute())
         }
+        viewModelScope.launch {
+            getReinforcementImageMutableFlow.emit(getReinforcementUriStringUseCase.execute()?.toUri())
+        }
     }
 
     fun changeTokensNum(newNum: Int) {
         changeTokensNumberUseCase.execute(newNum)
         changedTokensNumMutableLiveData.postValue(true)
     }
+
+    fun askReinforcementImage() {
+        viewModelScope.launch {
+            getReinforcementImageMutableFlow.emit(getReinforcementUriStringUseCase.execute()?.toUri())
+        }
+    }
+
 
     fun clearTokens() {
         clearAllTokensUseCase.execute()

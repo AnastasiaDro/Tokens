@@ -2,7 +2,6 @@ package presentation.tokens_screen
 
 import SelectTokensNumberAlertData
 import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -24,7 +23,6 @@ import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.SwipeParser
 import com.cerebus.tokens.core.ui.SwipeParserImpl
-import com.cerebus.tokens.core.ui.getImageByFilePath
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentTokensBinding
@@ -34,7 +32,6 @@ import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.jar.Manifest
 
 /**
  * [TokensFragment] - a fragment for tokens displaying
@@ -57,18 +54,16 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
 
-    private val requestPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                // Permission is granted. Continue the action or workflow in your
-                // app.
-                goToImageSelecting()
-            } else {
-                Toast.makeText(requireActivity(), "Can't show image without permission", Toast.LENGTH_LONG).show()
-            }
-        }
+//    private val requestPermissionLauncher =
+//        registerForActivityResult(
+//            ActivityResultContracts.RequestPermission()
+//        ) { isGranted: Boolean ->
+//            if (isGranted) {
+//                goToImageSelecting()
+//            } else {
+//                Toast.makeText(requireActivity(), "Can't show image without permission", Toast.LENGTH_LONG).show()
+//            }
+//        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -80,11 +75,12 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         subscribeToNavigationResultLiveData()
         subscribeToViewModel(viewArray)
 
-        viewBinding.reinforcementImage.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-                goToImageSelecting()
-            else
-                requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        viewBinding.reinforcementImageCardView.setOnClickListener {
+            goToImageSelecting()
+//            if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+//                goToImageSelecting()
+//            else
+//                requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
         }
 
         viewModel.initData()
@@ -164,6 +160,10 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
             viewModel.changeTokensNum(newNum)
             logger.d("$CURRENT_TOKENS_NUMBER_RESULT_KEY navigation result is taken NEW NUMBER = $newNum")
         }
+        val imageResult = getNavigationResultLiveData<Boolean>(IS_IMAGE_SET_RESULT)
+        imageResult?.observe(viewLifecycleOwner) { res ->
+            if (res) viewModel.askReinforcementImage()
+        }
     }
 
     private fun subscribeToViewModel(viewList: List<TokenView>) {
@@ -197,7 +197,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
             viewLifecycleOwner.lifecycleScope.launch {
                 repeatOnLifecycle((Lifecycle.State.STARTED)) {
                     viewModel.getReinforcementImageStateFlow.collect { uri ->
-                       uri?.let {
+                        uri?.let {
                             viewBinding.reinforcementImage.setImageURI(uri)
                         }
                     }
@@ -274,5 +274,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     companion object {
         const val ANIMATION_FIRST_DELAY = 500L
         const val ANIMATION_SECOND_DELAY = 300L
+
+        const val IS_IMAGE_SET_RESULT = "ImageUri"
     }
 }

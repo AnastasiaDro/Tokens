@@ -43,8 +43,8 @@
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/reinforcement_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:scaleType="centerCrop"
             app:srcCompat="@drawable/baseline_add_a_photo_24" />
     </androidx.cardview.widget.CardView>

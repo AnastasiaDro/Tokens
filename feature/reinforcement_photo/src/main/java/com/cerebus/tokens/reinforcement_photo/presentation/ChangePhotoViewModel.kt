@@ -36,12 +36,20 @@ class ChangePhotoViewModel(
         uri?.let {
             val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, flag)
-            saveSelectedPhotoPathUseCase.execute(it.toString())
-            viewModelScope.launch {
-                placePhotoStateFlow.emit(
-                    getSelectedPhotoPathUseCase.execute()?.toUri()
-                )
-            }
+            saveUriToStorage(uri)
+        }
+    }
+
+    fun saveUriCamera(uri: Uri?) {
+        if (uri != null) saveUriToStorage(uri)
+    }
+
+    private fun saveUriToStorage(uri: Uri) {
+        saveSelectedPhotoPathUseCase.execute(uri.toString())
+        viewModelScope.launch {
+            placePhotoStateFlow.emit(
+                getSelectedPhotoPathUseCase.execute()?.toUri()
+            )
         }
     }
 }
