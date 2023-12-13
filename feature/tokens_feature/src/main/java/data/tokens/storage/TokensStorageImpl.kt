@@ -33,7 +33,7 @@ class TokensStorageImpl(context: Context, loggerFactory: LoggerFactory) : Tokens
     }
 
     override fun getCheckedTokensColor(): Int {
-        val color = prefs.getInt(CHECKED_TOKENS_COLOR, 0)
+        val color = prefs.getInt(CHECKED_TOKENS_COLOR, -12517557)
         logger.d("get checkedTokensColor = $color")
         return color
     }

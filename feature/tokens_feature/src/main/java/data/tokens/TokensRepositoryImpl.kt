@@ -21,8 +21,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     override fun getTokenById(id: Int) = tokensList[id]
     override fun createTokens(number: Int) {
         for (i in 0 until number)
-            tokensList += Token(false)
-
+            tokensList += Token(false, getCheckedColor())
     }
 
     override fun removeTokens(number: Int) {
@@ -51,6 +50,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
 
     override fun changeCheckedColor(color: Int) {
         tokensStorage.saveCheckedTokensColor(color)
+        tokensList.forEach { it.checkedColor = color }
     }
 
     override fun uncheckAllTokens(): Boolean {

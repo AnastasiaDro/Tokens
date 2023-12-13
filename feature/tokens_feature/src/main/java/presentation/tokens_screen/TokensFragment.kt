@@ -130,11 +130,8 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
             var i = 0
             viewModel.getTokens().collectIndexed { index, token ->
                 viewList[index].visibility = View.VISIBLE
+                viewList[index].setCheckedColor(token.checkedColor)
                 if (token.isChecked) {
-                    val color = viewModel.getCheckedColor()
-                    if (color != viewList[index].getCheckedColor()) {
-                        viewList[index].setCheckedColor(color)
-                    }
                     viewList[index].setChecked()
                 } else
                     viewList[index].setUnchecked()
@@ -151,11 +148,8 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     private fun refreshTokens(viewList: List<TokenView>) {
         lifecycleScope.launch {
             viewModel.getTokens().collectIndexed { index, token ->
+                viewList[index].setCheckedColor(token.checkedColor)
                 if (token.isChecked) {
-                    val color = viewModel.getCheckedColor()
-                    if (color != viewList[index].getCheckedColor()) {
-                        viewList[index].setCheckedColor(color)
-                    }
                     viewList[index].setChecked()
                 } else
                     viewList[index].setUnchecked()
