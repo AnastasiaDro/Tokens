@@ -103,7 +103,6 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        currentPhotoUri = getPhotoFile()
         initButtons()
         subscribeToViewModel()
     }
@@ -137,6 +136,7 @@ class AskForReinforcementImageDialog: DialogFragment(R.layout.dialog_ask_for_rei
     }
 
     private fun openCamera() {
+        currentPhotoUri = getPhotoFile()
         getFromCameraResultLauncher.launch(currentPhotoUri)
     }
 
