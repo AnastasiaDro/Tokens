@@ -31,14 +31,13 @@
         </activity>
 
         <provider
-            android:authorities="com.cerebus.tokens.fileProvider"
             android:name="androidx.core.content.FileProvider"
+            android:authorities="com.cerebus.tokens.provider"
             android:exported="false"
             android:grantUriPermissions="true">
-
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"/>
+                android:resource="@xml/file_paths" />
         </provider>
     </application>
 
