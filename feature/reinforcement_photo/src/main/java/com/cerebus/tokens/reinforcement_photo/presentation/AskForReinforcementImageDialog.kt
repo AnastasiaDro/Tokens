@@ -20,6 +20,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import by.kirich1409.viewbindingdelegate.viewBinding
+import com.cerebus.tokens.core.ui.PermissionsManager.isPermissionGranted
 import com.cerebus.tokens.core.ui.setNavigationResult
 import com.cerebus.tokens.logger.api.LoggerFactory
 import com.cerebus.tokens.reinforcement_photo.R
@@ -59,6 +60,27 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
             Toast.makeText(requireActivity(), "No image selected", Toast.LENGTH_LONG).show()
         }
     }
+
+    private val requestWriteStoragePermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) {
+            isGranted: Boolean ->
+            if (!isGranted) {
+                Toast.makeText(requireActivity(), "Can't open camera without permission", Toast.LENGTH_LONG).show()
+                dismiss()
+            } else {
+                if (ContextCompat.checkSelfPermission(
+                        requireContext(),
+                        android.Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                )
+                    viewModel.askPhotoFromCamera()
+                else
+                    requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                logger.d("ask to make a photo")
+            }
+        }
 
     private val requestGalleryPermissionLauncher =
         registerForActivityResult(
@@ -122,15 +144,27 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         }
         makePhotoButton.setOnClickListener {
 
-            if (ContextCompat.checkSelfPermission(
-                    requireContext(),
-                    android.Manifest.permission.CAMERA
-                ) == PackageManager.PERMISSION_GRANTED
-            )
-                viewModel.askPhotoFromCamera()
-            else
-                requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
-            logger.d("ask to make a photo")
+//            if (ContextCompat.checkSelfPermission(
+//                    requireContext(),
+//                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+//                ) == PackageManager.PERMISSION_GRANTED
+//            )
+            if (isPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                if (ContextCompat.checkSelfPermission(
+                        requireContext(),
+                        android.Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                )
+                    viewModel.askPhotoFromCamera()
+                else
+                    requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                logger.d("ask to make a photo")
+            } else {
+                requestWriteStoragePermissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+
+
+
         }
 
         getFromGalleryButton.setOnClickListener {
