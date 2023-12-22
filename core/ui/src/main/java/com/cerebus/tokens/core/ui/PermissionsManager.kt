@@ -1,5 +1,6 @@
 package com.cerebus.tokens.core.ui
 
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -12,6 +13,6 @@ object PermissionsManager {
             if (isGranted) successAction.invoke() else unsuccessAction.invoke()
         }
 
-    fun Fragment.isPermissionGranted(permission: String) =
-        ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_GRANTED
+    fun isPermissionGranted(context: Context, permission: String) =
+        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 }
