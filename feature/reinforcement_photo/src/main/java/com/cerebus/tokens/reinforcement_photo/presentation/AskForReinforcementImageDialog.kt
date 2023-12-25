@@ -1,20 +1,12 @@
 package com.cerebus.tokens.reinforcement_photo.presentation
 
-import android.content.ContentValues
-import android.content.pm.PackageManager
-import android.media.MediaScannerConnection
-import android.net.Uri
-import android.os.Build
+import android.Manifest.permission.CAMERA
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -29,9 +21,6 @@ import com.cerebus.tokens.reinforcement_photo.databinding.DialogAskForReinforcem
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * [AskForReinforcementImageDialog] - a dialog for selecting a new image of the reinforcement
@@ -45,8 +34,6 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
     private val viewModel: ChangePhotoViewModel by viewModel()
-
-    private var currentPhotoUri: Uri? = null
 
     private val getFromGalleryResultLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -70,10 +57,11 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
                 showToast("Can't open camera without permission")
                 dismiss()
             } else {
-                if (isPermissionGranted(requireContext(), android.Manifest.permission.CAMERA))
-                    viewModel.askPhotoFromCamera()
-                else
-                    requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                viewModel.askToMakePhoto(requireContext())
+//                if (isPermissionGranted(requireContext(), android.Manifest.permission.CAMERA))
+//                    viewModel.askPhotoFromCamera()
+//                else
+//                    requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                 logger.d("ask to make a photo")
             }
         }
@@ -93,7 +81,7 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            viewModel.askPhotoFromCamera()
+            viewModel.askToMakePhoto(requireContext())
         } else {
             showToast("Can't open a camera without permission")
         }
@@ -104,12 +92,12 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
     ) { success ->
         try {
             if (success) {
-                viewModel.saveUriCamera(currentPhotoUri)
-                galleryAddPic()
+                viewModel.saveUriCamera()
+                viewModel.galleryAddPic(requireContext())
                 setNavigationResult(true, IS_IMAGE_SET_RESULT)
                 dismiss()
             } else {
-                currentPhotoUri?.let { removeFromGallery(it) }
+                viewModel.removeFromGallery(requireContext())
             }
         } catch (e: Exception) {
             setNavigationResult(false, IS_IMAGE_SET_RESULT)
@@ -131,15 +119,7 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
             logger.d("cancel photo selection")
         }
         makePhotoButton.setOnClickListener {
-            if (isPermissionGranted(requireContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                if(isPermissionGranted(requireContext(), android.Manifest.permission.CAMERA))
-                    viewModel.askPhotoFromCamera()
-                else
-                    requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
-                logger.d("ask to make a photo")
-            } else {
-                requestWriteStoragePermissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            }
+            viewModel.askToMakePhoto(requireContext())
         }
 
         getFromGalleryButton.setOnClickListener {
@@ -156,42 +136,14 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
     }
 
     private fun openCamera() {
-        getPhotoFile()
-        getFromCameraResultLauncher.launch(currentPhotoUri)
+        viewModel.getPhotoFile(requireContext())
+        getFromCameraResultLauncher.launch(viewModel.getUri())
     }
 
 
     /** Обновление галереи, чтобы отобразить новое изображение **/
-    private fun galleryAddPic() {
 
-        println("Настя 2 SDK >= 10")
-        currentPhotoUri?.let { mediaScanUri ->
-            MediaScannerConnection.scanFile(
-                requireContext().applicationContext,
-                arrayOf(mediaScanUri.path),
-                null
-            ) { _, uri ->
-                Log.i("Scanner", "Scanned $uri")
-            }
-        }
-    }
 
-    private fun getPhotoFile() {
-        // Создаем файл для сохранения изображения
-
-        val timeStamp: String =
-            SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-
-        val uniqueFileName = "JPEG_${timeStamp}_"
-
-        val values = ContentValues()
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, uniqueFileName)
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-        currentPhotoUri = requireContext().contentResolver.insert(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            values
-        )!!
-    }
 
     private fun subscribeToViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -214,10 +166,18 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
                 }
             }
         }
-    }
 
-    private fun removeFromGallery(uri: Uri) {
-        requireContext().contentResolver.delete(uri, null, null)
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.permissionSharedFlow.collect { permissionType ->
+                    when(permissionType) {
+                        PermissionsEnum.WRITE_STORAGE_PERMISSION ->  requestWriteStoragePermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
+                        PermissionsEnum.CAMERA_PERMISSION -> requestCameraPermissionLauncher.launch(CAMERA)
+                        else -> { }//TODO
+                    }
+                }
+            }
+        }
     }
 
     companion object {
