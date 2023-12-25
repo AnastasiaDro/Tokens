@@ -30,6 +30,7 @@
     <string name="settings_animation">Win animation</string>
     <string name="settings_sound">Win sound</string>
 
+    <string name="reinforcement_image">Reinforcement image</string>
     <!-- Dialog -->
     <string name="select_color">Select a color</string>
 </resources>

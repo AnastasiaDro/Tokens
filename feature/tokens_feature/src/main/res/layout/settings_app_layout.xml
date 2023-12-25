@@ -146,7 +146,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="start|center_vertical"
                 android:gravity="center"
-                android:text="@string/settings_sound" />
+                android:text="@string/reinforcement_image" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/reinforcement_switch"

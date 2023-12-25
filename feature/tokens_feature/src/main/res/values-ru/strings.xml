@@ -28,6 +28,8 @@
     <string name="settings_tokens_color">Цвет жетонов</string>
     <string name="select_button_text">Выбрать</string>
 
+    <string name="reinforcement_image">Фото поощрения</string>
+
     <!-- Dialog -->
     <string name="select_color">Выберите цвет</string>
 </resources>
