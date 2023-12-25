@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.setNavigationResult
 import com.cerebus.tokens.core.ui.showToast
+import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.logger.api.LoggerFactory
 import com.cerebus.tokens.reinforcement_photo.R
 import com.cerebus.tokens.reinforcement_photo.databinding.DialogAskForReinforcementImageBinding
@@ -79,10 +80,11 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         }
         makePhotoButton.setOnClickListener {
             viewModel.makePhoto(requireContext())
+            logger.d("ask to make a photo")
         }
         getFromGalleryButton.setOnClickListener {
             viewModel.getFromGallery(requireContext())
-            logger.d("ask to get a photo from gallery")
+            logger.d("ask to get an image from gallery")
         }
     }
 
@@ -95,54 +97,36 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
     }
 
     private fun subscribeToViewModel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.changePhotoSharedFlow.collect {
-                    when (it) {
-                        ChangingPhoto.GET_FROM_CAMERA -> openCamera()
-                        ChangingPhoto.GET_FROM_GALLERY -> openGallery()
-                    }
-                }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.photoUriStateFlow.collect {
-                    it?.let {
-                        viewBinding.reinforcementImage.setImageURI(null)
-                        viewBinding.reinforcementImage.setImageURI(it)
-                    }
-                }
+
+        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.openSourceSharedFlow) { source ->
+            when (source) {
+                ImageSource.CAMERA -> openCamera()
+                ImageSource.GALLERY -> openGallery()
             }
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.permissionSharedFlow.collect { permissionType ->
-                    when(permissionType) {
-                        PermissionsEnum.WRITE_STORAGE_PERMISSION ->  requestWriteStoragePermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
-                        PermissionsEnum.CAMERA_PERMISSION -> requestCameraPermissionLauncher.launch(CAMERA)
-                        PermissionsEnum.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
-                    }
-                }
+        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.photoUriStateFlow) { imageUri ->
+            imageUri?.let {
+                viewBinding.reinforcementImage.setImageURI(null)
+                viewBinding.reinforcementImage.setImageURI(imageUri)
             }
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.messageSharedFlow.collect { message ->
-                    showToast(message)
-                }
+        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.permissionSharedFlow) { permissionType ->
+            when(permissionType) {
+                PermissionsEnum.WRITE_STORAGE_PERMISSION ->  requestWriteStoragePermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
+                PermissionsEnum.CAMERA_PERMISSION -> requestCameraPermissionLauncher.launch(CAMERA)
+                PermissionsEnum.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
             }
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle((Lifecycle.State.CREATED)) {
-                viewModel.navResultSharedFlow.collect { navResult ->
-                    setNavigationResult(navResult, IS_IMAGE_SET_RESULT)
-                    if (navResult) dismiss()
-                }
-            }
+        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.messageSharedFlow) { message ->
+            showToast(message)
+        }
+
+        subscribeToHotFlow(Lifecycle.State.CREATED, viewModel.navResultSharedFlow) { navResult ->
+            setNavigationResult(navResult, IS_IMAGE_SET_RESULT)
+            if (navResult) dismiss()
         }
     }
 

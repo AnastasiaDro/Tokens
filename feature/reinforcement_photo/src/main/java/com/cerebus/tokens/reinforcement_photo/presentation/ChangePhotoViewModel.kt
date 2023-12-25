@@ -19,6 +19,7 @@ import com.cerebus.tokens.reinforcement_photo.domain.usecases.SaveSelectedPhotoP
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,8 +33,8 @@ class ChangePhotoViewModel(
     private var currentPhotoUri: Uri? = null
     fun getUri() = currentPhotoUri
 
-    private val mutableChangePhotoSharedFlow = MutableSharedFlow<ChangingPhoto>()
-    val changePhotoSharedFlow: SharedFlow<ChangingPhoto> = mutableChangePhotoSharedFlow
+    private val mutableOpenSourceSharedFlow = MutableSharedFlow<ImageSource>()
+    val openSourceSharedFlow: SharedFlow<ImageSource> = mutableOpenSourceSharedFlow
 
     private val permissionMutableSharedFlow = MutableSharedFlow<PermissionsEnum>()
     val permissionSharedFlow: SharedFlow<PermissionsEnum> = permissionMutableSharedFlow
@@ -58,7 +59,7 @@ class ChangePhotoViewModel(
         } else {
             if (isPermissionGranted(context, CAMERA)) {
                 getPhotoFile(context)
-                getPhotoFromCamera()
+                openCamera()
             }
             else
                 viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.CAMERA_PERMISSION) }
@@ -71,7 +72,7 @@ class ChangePhotoViewModel(
 
     private fun askToGetFromGallery(context: Context) {
         if (isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE))
-            getPhotoFromGallery()
+            openGallery()
         else
             viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.READ_STORAGE_PERMISSION) }
     }
@@ -88,12 +89,12 @@ class ChangePhotoViewModel(
         }
     }
 
-    private fun getPhotoFromCamera() = viewModelScope.launch {
-        mutableChangePhotoSharedFlow.emit(ChangingPhoto.GET_FROM_CAMERA)
+    private fun openCamera() = viewModelScope.launch {
+        mutableOpenSourceSharedFlow.emit(ImageSource.CAMERA)
     }
 
-    private fun getPhotoFromGallery() = viewModelScope.launch {
-        mutableChangePhotoSharedFlow.emit(ChangingPhoto.GET_FROM_GALLERY)
+    private fun openGallery() = viewModelScope.launch {
+        mutableOpenSourceSharedFlow.emit(ImageSource.GALLERY)
     }
 
     private fun savePhotoUri(context: Context, uri: Uri?) {

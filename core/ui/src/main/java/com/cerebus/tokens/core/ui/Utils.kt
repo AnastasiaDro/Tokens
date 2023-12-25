@@ -1,36 +1,12 @@
 package com.cerebus.tokens.core.ui
 
-import android.content.Context
-import android.database.Cursor
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
-import android.provider.MediaStore
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import java.io.File
-import java.time.Duration
-
-
-fun getRealPathFromURI(context: Context, uri: Uri): String? {
-    val cursor: Cursor? = context.contentResolver.query(uri, null, null, null, null)
-
-    val path = if (cursor != null) {
-        cursor.moveToFirst()
-        val idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA)
-        cursor.getString(idx)
-    } else null
-    cursor?.close()
-    return (path)
-}
-
-fun getImageByFilePath(path: String): Bitmap? {
-    val file = File(path)
-    return if (file.exists())
-        BitmapFactory.decodeFile(file.absolutePath)
-    else null
-}
-
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.launch
 
 fun Fragment.showToast(message: String, duration: ToastDuration = ToastDuration.LONG) {
     Toast.makeText(requireActivity(), message, duration.value).show()
@@ -39,6 +15,16 @@ fun Fragment.showToast(message: String, duration: ToastDuration = ToastDuration.
 enum class ToastDuration(val value: Int) {
     SHORT(Toast.LENGTH_SHORT),
     LONG(Toast.LENGTH_LONG)
+}
+
+fun <T> Fragment.subscribeToHotFlow(lifecycleState: Lifecycle.State, observable: SharedFlow<T>, action: (data: T) -> Unit) {
+    viewLifecycleOwner.lifecycleScope.launch {
+        repeatOnLifecycle(lifecycleState) {
+            observable.collect { data ->
+                action.invoke(data)
+            }
+        }
+    }
 }
 
 
