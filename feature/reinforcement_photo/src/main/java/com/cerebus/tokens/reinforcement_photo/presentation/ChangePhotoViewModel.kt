@@ -19,12 +19,22 @@ import com.cerebus.tokens.reinforcement_photo.domain.usecases.SaveSelectedPhotoP
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * [ChangePhotoViewModel] - a viewModel class for [AskForReinforcementImageDialog]
+ *
+ * Parses the cases of opening a camera or a gallery for
+ * new reinforcement image selecting
+ *
+ * @see AskForReinforcementImageDialog
+ *
+ * @author Anastasia Drogunova
+ * @since 25.12.2023
+ */
 class ChangePhotoViewModel(
     private val getSelectedPhotoPathUseCase: GetSelectedPhotoPathUseCase,
     private val saveSelectedPhotoPathUseCase: SaveSelectedPhotoPathUseCase
@@ -36,8 +46,8 @@ class ChangePhotoViewModel(
     private val mutableOpenSourceSharedFlow = MutableSharedFlow<ImageSource>()
     val openSourceSharedFlow: SharedFlow<ImageSource> = mutableOpenSourceSharedFlow
 
-    private val permissionMutableSharedFlow = MutableSharedFlow<PermissionsEnum>()
-    val permissionSharedFlow: SharedFlow<PermissionsEnum> = permissionMutableSharedFlow
+    private val permissionMutableSharedFlow = MutableSharedFlow<PermissionType>()
+    val permissionSharedFlow: SharedFlow<PermissionType> = permissionMutableSharedFlow
 
     private val placePhotoStateFlow =
         MutableStateFlow(getSelectedPhotoPathUseCase.execute()?.toUri())
@@ -55,14 +65,14 @@ class ChangePhotoViewModel(
 
     private fun askToMakePhoto(context: Context) {
         if (!isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)) {
-            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.WRITE_STORAGE_PERMISSION) }
+            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.WRITE_STORAGE_PERMISSION) }
         } else {
             if (isPermissionGranted(context, CAMERA)) {
                 getPhotoFile(context)
                 openCamera()
             }
             else
-                viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.CAMERA_PERMISSION) }
+                viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.CAMERA_PERMISSION) }
         }
     }
 
@@ -74,15 +84,15 @@ class ChangePhotoViewModel(
         if (isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE))
             openGallery()
         else
-            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.READ_STORAGE_PERMISSION) }
+            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.READ_STORAGE_PERMISSION) }
     }
 
-    fun onPermission(permissionType: PermissionsEnum, isGranted: Boolean, context: Context) {
+    fun onPermissionResultReceive(permissionType: PermissionType, isGranted: Boolean, context: Context) {
         if (isGranted) {
             when (permissionType) {
-                PermissionsEnum.WRITE_STORAGE_PERMISSION -> askToMakePhoto(context)
-                PermissionsEnum.CAMERA_PERMISSION -> askToMakePhoto(context)
-                PermissionsEnum.READ_STORAGE_PERMISSION -> askToGetFromGallery(context)
+                PermissionType.WRITE_STORAGE_PERMISSION -> askToMakePhoto(context)
+                PermissionType.CAMERA_PERMISSION -> askToMakePhoto(context)
+                PermissionType.READ_STORAGE_PERMISSION -> askToGetFromGallery(context)
             }
         } else {
             showMessage(permissionType.errorMessage)
@@ -117,7 +127,8 @@ class ChangePhotoViewModel(
         currentPhotoUri?.let { saveUriToStorage(it) }
     }
 
-    private fun removeFromGallery(context: Context) {
+
+    private fun removeJunkFileFromGallery(context: Context) {
         currentPhotoUri?.let { context.contentResolver.delete(it, null, null) }
     }
 
@@ -127,7 +138,7 @@ class ChangePhotoViewModel(
                 saveUriCamera()
                 galleryAddPic(context)
             } else {
-                removeFromGallery(context)
+                removeJunkFileFromGallery(context)
             }
             viewModelScope.launch {
                 setNavResultSharedFlow.emit(success)
@@ -175,8 +186,12 @@ class ChangePhotoViewModel(
         )
     }
 
-    private fun saveUriToStorage(uri: Uri) {
-        saveSelectedPhotoPathUseCase.execute(uri.toString())
+    /**
+     * @param imageUri - an uri of the new reinforcement image
+     * which could be taken from the camera or gallery
+     **/
+    private fun saveUriToStorage(imageUri: Uri) {
+        saveSelectedPhotoPathUseCase.execute(imageUri.toString())
         viewModelScope.launch {
             placePhotoStateFlow.emit(
                 getSelectedPhotoPathUseCase.execute()?.toUri()
