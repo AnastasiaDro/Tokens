@@ -1,6 +1,5 @@
 package com.cerebus.tokens.reinforcement_photo.presentation
 
-import android.Manifest
 import android.Manifest.permission.CAMERA
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.ContentValues
@@ -8,14 +7,13 @@ import android.content.Context
 import android.content.Intent
 import android.media.MediaScannerConnection
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cerebus.tokens.core.ui.PermissionsManager
 import com.cerebus.tokens.core.ui.PermissionsManager.isPermissionGranted
-import com.cerebus.tokens.core.ui.showToast
 import com.cerebus.tokens.reinforcement_photo.domain.usecases.GetSelectedPhotoPathUseCase
 import com.cerebus.tokens.reinforcement_photo.domain.usecases.SaveSelectedPhotoPathUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -46,36 +44,53 @@ class ChangePhotoViewModel(
     val permissionSharedFlow: SharedFlow<PermissionsEnum> = permissionMutableSharedFlow
 
     fun askToMakePhoto(context: Context) {
-        //проверить пермишн
         if (!isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)) {
             viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.WRITE_STORAGE_PERMISSION) }
         } else {
             if (isPermissionGranted(context, CAMERA))
-                askPhotoFromCamera()
+                getPhotoFromCamera()
             else
                 viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.CAMERA_PERMISSION) }
         }
+    }
 
-        //если нет - запросить
-        //если есть - идти по флоу пермишена
+    fun askToGetFromGallery(context: Context) {
+        if (isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            println("Настя askToGetFromGallery GRANTED")
+            getPhotoFromGallery()
+        }
+
+        else {
+            println("Настя askToGetFromGallery NOT GRANTED")
+            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.READ_STORAGE_PERMISSION) }
+        }
+
     }
 
 
     private val placePhotoStateFlow =
         MutableStateFlow<Uri?>(getSelectedPhotoPathUseCase.execute()?.toUri())
     val photoUriStateFlow = placePhotoStateFlow
-    fun askPhotoFromCamera() = viewModelScope.launch {
+    private fun getPhotoFromCamera() = viewModelScope.launch {
         mutableChangePhotoSharedFlow.emit(ChangingPhoto.GET_FROM_CAMERA)
     }
 
-    fun askPhotoFromGallery() = viewModelScope.launch {
+    private fun getPhotoFromGallery() = viewModelScope.launch {
         mutableChangePhotoSharedFlow.emit(ChangingPhoto.GET_FROM_GALLERY)
     }
 
     fun savePhotoUri(context: Context, uri: Uri?) {
         uri?.let {
-            val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(uri, flag)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(uri, flag)
+            } else {
+                context.grantUriPermission(
+                    context.packageName,
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
             saveUriToStorage(uri)
         }
     }

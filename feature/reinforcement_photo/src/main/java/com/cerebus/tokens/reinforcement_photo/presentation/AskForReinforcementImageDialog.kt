@@ -1,6 +1,7 @@
 package com.cerebus.tokens.reinforcement_photo.presentation
 
 import android.Manifest.permission.CAMERA
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.os.Bundle
 import android.view.View
@@ -38,11 +39,13 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
     private val getFromGalleryResultLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { result ->
+        println("Настя result = ${result}")
         try {
             viewModel.savePhotoUri(requireContext(), result)
             setNavigationResult(true, IS_IMAGE_SET_RESULT)
             dismiss()
         } catch (e: Exception) {
+            println("Настя ${e.message}")
             setNavigationResult(false, IS_IMAGE_SET_RESULT)
             Toast.makeText(requireActivity(), "No image selected", Toast.LENGTH_LONG).show()
         }
@@ -58,10 +61,6 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
                 dismiss()
             } else {
                 viewModel.askToMakePhoto(requireContext())
-//                if (isPermissionGranted(requireContext(), android.Manifest.permission.CAMERA))
-//                    viewModel.askPhotoFromCamera()
-//                else
-//                    requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                 logger.d("ask to make a photo")
             }
         }
@@ -71,7 +70,7 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
             if (isGranted) {
-                viewModel.askPhotoFromGallery()
+                viewModel.askToGetFromGallery(requireContext())
             } else {
                 showToast("Can't open a gallery without permission")
             }
@@ -123,10 +122,7 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         }
 
         getFromGalleryButton.setOnClickListener {
-            if (isPermissionGranted(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE))
-                viewModel.askPhotoFromGallery()
-            else
-                requestGalleryPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+            viewModel.askToGetFromGallery(requireContext())
             logger.d("ask to get a photo from gallery")
         }
     }
@@ -173,7 +169,7 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
                     when(permissionType) {
                         PermissionsEnum.WRITE_STORAGE_PERMISSION ->  requestWriteStoragePermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
                         PermissionsEnum.CAMERA_PERMISSION -> requestCameraPermissionLauncher.launch(CAMERA)
-                        else -> { }//TODO
+                        PermissionsEnum.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
                     }
                 }
             }
