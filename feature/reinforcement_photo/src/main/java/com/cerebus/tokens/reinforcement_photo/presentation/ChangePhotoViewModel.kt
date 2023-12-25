@@ -24,10 +24,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
-//Логика:
-
-
 class ChangePhotoViewModel(
     private val getSelectedPhotoPathUseCase: GetSelectedPhotoPathUseCase,
     private val saveSelectedPhotoPathUseCase: SaveSelectedPhotoPathUseCase
@@ -39,38 +35,59 @@ class ChangePhotoViewModel(
     private val mutableChangePhotoSharedFlow = MutableSharedFlow<ChangingPhoto>()
     val changePhotoSharedFlow: SharedFlow<ChangingPhoto> = mutableChangePhotoSharedFlow
 
-
     private val permissionMutableSharedFlow = MutableSharedFlow<PermissionsEnum>()
     val permissionSharedFlow: SharedFlow<PermissionsEnum> = permissionMutableSharedFlow
 
-    fun askToMakePhoto(context: Context) {
+    private val placePhotoStateFlow =
+        MutableStateFlow(getSelectedPhotoPathUseCase.execute()?.toUri())
+    val photoUriStateFlow = placePhotoStateFlow
+
+    private val showMessageSharedFlow = MutableSharedFlow<String>()
+    val messageSharedFlow: SharedFlow<String> = showMessageSharedFlow
+
+    private val setNavResultSharedFlow = MutableSharedFlow<Boolean>()
+    val navResultSharedFlow: SharedFlow<Boolean> = setNavResultSharedFlow
+
+    fun makePhoto(context: Context) {
+        askToMakePhoto(context)
+    }
+
+    private fun askToMakePhoto(context: Context) {
         if (!isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)) {
             viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.WRITE_STORAGE_PERMISSION) }
         } else {
-            if (isPermissionGranted(context, CAMERA))
+            if (isPermissionGranted(context, CAMERA)) {
+                getPhotoFile(context)
                 getPhotoFromCamera()
+            }
             else
                 viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.CAMERA_PERMISSION) }
         }
     }
 
-    fun askToGetFromGallery(context: Context) {
-        if (isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            println("Настя askToGetFromGallery GRANTED")
-            getPhotoFromGallery()
-        }
-
-        else {
-            println("Настя askToGetFromGallery NOT GRANTED")
-            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.READ_STORAGE_PERMISSION) }
-        }
-
+    fun getFromGallery(context: Context) {
+        askToGetFromGallery(context)
     }
 
+    private fun askToGetFromGallery(context: Context) {
+        if (isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE))
+            getPhotoFromGallery()
+        else
+            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionsEnum.READ_STORAGE_PERMISSION) }
+    }
 
-    private val placePhotoStateFlow =
-        MutableStateFlow<Uri?>(getSelectedPhotoPathUseCase.execute()?.toUri())
-    val photoUriStateFlow = placePhotoStateFlow
+    fun onPermission(permissionType: PermissionsEnum, isGranted: Boolean, context: Context) {
+        if (isGranted) {
+            when (permissionType) {
+                PermissionsEnum.WRITE_STORAGE_PERMISSION -> askToMakePhoto(context)
+                PermissionsEnum.CAMERA_PERMISSION -> askToMakePhoto(context)
+                PermissionsEnum.READ_STORAGE_PERMISSION -> askToGetFromGallery(context)
+            }
+        } else {
+            showMessage(permissionType.errorMessage)
+        }
+    }
+
     private fun getPhotoFromCamera() = viewModelScope.launch {
         mutableChangePhotoSharedFlow.emit(ChangingPhoto.GET_FROM_CAMERA)
     }
@@ -79,7 +96,7 @@ class ChangePhotoViewModel(
         mutableChangePhotoSharedFlow.emit(ChangingPhoto.GET_FROM_GALLERY)
     }
 
-    fun savePhotoUri(context: Context, uri: Uri?) {
+    private fun savePhotoUri(context: Context, uri: Uri?) {
         uri?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -95,17 +112,42 @@ class ChangePhotoViewModel(
         }
     }
 
-    fun saveUriCamera() {
+    private fun saveUriCamera() {
         currentPhotoUri?.let { saveUriToStorage(it) }
     }
 
-    fun removeFromGallery(context: Context) {
+    private fun removeFromGallery(context: Context) {
         currentPhotoUri?.let { context.contentResolver.delete(it, null, null) }
     }
 
-    fun galleryAddPic(context: Context) {
+    fun onCameraResultReceived(context: Context, success: Boolean) {
+        try {
+            if (success) {
+                saveUriCamera()
+                galleryAddPic(context)
+            } else {
+                removeFromGallery(context)
+            }
+            viewModelScope.launch {
+                setNavResultSharedFlow.emit(success)
+            }
+        } catch (e: Exception) {
+            showMessage("No photo made")
+        }
+    }
 
-        println("Настя 2 SDK >= 10")
+    fun onGalleryResultReceived(context: Context, selectedImageUri: Uri?) {
+        try {
+            savePhotoUri(context, selectedImageUri)
+            viewModelScope.launch { setNavResultSharedFlow.emit(true) }
+        } catch (e: Exception) {
+            showMessage("No image selected")
+            viewModelScope.launch { setNavResultSharedFlow.emit(false) }
+        }
+    }
+
+   private fun galleryAddPic(context: Context) {
+
         currentPhotoUri?.let { mediaScanUri ->
             MediaScannerConnection.scanFile(
                 context.applicationContext,
@@ -117,9 +159,7 @@ class ChangePhotoViewModel(
         }
     }
 
-    fun getPhotoFile(context: Context) {
-        // Создаем файл для сохранения изображения
-
+    private fun getPhotoFile(context: Context) {
         val timeStamp: String =
             SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
 
@@ -131,7 +171,7 @@ class ChangePhotoViewModel(
         currentPhotoUri = context.contentResolver.insert(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             values
-        )!!
+        )
     }
 
     private fun saveUriToStorage(uri: Uri) {
@@ -141,5 +181,9 @@ class ChangePhotoViewModel(
                 getSelectedPhotoPathUseCase.execute()?.toUri()
             )
         }
+    }
+
+    private fun showMessage(message: String) {
+        viewModelScope.launch { showMessageSharedFlow.emit(message) }
     }
 }
