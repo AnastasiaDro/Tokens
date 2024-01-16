@@ -2,7 +2,7 @@ package domain.usecases.tokens
 
 import domain.repository.TokensRepository
 
-class ChangeTokensNumberUseCase(private val tokensRepository: domain.repository.TokensRepository) {
+class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) {
 
     fun execute(newNumber: Int) {
         val currentTokensNumber = tokensRepository.getTokensNumber()
@@ -30,7 +30,10 @@ class ChangeTokensNumberUseCase(private val tokensRepository: domain.repository.
 
                 while (tokensRepository.getTokenById(step).isChecked)
                     step++
-                tokensRepository.checkToken(step)
+                if (step < newNumber) {
+                    tokensRepository.checkToken(step)
+                    step++
+                }
             }
         }
         tokensRepository.removeTokens(currentNumber - newNumber)
