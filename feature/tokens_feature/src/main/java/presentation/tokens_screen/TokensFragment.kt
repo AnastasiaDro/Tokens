@@ -2,15 +2,11 @@ package presentation.tokens_screen
 
 import SelectTokensNumberAlertData
 import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
-import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -157,7 +153,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     override fun subscribeToNavigationResultLiveData() {
         val result = getNavigationResultLiveData<Int>(CURRENT_TOKENS_NUMBER_RESULT_KEY)
         result?.observe(viewLifecycleOwner) { newNum ->
-            viewModel.changeTokensNum(newNum)
+            viewModel.updateTokensNum()
             logger.d("$CURRENT_TOKENS_NUMBER_RESULT_KEY navigation result is taken NEW NUMBER = $newNum")
         }
         val imageResult = getNavigationResultLiveData<Boolean>(IS_IMAGE_SET_RESULT)

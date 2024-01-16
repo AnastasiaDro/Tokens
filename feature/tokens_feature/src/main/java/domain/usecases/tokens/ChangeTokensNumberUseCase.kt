@@ -12,7 +12,9 @@ class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) 
             newNumber < currentTokensNumber -> decreaseTokensNumber(currentTokensNumber, newNumber)
             else ->  tokensRepository.createTokens(newNumber - currentTokensNumber)
         }
+        println("Настя before number= ${tokensRepository.getTokensNumber()}")
         tokensRepository.setTokensNumber(newNumber)
+        println("Настя after number= ${tokensRepository.getTokensNumber()}")
     }
 
     /**
@@ -36,6 +38,8 @@ class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) 
                 }
             }
         }
+        println("Настя tokensRepositorySize BEFORE = ${tokensRepository.getTokensNumber()}")
         tokensRepository.removeTokens(currentNumber - newNumber)
+        println("Настя tokensRepositorySize AFTER = ${tokensRepository.getTokensNumber()}")
     }
 }

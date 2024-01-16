@@ -1,6 +1,7 @@
 package presentation.settings_screen
 
 import SelectTokensNumberAlertData
+import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.util.Log
@@ -112,7 +113,8 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
     override fun subscribeToNavigationResultLiveData() {
         val result = getNavigationResultLiveData<Int>(SelectTokensNumberAlertData.CURRENT_TOKENS_NUMBER_RESULT_KEY)
         result?.observe(viewLifecycleOwner) { newNum ->
-            viewModel.changeTokensNum(newNum)
+            viewModel.updateTokensNum()
+            logger.d("$CURRENT_TOKENS_NUMBER_RESULT_KEY navigation result is taken NEW NUMBER = $newNum")
         }
     }
 }
