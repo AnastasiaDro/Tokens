@@ -64,16 +64,17 @@ class ChangePhotoViewModel(
     }
 
     private fun askToMakePhoto(context: Context) {
-        if (!isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)) {
-            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.WRITE_STORAGE_PERMISSION) }
-        } else {
+//        if (!isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)) {
+//            println("НАстя !isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)")
+//            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.WRITE_STORAGE_PERMISSION) }
+//        } else {
             if (isPermissionGranted(context, CAMERA)) {
                 getPhotoFile(context)
                 openCamera()
             }
             else
                 viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.CAMERA_PERMISSION) }
-        }
+        //}
     }
 
     fun getFromGallery(context: Context) {
@@ -81,13 +82,16 @@ class ChangePhotoViewModel(
     }
 
     private fun askToGetFromGallery(context: Context) {
-        if (isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE))
+       // if (isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE))
+        if (isPermissionGranted(context, android.Manifest.permission.READ_MEDIA_IMAGES))
             openGallery()
         else
+            //viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.READ_STORAGE_PERMISSION) }
             viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.READ_STORAGE_PERMISSION) }
     }
 
     fun onPermissionResultReceive(permissionType: PermissionType, isGranted: Boolean, context: Context) {
+        println("Настя onPermissionResultReceive isGranted = $isGranted")
         if (isGranted) {
             when (permissionType) {
                 PermissionType.WRITE_STORAGE_PERMISSION -> askToMakePhoto(context)

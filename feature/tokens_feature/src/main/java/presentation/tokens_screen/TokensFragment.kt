@@ -50,17 +50,6 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
 
-//    private val requestPermissionLauncher =
-//        registerForActivityResult(
-//            ActivityResultContracts.RequestPermission()
-//        ) { isGranted: Boolean ->
-//            if (isGranted) {
-//                goToImageSelecting()
-//            } else {
-//                Toast.makeText(requireActivity(), "Can't show image without permission", Toast.LENGTH_LONG).show()
-//            }
-//        }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -73,10 +62,6 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
         viewBinding.reinforcementImageCardView.setOnClickListener {
             goToImageSelecting()
-//            if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-//                goToImageSelecting()
-//            else
-//                requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
         }
 
         viewModel.initData()

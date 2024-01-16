@@ -2,6 +2,7 @@ package com.cerebus.tokens.reinforcement_photo.presentation
 
 import android.Manifest.permission.CAMERA
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.READ_MEDIA_IMAGES
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.os.Bundle
 import android.view.View
@@ -36,12 +37,14 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
     private val getFromGalleryResultLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { selectedImageUri ->
+        println("Настя getFromGalleryResultLauncher")
         viewModel.onGalleryResultReceived(requireContext(), selectedImageUri)
     }
 
     private val getFromCameraResultLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
+        println("Настя getFromCameraResultLauncher")
         viewModel.onCameraResultReceived(requireContext(), success)
     }
 
@@ -50,6 +53,7 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
+            println("Настя requestWriteStoragePermissionLauncher")
             viewModel.onPermissionResultReceive(PermissionType.WRITE_STORAGE_PERMISSION, isGranted, requireContext())
         }
 
@@ -57,6 +61,7 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
+            println("Настя requestGalleryPermissionLauncher")
             viewModel.onPermissionResultReceive(PermissionType.READ_STORAGE_PERMISSION, isGranted, requireContext())
         }
 
@@ -115,10 +120,13 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
 
         /** Asking permissions **/
         subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.permissionSharedFlow) { permissionType ->
+            println("Настя permission result")
             when(permissionType) {
+                //PermissionType.WRITE_STORAGE_PERMISSION ->  requestWriteStoragePermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
                 PermissionType.WRITE_STORAGE_PERMISSION ->  requestWriteStoragePermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
                 PermissionType.CAMERA_PERMISSION -> requestCameraPermissionLauncher.launch(CAMERA)
-                PermissionType.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
+                //PermissionType.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
+                PermissionType.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_MEDIA_IMAGES)
             }
         }
 
