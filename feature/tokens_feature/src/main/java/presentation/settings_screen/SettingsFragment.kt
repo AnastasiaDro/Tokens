@@ -87,7 +87,7 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
             }
         }
         colorLiveData.observe(viewLifecycleOwner) { newColor ->
-            viewBinding.settingsAppLayout.colorPreviewCard.circleColorExample.setBackgroundColor(newColor)
+            viewBinding.settingsAppLayout.tokenColorPreview.setBackgroundColor(newColor)
         }
         changedTokensNumLiveData.observe(viewLifecycleOwner) {
             if (it) viewBinding.settingsAppLayout.currentTokensNumberTextView.text = viewModel.getTokensNum().toString()
