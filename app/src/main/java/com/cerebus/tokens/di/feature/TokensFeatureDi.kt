@@ -3,15 +3,24 @@ package com.cerebus.tokens.di.feature
 import data.effects.EffectsRepositoryImpl
 import data.effects.storage.EffectsStorage
 import data.effects.storage.EffectsStorageImpl
+import data.reinforcement.ReinforcementRepositoryImpl
+import com.cerebus.tokens.data.reinforcement.storage.ReinforcementStorage
+import com.cerebus.tokens.data.reinforcement.storage.ReinforcementStorageImpl
 import data.tokens.TokensRepositoryImpl
 import data.tokens.storage.TokensStorage
 import data.tokens.storage.TokensStorageImpl
+import domain.repository.EffectsRepository
+import domain.repository.ReinforcementSettingsRepository
+import domain.repository.TokensRepository
 import domain.usecases.effects.GetAnimationRepeatTimesUseCase
 import domain.usecases.effects.GetEffectsDurationUseCase
 import domain.usecases.effects.IsWinAnimationOnUseCase
 import domain.usecases.effects.IsWinSoundOnUseCase
 import domain.usecases.effects.PlugOnOffWinAnimationUseCase
 import domain.usecases.effects.PlugOnOffWinSoundUseCase
+import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
+import domain.usecases.reinforcement.GetReinforcementUriStringUseCase
+import domain.usecases.reinforcement.SetIsReinforcementShowUseCase
 import domain.usecases.tokens.ChangeCheckedColorUseCase
 import domain.usecases.tokens.ChangeTokensNumberUseCase
 import domain.usecases.tokens.CheckTokenUseCase
@@ -27,13 +36,13 @@ import presentation.settings_screen.SettingsViewModel
 import presentation.tokens_screen.TokensViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import presentation.tokens_screen.SelectTokensNumberViewModel
 
 val tokensFeatureModule = module {
 
     /** presentation **/
     viewModel<TokensViewModel> {
         TokensViewModel(
-            getCheckedColorUseCase = get(),
             changeTokensNumberUseCase = get(),
             clearAllTokensUseCase = get(),
             checkTokenUseCase = get(),
@@ -47,7 +56,10 @@ val tokensFeatureModule = module {
             isWinAnimationOnUseCase = get(),
             isWinSoundOnUseCase = get(),
             getEffectsDurationUseCase = get(),
-            getAnimationRepeatTimesUseCase = get()
+            getAnimationRepeatTimesUseCase = get(),
+
+            getIsReinforcementShowUseCase = get(),
+            getReinforcementUriStringUseCase = get()
         )
     }
 
@@ -59,10 +71,20 @@ val tokensFeatureModule = module {
             getMaxTokensNumberUseCase = get(),
             getChangeCheckedColorUseCase = get(),
             getCheckedColorUseCase = get(),
+
             isWinAnimationOnUseCase = get(),
             isWinSoundOnUseCase = get(),
             plugOnOffWinAnimationUseCase = get(),
             plugOnOffWinSoundUseCase = get(),
+
+            getIsReinforcementShowUseCase = get(),
+            setIsReinforcementShowUseCase = get()
+        )
+    }
+
+    viewModel<SelectTokensNumberViewModel> {
+        SelectTokensNumberViewModel(
+            changeTokensNumberUseCase = get()
         )
     }
 
@@ -116,7 +138,6 @@ val tokensFeatureModule = module {
 
 
     /* Effects */
-
     factory<IsWinAnimationOnUseCase> {
         IsWinAnimationOnUseCase(effectsRepository = get())
     }
@@ -142,13 +163,26 @@ val tokensFeatureModule = module {
         PlugOnOffWinSoundUseCase(effectsRepository = get())
     }
 
+    /* Reinforcement settings */
+    factory<GetIsReinforcementShowUseCase> {
+        GetIsReinforcementShowUseCase(reinforcementSettingsRepository = get())
+    }
+
+    factory<SetIsReinforcementShowUseCase> {
+        SetIsReinforcementShowUseCase(reinforcementSettingsRepository = get())
+    }
+
+    factory<GetReinforcementUriStringUseCase> {
+        GetReinforcementUriStringUseCase(reinforcementSettingsRepository = get())
+    }
+
     /** Data **/
     /* Tokens */
     single<TokensStorage> {
         TokensStorageImpl(context = get(), loggerFactory = get())
     }
 
-    single<domain.repository.TokensRepository> {
+    single<TokensRepository> {
         TokensRepositoryImpl(tokensStorage = get())
     }
 
@@ -157,7 +191,14 @@ val tokensFeatureModule = module {
         EffectsStorageImpl(context = get(), loggerFactory = get())
     }
 
-    single<domain.repository.EffectsRepository> {
+    single<EffectsRepository> {
         EffectsRepositoryImpl(effectsStorage = get())
     }
+
+    /* Reinforcement */
+    single<ReinforcementSettingsRepository> {
+        ReinforcementRepositoryImpl(reinforcementStorage = get())
+    }
+
+
 }

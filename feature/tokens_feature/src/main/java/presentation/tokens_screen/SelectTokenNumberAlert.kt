@@ -10,6 +10,7 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.setNavigationResult
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.AlertSelectTokensNumberBinding
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import presentation.settings_screen.SettingsFragment
 
 /**
@@ -29,6 +30,7 @@ class SelectTokenNumberAlert: DialogFragment(R.layout.alert_select_tokens_number
     private var newTokensNumber = 1
     private val viewBinding: AlertSelectTokensNumberBinding by viewBinding()
     private val navArgs: SelectTokenNumberAlertArgs by navArgs()
+    private val viewModel: SelectTokensNumberViewModel by viewModel<SelectTokensNumberViewModel>()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initNumPicker()
@@ -51,6 +53,7 @@ class SelectTokenNumberAlert: DialogFragment(R.layout.alert_select_tokens_number
     private fun initButtons() {
         with(viewBinding) {
             okBtn.setOnClickListener {
+                viewModel.changeTokensNum(tokensNumPicker.value)
                 setNavigationResult(tokensNumPicker.value, CURRENT_TOKENS_NUMBER_RESULT_KEY)
                 dismiss()
             }

@@ -1,6 +1,7 @@
 package presentation.settings_screen
 
 import SelectTokensNumberAlertData
+import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.util.Log
@@ -15,8 +16,10 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentSettingsBinding
+import com.cerebus.tokens.logger.api.LoggerFactory
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import presentation.tokens_screen.TokenView
 import presentation.tokens_screen.TokensNumberListener
@@ -37,19 +40,21 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
 
     private val viewModel: SettingsViewModel by activityViewModel<SettingsViewModel>()
     private val viewBinding: FragmentSettingsBinding by viewBinding()
+    private val loggerFactory: LoggerFactory  by inject()
+    private val logger = loggerFactory.createLogger(this::class.java.simpleName)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         with(viewBinding.settingsAppLayout) {
             changeTokensColorButton.setOnClickListener { viewModel.askForChangeTokensColor() }
-            changeTokensNumberButton.setOnClickListener {
-                viewModel.askChangeTokensNumber()
-            }
+            changeTokensNumberButton.setOnClickListener { viewModel.askChangeTokensNumber() }
             currentTokensNumberTextView.text = viewModel.getTokensNum().toString()
             animationSwitch.isChecked = viewModel.getIsAnimation()
             soundSwitch.isChecked = viewModel.getIsSound()
+            reinforcementSwitch.isChecked = viewModel.getIsReinforcement()
             animationSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.changeAnimation(isChecked) }
             soundSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.changeSound(isChecked) }
+            reinforcementSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.changeReinforcement(isChecked)}
         }
         with(viewBinding.aboutAppLayout) {
             youtubeLinkTextView.movementMethod = LinkMovementMethod.getInstance()
@@ -58,6 +63,7 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
         Log.d(TAG, "Views were initialized")
         subscribeToNavigationResultLiveData()
         subscribeToViewModel()
+        logger.d("View created")
     }
 
     private fun subscribeToViewModel() = with(viewModel) {
@@ -82,12 +88,12 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
             }
         }
         colorLiveData.observe(viewLifecycleOwner) { newColor ->
-            viewBinding.settingsAppLayout.colorPreviewCard.circleColorExample.setBackgroundColor(newColor)
+            viewBinding.settingsAppLayout.tokenColorPreview.setBackgroundColor(newColor)
         }
         changedTokensNumLiveData.observe(viewLifecycleOwner) {
             if (it) viewBinding.settingsAppLayout.currentTokensNumberTextView.text = viewModel.getTokensNum().toString()
         }
-        Log.d(TAG, "subscribed to viewModel's data")
+        logger.d("Subscribed to viewModel")
     }
 
     override fun getTokensNumberAlertNavAction(
@@ -106,8 +112,9 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
 
     override fun subscribeToNavigationResultLiveData() {
         val result = getNavigationResultLiveData<Int>(SelectTokensNumberAlertData.CURRENT_TOKENS_NUMBER_RESULT_KEY)
-        result?.observe(viewLifecycleOwner) {newNum ->
-            viewModel.changeTokensNum(newNum)
+        result?.observe(viewLifecycleOwner) { newNum ->
+            viewModel.updateTokensNum()
+            logger.d("$CURRENT_TOKENS_NUMBER_RESULT_KEY navigation result is taken NEW NUMBER = $newNum")
         }
     }
 }

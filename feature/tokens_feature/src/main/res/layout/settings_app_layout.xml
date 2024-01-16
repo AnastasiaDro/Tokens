@@ -79,9 +79,14 @@
                 android:gravity="center"
                 android:text="@string/settings_tokens_color" />
 
-            <include
-                android:id="@+id/color_preview_card"
-                layout="@layout/settings_color_preview_card" />
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/tokenColorPreview"
+                android:elevation="12dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                app:shapeAppearanceOverlay="@style/circleImageView"
+                android:layout_gravity="center|center_vertical"
+                android:background="@color/checkedColor" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/changeTokensColorButton"
@@ -129,6 +134,27 @@
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/sound_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/reinforcement"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_min_height"
+            android:layout_margin="@dimen/settings_item_margin">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/SettingsText"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="start|center_vertical"
+                android:gravity="center"
+                android:text="@string/reinforcement_image" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/reinforcement_switch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end|center_vertical" />

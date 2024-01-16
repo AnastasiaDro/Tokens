@@ -1,5 +1,7 @@
 package presentation.tokens_screen
 
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,20 +11,22 @@ import domain.usecases.effects.GetAnimationRepeatTimesUseCase
 import domain.usecases.effects.GetEffectsDurationUseCase
 import domain.usecases.effects.IsWinAnimationOnUseCase
 import domain.usecases.effects.IsWinSoundOnUseCase
+import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
+import domain.usecases.reinforcement.GetReinforcementUriStringUseCase
 import domain.usecases.tokens.ChangeTokensNumberUseCase
 import domain.usecases.tokens.CheckTokenUseCase
 import domain.usecases.tokens.CheckTokensAreGrappedUseCase
 import domain.usecases.tokens.ClearAllTokensUseCase
 import domain.usecases.tokens.GetAllTokensUseCase
-import domain.usecases.tokens.GetCheckedColorUseCase
 import domain.usecases.tokens.GetMaxTokensNumberUseCase
 import domain.usecases.tokens.GetMinTokensNumberUseCase
 import domain.usecases.tokens.GetTokensNumberUseCase
 import domain.usecases.tokens.UncheckTokenUseCase
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
@@ -38,7 +42,6 @@ import kotlinx.coroutines.launch
  * @since 28.04.2023
  */
 class TokensViewModel(
-    private val getCheckedColorUseCase: GetCheckedColorUseCase,
     private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
     private val clearAllTokensUseCase: ClearAllTokensUseCase,
     private val checkTokenUseCase: CheckTokenUseCase,
@@ -52,7 +55,10 @@ class TokensViewModel(
     private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
     private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
     private val getEffectsDurationUseCase: GetEffectsDurationUseCase,
-    private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase
+    private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase,
+
+    private val getIsReinforcementShowUseCase: GetIsReinforcementShowUseCase,
+    private val getReinforcementUriStringUseCase: GetReinforcementUriStringUseCase
     ) : ViewModel() {
 
     private var isAnimationRunning = false
@@ -82,22 +88,37 @@ class TokensViewModel(
     private val soundMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val soundLiveData: LiveData<Boolean> = soundMutableLiveData
 
-    fun getTokensNum() = getTokensNumberUseCase.execute()
+    private val getIsReinforcementShowFlow = MutableStateFlow(getIsReinforcementShowUseCase.execute())
+    val isReinforcementFlow: StateFlow<Boolean> = getIsReinforcementShowFlow
 
-    fun getCheckedColor() = getCheckedColorUseCase.execute()
+    private val getReinforcementImageMutableFlow: MutableStateFlow<Uri?> = MutableStateFlow(getReinforcementUriStringUseCase.execute()?.toUri())
+    val getReinforcementImageStateFlow: StateFlow<Uri?> = getReinforcementImageMutableFlow
+    fun getTokensNum() = getTokensNumberUseCase.execute()
 
     fun getTokens(): Flow<Token> = getAllTokensUseCase.execute()
 
     fun initData() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             prefsLoadedMutableLiveData.postValue(true)
+        }
+        viewModelScope.launch {
+            getIsReinforcementShowFlow.emit(getIsReinforcementShowUseCase.execute())
+        }
+        viewModelScope.launch {
+            getReinforcementImageMutableFlow.emit(getReinforcementUriStringUseCase.execute()?.toUri())
         }
     }
 
-    fun changeTokensNum(newNum: Int) {
-        changeTokensNumberUseCase.execute(newNum)
+    fun updateTokensNum() {
         changedTokensNumMutableLiveData.postValue(true)
     }
+
+    fun askReinforcementImage() {
+        viewModelScope.launch {
+            getReinforcementImageMutableFlow.emit(getReinforcementUriStringUseCase.execute()?.toUri())
+        }
+    }
+
 
     fun clearTokens() {
         clearAllTokensUseCase.execute()

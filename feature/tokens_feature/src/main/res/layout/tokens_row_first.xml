@@ -11,59 +11,39 @@
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintBottom_toTopOf="@id/second_row"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintEnd_toStartOf="@+id/reinforcement_image_card_view"
     app:layout_constraintVertical_chainStyle="packed">
 
     <presentation.tokens_screen.TokenView
         android:id="@+id/tokenButton1"
-        android:layout_width="@dimen/token_width"
-        android:layout_height="@dimen/token_height"
-        android:layout_marginHorizontal="@dimen/token_margin"
-        app:tokenHeight="@dimen/token_height"
-        app:tokenWidth="@dimen/token_width"
+        style="@style/TokenViewStyle"
         android:contentDescription="token1"
         tools:visibility="visible"/>
 
     <presentation.tokens_screen.TokenView
         android:id="@+id/tokenButton2"
-        android:layout_width="@dimen/token_width"
-        android:layout_height="@dimen/token_height"
-        android:layout_marginHorizontal="@dimen/token_margin"
-        app:tokenHeight="@dimen/token_height"
-        app:tokenWidth="@dimen/token_width"
+        style="@style/TokenViewStyle"
         android:visibility="gone"
         android:contentDescription="token2"
         tools:visibility="visible"/>
 
     <presentation.tokens_screen.TokenView
         android:id="@+id/tokenButton3"
-        android:layout_width="@dimen/token_width"
-        android:layout_height="@dimen/token_height"
-        android:layout_marginHorizontal="@dimen/token_margin"
-        app:tokenHeight="@dimen/token_height"
-        app:tokenWidth="@dimen/token_width"
+        style="@style/TokenViewStyle"
         android:visibility="gone"
         android:contentDescription="token3"
         tools:visibility="visible"/>
 
     <presentation.tokens_screen.TokenView
         android:id="@+id/tokenButton4"
-        android:layout_width="@dimen/token_width"
-        android:layout_height="@dimen/token_height"
-        android:layout_marginHorizontal="@dimen/token_margin"
-        app:tokenHeight="@dimen/token_height"
-        app:tokenWidth="@dimen/token_width"
+        style="@style/TokenViewStyle"
         android:visibility="gone"
         android:contentDescription="token4"
         tools:visibility="visible"/>
 
     <presentation.tokens_screen.TokenView
         android:id="@+id/tokenButton5"
-        android:layout_width="@dimen/token_width"
-        android:layout_height="@dimen/token_height"
-        android:layout_marginHorizontal="@dimen/token_margin"
-        app:tokenHeight="@dimen/token_height"
-        app:tokenWidth="@dimen/token_width"
+        style="@style/TokenViewStyle"
         android:visibility="gone"
         android:contentDescription="token5"
         tools:visibility="visible"/>

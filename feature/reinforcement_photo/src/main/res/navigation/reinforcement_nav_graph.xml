@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/dialog_ask_for_reinforcement_photo">
+
+    <dialog
+        android:id="@+id/dialog_ask_for_reinforcement_photo"
+        android:name="com.cerebus.tokens.reinforcement_photo.presentation.AskForReinforcementImageDialog"
+        android:label="AskForReinforcementImageDialog"
+        tools:layout="@layout/dialog_ask_for_reinforcement_image">
+        <action
+            android:id="@+id/action_ask_for_photo_to_make_photo"/>
+        <deepLink
+            app:uri="android-app://com.cerebus.tokens.reinforcement_photo.presentation.dialog" />
+    </dialog>
+</navigation>

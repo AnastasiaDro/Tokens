@@ -2,7 +2,7 @@ package domain.usecases.tokens
 
 import domain.repository.TokensRepository
 
-class ChangeTokensNumberUseCase(private val tokensRepository: domain.repository.TokensRepository) {
+class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) {
 
     fun execute(newNumber: Int) {
         val currentTokensNumber = tokensRepository.getTokensNumber()
@@ -12,7 +12,9 @@ class ChangeTokensNumberUseCase(private val tokensRepository: domain.repository.
             newNumber < currentTokensNumber -> decreaseTokensNumber(currentTokensNumber, newNumber)
             else ->  tokensRepository.createTokens(newNumber - currentTokensNumber)
         }
+        println("Настя before number= ${tokensRepository.getTokensNumber()}")
         tokensRepository.setTokensNumber(newNumber)
+        println("Настя after number= ${tokensRepository.getTokensNumber()}")
     }
 
     /**
@@ -30,9 +32,14 @@ class ChangeTokensNumberUseCase(private val tokensRepository: domain.repository.
 
                 while (tokensRepository.getTokenById(step).isChecked)
                     step++
-                tokensRepository.checkToken(step)
+                if (step < newNumber) {
+                    tokensRepository.checkToken(step)
+                    step++
+                }
             }
         }
+        println("Настя tokensRepositorySize BEFORE = ${tokensRepository.getTokensNumber()}")
         tokensRepository.removeTokens(currentNumber - newNumber)
+        println("Настя tokensRepositorySize AFTER = ${tokensRepository.getTokensNumber()}")
     }
 }

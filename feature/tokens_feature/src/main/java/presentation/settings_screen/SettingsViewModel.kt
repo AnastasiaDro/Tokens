@@ -5,6 +5,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import domain.usecases.effects.IsWinAnimationOnUseCase
+import domain.usecases.effects.IsWinSoundOnUseCase
+import domain.usecases.effects.PlugOnOffWinAnimationUseCase
+import domain.usecases.effects.PlugOnOffWinSoundUseCase
+import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
+import domain.usecases.reinforcement.SetIsReinforcementShowUseCase
 import domain.usecases.tokens.ChangeCheckedColorUseCase
 import domain.usecases.tokens.ChangeTokensNumberUseCase
 import domain.usecases.tokens.GetCheckedColorUseCase
@@ -34,10 +40,13 @@ class SettingsViewModel(
     private val getChangeCheckedColorUseCase: ChangeCheckedColorUseCase,
     private val getCheckedColorUseCase: GetCheckedColorUseCase,
 
-    private val isWinAnimationOnUseCase: domain.usecases.effects.IsWinAnimationOnUseCase,
-    private val isWinSoundOnUseCase: domain.usecases.effects.IsWinSoundOnUseCase,
-    private val plugOnOffWinAnimationUseCase: domain.usecases.effects.PlugOnOffWinAnimationUseCase,
-    private val plugOnOffWinSoundUseCase: domain.usecases.effects.PlugOnOffWinSoundUseCase
+    private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
+    private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
+    private val plugOnOffWinAnimationUseCase: PlugOnOffWinAnimationUseCase,
+    private val plugOnOffWinSoundUseCase: PlugOnOffWinSoundUseCase,
+
+    private val getIsReinforcementShowUseCase: GetIsReinforcementShowUseCase,
+    private val setIsReinforcementShowUseCase: SetIsReinforcementShowUseCase
 ) : ViewModel() {
 
     private val mutableColorLiveData = MutableLiveData(getTokensColor())
@@ -55,12 +64,18 @@ class SettingsViewModel(
     fun getIsAnimation() = isWinAnimationOnUseCase.execute()
     fun getIsSound() = isWinSoundOnUseCase.execute()
 
+    fun getIsReinforcement() = getIsReinforcementShowUseCase.execute()
+
     fun changeAnimation(isAnimate: Boolean) {
         plugOnOffWinAnimationUseCase.execute(isAnimate)
     }
 
     fun changeSound(isSound: Boolean) {
         plugOnOffWinSoundUseCase.execute(isSound)
+    }
+
+    fun changeReinforcement(checked: Boolean) {
+        setIsReinforcementShowUseCase.execute(checked)
     }
 
     fun askForChangeTokensColor() {
@@ -75,8 +90,7 @@ class SettingsViewModel(
         }
     }
 
-    fun changeTokensNum(newNum: Int) {
-        changeTokensNumberUseCase.execute(newNum)
+    fun updateTokensNum() {
         changedTokensNumMutableLiveData.postValue(true)
     }
 

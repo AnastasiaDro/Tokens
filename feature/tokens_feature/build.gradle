@@ -10,7 +10,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        minSdk 24
+        minSdk 26
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -83,6 +83,7 @@ dependencies {
     //domain
     implementation project(path: ':core:ui')
     implementation project(path: ':core:logger')
+    implementation project(path: ':data:reinforcement')
 
     //Koin
     implementation "io.insert-koin:koin-core:$koin_version"

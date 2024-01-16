@@ -15,9 +15,12 @@ dependencyResolutionManagement {
 rootProject.name = "Tokens"
 include ':app'
 include ':feature:tokens_feature'
+include ':feature:reinforcement_photo'
 
 
 //data layer
 //
 include ':core:ui'
 include ':core:logger'
+include ':feature:reinforcement_photo'
+include ':data:reinforcement'
