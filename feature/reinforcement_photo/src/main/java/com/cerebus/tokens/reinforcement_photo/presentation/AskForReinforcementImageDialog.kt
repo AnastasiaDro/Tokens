@@ -122,11 +122,10 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.permissionSharedFlow) { permissionType ->
             println("Настя permission result")
             when(permissionType) {
-                //PermissionType.WRITE_STORAGE_PERMISSION ->  requestWriteStoragePermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
                 PermissionType.WRITE_STORAGE_PERMISSION ->  requestWriteStoragePermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
                 PermissionType.CAMERA_PERMISSION -> requestCameraPermissionLauncher.launch(CAMERA)
-                //PermissionType.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
-                PermissionType.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_MEDIA_IMAGES)
+                PermissionType.READ_STORAGE_PERMISSION -> requestGalleryPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
+                PermissionType.READ_MEDIA_IMAGES -> requestGalleryPermissionLauncher.launch(READ_MEDIA_IMAGES)
             }
         }
 
