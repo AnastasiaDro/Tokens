@@ -54,4 +54,12 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="TokenViewStyle">
+        <item name="android:layout_width">@dimen/token_width</item>
+        <item name="android:layout_height">@dimen/token_height</item>
+        <item name="android:layout_marginHorizontal">@dimen/token_margin</item>
+        <item name="tokenHeight">@dimen/token_height</item>
+        <item name="tokenWidth">@dimen/token_width</item>
+    </style>
+
 </resources>
