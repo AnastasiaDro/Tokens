@@ -271,6 +271,11 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         )
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        soundPlayer?.release()
+    }
+
     companion object {
         const val ANIMATION_FIRST_DELAY = 500L
         const val ANIMATION_SECOND_DELAY = 300L
