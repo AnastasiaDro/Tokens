@@ -90,8 +90,7 @@ class SettingsViewModel(
         }
     }
 
-    fun changeTokensNum(newNum: Int) {
-        changeTokensNumberUseCase.execute(newNum)
+    fun updateTokensNum() {
         changedTokensNumMutableLiveData.postValue(true)
     }
 

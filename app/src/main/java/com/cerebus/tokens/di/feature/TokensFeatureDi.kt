@@ -36,6 +36,7 @@ import presentation.settings_screen.SettingsViewModel
 import presentation.tokens_screen.TokensViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import presentation.tokens_screen.SelectTokensNumberViewModel
 
 val tokensFeatureModule = module {
 
@@ -78,6 +79,12 @@ val tokensFeatureModule = module {
 
             getIsReinforcementShowUseCase = get(),
             setIsReinforcementShowUseCase = get()
+        )
+    }
+
+    viewModel<SelectTokensNumberViewModel> {
+        SelectTokensNumberViewModel(
+            changeTokensNumberUseCase = get()
         )
     }
 

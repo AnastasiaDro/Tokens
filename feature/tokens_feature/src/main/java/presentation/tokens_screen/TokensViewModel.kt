@@ -18,7 +18,6 @@ import domain.usecases.tokens.CheckTokenUseCase
 import domain.usecases.tokens.CheckTokensAreGrappedUseCase
 import domain.usecases.tokens.ClearAllTokensUseCase
 import domain.usecases.tokens.GetAllTokensUseCase
-import domain.usecases.tokens.GetCheckedColorUseCase
 import domain.usecases.tokens.GetMaxTokensNumberUseCase
 import domain.usecases.tokens.GetMinTokensNumberUseCase
 import domain.usecases.tokens.GetTokensNumberUseCase
@@ -110,8 +109,7 @@ class TokensViewModel(
         }
     }
 
-    fun changeTokensNum(newNum: Int) {
-        changeTokensNumberUseCase.execute(newNum)
+    fun updateTokensNum() {
         changedTokensNumMutableLiveData.postValue(true)
     }
 

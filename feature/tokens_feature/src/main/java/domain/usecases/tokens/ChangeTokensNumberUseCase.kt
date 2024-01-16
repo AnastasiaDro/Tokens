@@ -2,7 +2,7 @@ package domain.usecases.tokens
 
 import domain.repository.TokensRepository
 
-class ChangeTokensNumberUseCase(private val tokensRepository: domain.repository.TokensRepository) {
+class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) {
 
     fun execute(newNumber: Int) {
         val currentTokensNumber = tokensRepository.getTokensNumber()
@@ -21,18 +21,42 @@ class ChangeTokensNumberUseCase(private val tokensRepository: domain.repository.
      * @param newNumber - target number of tokens
      */
     private fun decreaseTokensNumber(currentNumber: Int, newNumber: Int) {
-        val lastIndexOld = currentNumber - 1
+        if (currentNumber != tokensRepository.getCheckedTokensNumber())
+            recheck(currentNumber, newNumber)
+        else
+            uncheck(currentNumber, newNumber)
+//        val lastIndexOld = currentNumber - 1
+//        var step = 0
+//
+//        for (i in lastIndexOld downTo  newNumber) {
+//            if (tokensRepository.getTokenById(i).isChecked) {
+//                tokensRepository.uncheckToken(i)
+//
+//                while (step < tokensRepository.getMaxTokensNumber() && tokensRepository.getTokenById(step).isChecked)
+//                    step++
+//                tokensRepository.checkToken(step)
+//            }
+//        }
+        tokensRepository.removeTokens(currentNumber - newNumber)
+    }
+
+    private fun recheck(currentNumber: Int, newNumber: Int) {
         var step = 0
 
-        for (i in lastIndexOld downTo  newNumber) {
+        for (i in currentNumber - 1 downTo  newNumber) {
             if (tokensRepository.getTokenById(i).isChecked) {
                 tokensRepository.uncheckToken(i)
 
-                while (tokensRepository.getTokenById(step).isChecked)
+                while (step < tokensRepository.getMaxTokensNumber() && tokensRepository.getTokenById(step).isChecked)
                     step++
                 tokensRepository.checkToken(step)
             }
         }
-        tokensRepository.removeTokens(currentNumber - newNumber)
+    }
+
+    private fun uncheck(currentNumber: Int, newNumber: Int) {
+        for (i in currentNumber - 1 downTo newNumber) {
+            if (tokensRepository.getTokenById(i).isChecked) tokensRepository.uncheckToken(i)
+        }
     }
 }
