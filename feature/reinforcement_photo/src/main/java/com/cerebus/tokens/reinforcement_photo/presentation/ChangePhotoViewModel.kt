@@ -65,7 +65,6 @@ class ChangePhotoViewModel(
 
     private fun askToMakePhoto(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && !isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)) {
-            println("НАстя !isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)")
             viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.WRITE_STORAGE_PERMISSION) }
         } else {
             if (isPermissionGranted(context, CAMERA)) {
@@ -105,7 +104,6 @@ class ChangePhotoViewModel(
     }
 
     fun onPermissionResultReceive(permissionType: PermissionType, isGranted: Boolean, context: Context) {
-        println("Настя onPermissionResultReceive isGranted = $isGranted")
         if (isGranted) {
             when (permissionType) {
                 PermissionType.WRITE_STORAGE_PERMISSION -> askToMakePhoto(context)
