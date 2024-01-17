@@ -4,15 +4,12 @@ import data.effects.EffectsRepositoryImpl
 import data.effects.storage.EffectsStorage
 import data.effects.storage.EffectsStorageImpl
 import data.reinforcement.ReinforcementRepositoryImpl
-import com.cerebus.tokens.data.reinforcement.storage.ReinforcementStorage
-import com.cerebus.tokens.data.reinforcement.storage.ReinforcementStorageImpl
 import data.tokens.TokensRepositoryImpl
 import data.tokens.storage.TokensStorage
 import data.tokens.storage.TokensStorageImpl
 import domain.repository.EffectsRepository
 import domain.repository.ReinforcementSettingsRepository
 import domain.repository.TokensRepository
-import domain.usecases.effects.GetAnimationRepeatTimesUseCase
 import domain.usecases.effects.GetEffectsDurationUseCase
 import domain.usecases.effects.IsWinAnimationOnUseCase
 import domain.usecases.effects.IsWinSoundOnUseCase
@@ -32,18 +29,17 @@ import domain.usecases.tokens.GetMaxTokensNumberUseCase
 import domain.usecases.tokens.GetMinTokensNumberUseCase
 import domain.usecases.tokens.GetTokensNumberUseCase
 import domain.usecases.tokens.UncheckTokenUseCase
-import presentation.settings_screen.SettingsViewModel
-import presentation.tokens_screen.TokensViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import presentation.settings_screen.SettingsViewModel
 import presentation.tokens_screen.SelectTokensNumberViewModel
+import presentation.tokens_screen.TokensViewModel
 
 val tokensFeatureModule = module {
 
     /** presentation **/
     viewModel<TokensViewModel> {
         TokensViewModel(
-            changeTokensNumberUseCase = get(),
             clearAllTokensUseCase = get(),
             checkTokenUseCase = get(),
             uncheckTokenUseCase = get(),
@@ -56,7 +52,6 @@ val tokensFeatureModule = module {
             isWinAnimationOnUseCase = get(),
             isWinSoundOnUseCase = get(),
             getEffectsDurationUseCase = get(),
-            getAnimationRepeatTimesUseCase = get(),
 
             getIsReinforcementShowUseCase = get(),
             getReinforcementUriStringUseCase = get()
@@ -149,11 +144,6 @@ val tokensFeatureModule = module {
     factory<GetEffectsDurationUseCase> {
         GetEffectsDurationUseCase(effectsRepository = get())
     }
-
-    factory<GetAnimationRepeatTimesUseCase> {
-        GetAnimationRepeatTimesUseCase(effectsRepository = get())
-    }
-
 
     factory<PlugOnOffWinAnimationUseCase> {
         PlugOnOffWinAnimationUseCase(effectsRepository = get())

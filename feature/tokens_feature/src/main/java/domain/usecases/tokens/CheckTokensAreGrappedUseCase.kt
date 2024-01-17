@@ -1,6 +1,8 @@
 package domain.usecases.tokens
 
-class CheckTokensAreGrappedUseCase(private val tokensRepository: domain.repository.TokensRepository) {
+import domain.repository.TokensRepository
+
+class CheckTokensAreGrappedUseCase(private val tokensRepository: TokensRepository) {
 
     fun execute(): Boolean {
         return (tokensRepository.getTokensNumber() == tokensRepository.getCheckedTokensNumber())
