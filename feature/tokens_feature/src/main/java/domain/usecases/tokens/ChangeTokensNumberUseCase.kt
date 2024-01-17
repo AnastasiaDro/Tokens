@@ -12,9 +12,7 @@ class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) 
             newNumber < currentTokensNumber -> decreaseTokensNumber(currentTokensNumber, newNumber)
             else ->  tokensRepository.createTokens(newNumber - currentTokensNumber)
         }
-        println("Настя before number= ${tokensRepository.getTokensNumber()}")
         tokensRepository.setTokensNumber(newNumber)
-        println("Настя after number= ${tokensRepository.getTokensNumber()}")
     }
 
     /**
@@ -23,23 +21,42 @@ class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) 
      * @param newNumber - target number of tokens
      */
     private fun decreaseTokensNumber(currentNumber: Int, newNumber: Int) {
-        val lastIndexOld = currentNumber - 1
+        if (currentNumber != tokensRepository.getCheckedTokensNumber())
+            recheck(currentNumber, newNumber)
+        else
+            uncheck(currentNumber, newNumber)
+//        val lastIndexOld = currentNumber - 1
+//        var step = 0
+//
+//        for (i in lastIndexOld downTo  newNumber) {
+//            if (tokensRepository.getTokenById(i).isChecked) {
+//                tokensRepository.uncheckToken(i)
+//
+//                while (step < tokensRepository.getMaxTokensNumber() && tokensRepository.getTokenById(step).isChecked)
+//                    step++
+//                tokensRepository.checkToken(step)
+//            }
+//        }
+        tokensRepository.removeTokens(currentNumber - newNumber)
+    }
+
+    private fun recheck(currentNumber: Int, newNumber: Int) {
         var step = 0
 
-        for (i in lastIndexOld downTo  newNumber) {
+        for (i in currentNumber - 1 downTo  newNumber) {
             if (tokensRepository.getTokenById(i).isChecked) {
                 tokensRepository.uncheckToken(i)
 
-                while (tokensRepository.getTokenById(step).isChecked)
+                while (step < tokensRepository.getMaxTokensNumber() && tokensRepository.getTokenById(step).isChecked)
                     step++
-                if (step < newNumber) {
-                    tokensRepository.checkToken(step)
-                    step++
-                }
+                tokensRepository.checkToken(step)
             }
         }
-        println("Настя tokensRepositorySize BEFORE = ${tokensRepository.getTokensNumber()}")
-        tokensRepository.removeTokens(currentNumber - newNumber)
-        println("Настя tokensRepositorySize AFTER = ${tokensRepository.getTokensNumber()}")
+    }
+
+    private fun uncheck(currentNumber: Int, newNumber: Int) {
+        for (i in currentNumber - 1 downTo newNumber) {
+            if (tokensRepository.getTokenById(i).isChecked) tokensRepository.uncheckToken(i)
+        }
     }
 }

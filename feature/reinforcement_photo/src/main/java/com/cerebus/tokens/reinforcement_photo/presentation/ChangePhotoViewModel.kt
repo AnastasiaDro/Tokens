@@ -64,7 +64,7 @@ class ChangePhotoViewModel(
     }
 
     private fun askToMakePhoto(context: Context) {
-        if (!isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && !isPermissionGranted(context, WRITE_EXTERNAL_STORAGE)) {
             viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.WRITE_STORAGE_PERMISSION) }
         } else {
             if (isPermissionGranted(context, CAMERA)) {
@@ -81,10 +81,26 @@ class ChangePhotoViewModel(
     }
 
     private fun askToGetFromGallery(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE))
+            askSdkUnderTiramisu(context)
+        else
+            askSdkTiramisuAndAbove(context)
+    }
+
+    private fun askSdkTiramisuAndAbove(context: Context) {
+        if (isPermissionGranted(context, android.Manifest.permission.READ_MEDIA_IMAGES))
+            openGallery()
+        else
+            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.READ_MEDIA_IMAGES) }
+    }
+
+    private fun askSdkUnderTiramisu(context: Context) {
         if (isPermissionGranted(context, android.Manifest.permission.READ_EXTERNAL_STORAGE))
             openGallery()
         else
-            viewModelScope.launch { permissionMutableSharedFlow.emit(PermissionType.READ_STORAGE_PERMISSION) }
+            viewModelScope.launch {
+                permissionMutableSharedFlow.emit(PermissionType.READ_STORAGE_PERMISSION)
+            }
     }
 
     fun onPermissionResultReceive(permissionType: PermissionType, isGranted: Boolean, context: Context) {
@@ -93,6 +109,7 @@ class ChangePhotoViewModel(
                 PermissionType.WRITE_STORAGE_PERMISSION -> askToMakePhoto(context)
                 PermissionType.CAMERA_PERMISSION -> askToMakePhoto(context)
                 PermissionType.READ_STORAGE_PERMISSION -> askToGetFromGallery(context)
+                PermissionType.READ_MEDIA_IMAGES -> askToGetFromGallery(context)
             }
         } else {
             showMessage(permissionType.errorMessage)
