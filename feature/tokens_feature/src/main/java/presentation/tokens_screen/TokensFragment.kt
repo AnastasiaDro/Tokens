@@ -29,10 +29,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import presentation.tokens_screen.tokens_mvi_contract.CheckTokenEvent
-import presentation.tokens_screen.tokens_mvi_contract.ClearTokensEvent
-import presentation.tokens_screen.tokens_mvi_contract.GetTokensStateEvent
-import presentation.tokens_screen.tokens_mvi_contract.UncheckTokenEvent
+import presentation.tokens_screen.mvi_contracts.InitEvent
+import presentation.tokens_screen.mvi_contracts.reinforcement_image_mvi_contract.GetReinforcementStateEvent
+import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.CheckTokenEvent
+import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.ClearTokensEvent
+import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.UncheckTokenEvent
 
 /**
  * [TokensFragment] - a fragment for tokens displaying
@@ -58,25 +59,20 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()
 
-
-
         subscribeToNavigationResultLiveData()
-
 
         viewBinding.reinforcementImageCardView.setOnClickListener {
             goToImageSelecting()
         }
         viewArray = getTokenViewsList()
         subscribeToViewModel(viewArray)
-        viewModel.sendTokensEvent(GetTokensStateEvent())
-        viewModel.initData()
+        viewModel.sendEvent(InitEvent())
 
         view.setOnTouchListener { v, event ->
-            if (swipeParser.onSwipeHorizontal(v, event)) viewModel.sendTokensEvent(ClearTokensEvent())
+            if (swipeParser.onSwipeHorizontal(v, event)) viewModel.sendEvent(ClearTokensEvent())
             if (event.action == MotionEvent.ACTION_UP) v.performClick()
             return@setOnTouchListener true
         }
@@ -138,31 +134,28 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         }
         val imageResult = getNavigationResultLiveData<Boolean>(IS_IMAGE_SET_RESULT)
         imageResult?.observe(viewLifecycleOwner) { res ->
-            if (res) viewModel.askReinforcementImage()
+            if (res) viewModel.sendEvent(GetReinforcementStateEvent())
         }
     }
 
     private fun subscribeToViewModel(viewList: List<TokenView>) {
         with(viewModel) {
-           subscribeToHotFlow(Lifecycle.State.CREATED, viewModel.tokensStateFlow) { tokensState ->
+           subscribeToHotFlow(Lifecycle.State.CREATED, tokensStateFlow) { tokensState ->
                showTokens(viewList, tokensState.tokens)
            }
 
-            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.winEffectsFlow) { effectsState ->
+            subscribeToHotFlow(Lifecycle.State.STARTED, winEffectsFlow) { effectsState ->
                 if (effectsState.isSoundPlaying) soundPlayer?.start()
                 if (effectsState.isAnimationRunning) playAnimation() else pauseAnimation()
             }
 
-            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.navigateToSettingsFlow) {
+            subscribeToHotFlow(Lifecycle.State.STARTED, navigateToSettingsFlow) {
                 findNavController().navigate(R.id.action_tokensFragment_to_settingsFragment)
             }
 
-            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.isReinforcementFlow) { isVisible ->
-                viewBinding.reinforcementImageCardView.isVisible = isVisible
-            }
-
-            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.getReinforcementImageStateFlow) { uri ->
-                viewBinding.reinforcementImage.setPhotoImage(uri, com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+            subscribeToHotFlow(Lifecycle.State.STARTED, reinforcementStateFlow) { state ->
+                viewBinding.reinforcementImageCardView.isVisible = state.isReinforcementShow
+                viewBinding.reinforcementImage.setPhotoImage(state.reinforcementImageUri, com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
             }
         }
         logger.d("subscribed to viewModel")
@@ -218,9 +211,9 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     private fun onTokenClick(index: Int) {
         logger.d("token $index was clicked")
         if (viewArray[index].getIsChecked())
-            viewModel.sendTokensEvent(UncheckTokenEvent(index))
+            viewModel.sendEvent(UncheckTokenEvent(index))
         else
-            viewModel.sendTokensEvent(CheckTokenEvent(index))
+            viewModel.sendEvent(CheckTokenEvent(index))
     }
 
     override fun getTokensNumberAlertNavAction(

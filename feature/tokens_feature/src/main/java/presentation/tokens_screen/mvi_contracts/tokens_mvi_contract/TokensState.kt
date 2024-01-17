@@ -1,4 +1,4 @@
-package presentation.tokens_screen.tokens_mvi_contract
+package presentation.tokens_screen.mvi_contracts.tokens_mvi_contract
 
 import domain.models.Token
 
