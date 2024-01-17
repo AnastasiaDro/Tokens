@@ -67,6 +67,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         }
 
         viewModel.initData()
+        showTokens(viewArray)
         view.setOnTouchListener { v, event ->
             if (swipeParser.onSwipeHorizontal(v, event)) viewModel.clearTokens()
             if (event.action == MotionEvent.ACTION_UP) v.performClick()
@@ -88,7 +89,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         findNavController().navigate(request)
     }
 
-    private fun getTokensList() = with(viewBinding) {
+    private fun getTokensList(): List<TokenView> = with(viewBinding) {
         listOf(
             firstRow.tokenButton1,
             firstRow.tokenButton2,
@@ -151,7 +152,6 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
     private fun subscribeToViewModel(viewList: List<TokenView>) {
         with(viewModel) {
-            prefsLoadedLiveData.observe(viewLifecycleOwner) { if (it == true) showTokens(viewList) }
             selectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setChecked() }
             unselectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setUnchecked() }
             changedTokensNumLiveData.observe(viewLifecycleOwner) { showTokens(viewList) }

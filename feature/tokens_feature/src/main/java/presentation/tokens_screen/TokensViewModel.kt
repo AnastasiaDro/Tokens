@@ -99,9 +99,6 @@ class TokensViewModel(
 
     fun initData() {
         viewModelScope.launch {
-            prefsLoadedMutableLiveData.postValue(true)
-        }
-        viewModelScope.launch {
             getIsReinforcementShowFlow.emit(getIsReinforcementShowUseCase.execute())
         }
         viewModelScope.launch {
