@@ -23,12 +23,17 @@ import domain.usecases.tokens.GetMinTokensNumberUseCase
 import domain.usecases.tokens.GetTokensNumberUseCase
 import domain.usecases.tokens.UncheckTokenUseCase
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import presentation.tokens_screen.events.CheckTokenEvent
+import presentation.tokens_screen.events.ClearTokensEvent
+import presentation.tokens_screen.events.GetTokensStateEvent
+import presentation.tokens_screen.events.TokensEvent
+import presentation.tokens_screen.events.UncheckTokenEvent
+import presentation.tokens_screen.states.TokensState
 
 /**
  * [TokensViewModel] - a view model for
@@ -64,30 +69,22 @@ class TokensViewModel(
     private var isAnimationRunning = false
     private var isSoundPlaying = false
 
-    private val prefsLoadedMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
-    val prefsLoadedLiveData: LiveData<Boolean> = prefsLoadedMutableLiveData
+    /** Tokens **/
 
-    private val selectedMutableLiveData: MutableLiveData<Int> = MutableLiveData(0)
-    val selectedLiveData: LiveData<Int> = selectedMutableLiveData
-
-    private val unselectedMutableLiveData: MutableLiveData<Int> = MutableLiveData(0)
-    val unselectedLiveData: LiveData<Int> = unselectedMutableLiveData
-
-    private val changeCheckedNumMutableLiveData: MutableLiveData<Int> = MutableLiveData(0)
-    val changeCheckedTokensNumLiveData: LiveData<Int> = changeCheckedNumMutableLiveData
-
-    private val changedTokensNumMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
-    val changedTokensNumLiveData: LiveData<Boolean> = changedTokensNumMutableLiveData
+    private val tokensStateSharedFlow: MutableSharedFlow<TokensState> = MutableSharedFlow()
+    val tokensStateFlow: MutableSharedFlow<TokensState> = tokensStateSharedFlow
 
     private val navigateToSettingsMutableFlow: MutableSharedFlow<Boolean> = MutableSharedFlow()
     val navigateToSettingsFlow = navigateToSettingsMutableFlow.asSharedFlow()
 
+    /** Animation and sound **/
     private val animationMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val animationLiveData: LiveData<Boolean> = animationMutableLiveData
 
     private val soundMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val soundLiveData: LiveData<Boolean> = soundMutableLiveData
 
+    /** Reinforcement **/
     private val getIsReinforcementShowFlow = MutableStateFlow(getIsReinforcementShowUseCase.execute())
     val isReinforcementFlow: StateFlow<Boolean> = getIsReinforcementShowFlow
 
@@ -95,8 +92,7 @@ class TokensViewModel(
     val getReinforcementImageStateFlow: StateFlow<Uri?> = getReinforcementImageMutableFlow
     fun getTokensNum() = getTokensNumberUseCase.execute()
 
-    fun getTokens(): Flow<Token> = getAllTokensUseCase.execute()
-
+    private fun getTokensList(): List<Token> = getAllTokensUseCase.execute()
     fun initData() {
         viewModelScope.launch {
             getIsReinforcementShowFlow.emit(getIsReinforcementShowUseCase.execute())
@@ -107,7 +103,7 @@ class TokensViewModel(
     }
 
     fun updateTokensNum() {
-        changedTokensNumMutableLiveData.postValue(true)
+        viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
     }
 
     fun askReinforcementImage() {
@@ -119,7 +115,7 @@ class TokensViewModel(
 
     fun clearTokens() {
         clearAllTokensUseCase.execute()
-        changeCheckedNumMutableLiveData.postValue(1)
+        viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
     }
 
     fun getMinTokensNum() = getMinTokensNumberUseCase.execute()
@@ -131,9 +127,20 @@ class TokensViewModel(
         }
     }
 
-    fun onTokenSelected(tokenIndex: Int) {
-            if (checkTokenUseCase.execute(tokenIndex))
-                viewModelScope.launch { selectedMutableLiveData.postValue(tokenIndex) }
+    fun sendTokensEvent(event: TokensEvent) {
+        when(event) {
+            is CheckTokenEvent -> onTokenSelected(event.index)
+            is UncheckTokenEvent -> onTokenUnselected(event.index)
+            is GetTokensStateEvent -> viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
+            is ClearTokensEvent -> clearTokens()
+        }
+    }
+    private fun onTokenSelected(tokenIndex: Int) {
+
+            if (checkTokenUseCase.execute(tokenIndex)) {
+                viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
+            }
+
             if (checkTokensAreGrappedUseCase.execute()) {
                 if (!isAnimationRunning && isWinAnimationOnUseCase.execute()) {
                     viewModelScope.launch {
@@ -158,8 +165,8 @@ class TokensViewModel(
             }
     }
 
-    fun onTokenUnselected(tokenIndex: Int) {
+    private fun onTokenUnselected(tokenIndex: Int) {
         if (uncheckTokenUseCase.execute(tokenIndex))
-            viewModelScope.launch { unselectedMutableLiveData.postValue(tokenIndex) }
+            viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
     }
 }
