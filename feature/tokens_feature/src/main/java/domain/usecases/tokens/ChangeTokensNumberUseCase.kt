@@ -25,18 +25,6 @@ class ChangeTokensNumberUseCase(private val tokensRepository: TokensRepository) 
             recheck(currentNumber, newNumber)
         else
             uncheck(currentNumber, newNumber)
-//        val lastIndexOld = currentNumber - 1
-//        var step = 0
-//
-//        for (i in lastIndexOld downTo  newNumber) {
-//            if (tokensRepository.getTokenById(i).isChecked) {
-//                tokensRepository.uncheckToken(i)
-//
-//                while (step < tokensRepository.getMaxTokensNumber() && tokensRepository.getTokenById(step).isChecked)
-//                    step++
-//                tokensRepository.checkToken(step)
-//            }
-//        }
         tokensRepository.removeTokens(currentNumber - newNumber)
     }
 
