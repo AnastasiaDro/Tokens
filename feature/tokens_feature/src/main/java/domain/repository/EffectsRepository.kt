@@ -12,5 +12,5 @@ interface EffectsRepository {
 
     fun plugWinSoundOff()
 
-    fun getWinEffects(): domain.models.WinEffects
+    fun getWinEffects(): WinEffects
 }

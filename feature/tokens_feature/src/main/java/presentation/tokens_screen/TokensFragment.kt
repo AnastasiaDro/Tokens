@@ -58,18 +58,21 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()
-        viewArray = getTokenViewsList()
+
 
 
         subscribeToNavigationResultLiveData()
-        subscribeToViewModel(viewArray)
-        viewModel.sendTokensEvent(GetTokensStateEvent())
+
+
         viewBinding.reinforcementImageCardView.setOnClickListener {
             goToImageSelecting()
         }
-
+        viewArray = getTokenViewsList()
+        subscribeToViewModel(viewArray)
+        viewModel.sendTokensEvent(GetTokensStateEvent())
         viewModel.initData()
 
         view.setOnTouchListener { v, event ->
@@ -109,26 +112,6 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         )
     }
 
-//    private fun showTokens(viewList: List<TokenView>) {
-//        lifecycleScope.launch {
-//            var i = 0
-//            viewModel.getTokens().collectIndexed { index, token ->
-//                viewList[index].visibility = View.VISIBLE
-//                viewList[index].setCheckedColor(token.checkedColor)
-//                if (token.isChecked) {
-//                    viewList[index].setChecked()
-//                } else
-//                    viewList[index].setUnchecked()
-//                viewList[index].setOnClickListener { onTokenClick(index) }
-//                i = index + 1
-//            }
-//            logger.d("$i tokens were initialized as visible")
-//            for (t in i until viewList.size)
-//                viewList[t].isVisible = false
-//        }
-//        logger.d("All tokens were initialized")
-//    }
-
     private fun showTokens(viewList: List<TokenView>, tokensList: List<Token>) {
         var i = 0
         for (index in tokensList.indices) {
@@ -147,19 +130,6 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         logger.d("All tokens were initialized")
     }
 
-//    private fun refreshTokens(viewList: List<TokenView>) {
-//        lifecycleScope.launch {
-//            viewModel.getTokens().collectIndexed { index, token ->
-//                viewList[index].setCheckedColor(token.checkedColor)
-//                if (token.isChecked) {
-//                    viewList[index].setChecked()
-//                } else
-//                    viewList[index].setUnchecked()
-//            }
-//            logger.d("Tokens are refreshed")
-//        }
-//    }
-
     override fun subscribeToNavigationResultLiveData() {
         val result = getNavigationResultLiveData<Int>(CURRENT_TOKENS_NUMBER_RESULT_KEY)
         result?.observe(viewLifecycleOwner) { newNum ->
@@ -174,20 +144,13 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
     private fun subscribeToViewModel(viewList: List<TokenView>) {
         with(viewModel) {
-//            selectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setChecked() }
-//            unselectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setUnchecked() }
            subscribeToHotFlow(Lifecycle.State.CREATED, viewModel.tokensStateFlow) { tokensState ->
                showTokens(viewList, tokensState.tokens)
            }
 
-            //changedTokensNumLiveData.observe(viewLifecycleOwner) { showTokens(viewList) }
-            //changeCheckedTokensNumLiveData.observe(viewLifecycleOwner) { refreshTokens(viewList) }
-
-            animationLiveData.observe(viewLifecycleOwner) { animate ->
-                if (animate) playAnimation() else pauseAnimation()
-            }
-            soundLiveData.observe(viewLifecycleOwner) { sound ->
-                if (sound) soundPlayer?.start()
+            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.winEffectsFlow) { effectsState ->
+                if (effectsState.isSoundPlaying) soundPlayer?.start()
+                if (effectsState.isAnimationRunning) playAnimation() else pauseAnimation()
             }
 
             subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.navigateToSettingsFlow) {

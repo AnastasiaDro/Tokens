@@ -2,18 +2,14 @@ package presentation.tokens_screen
 
 import android.net.Uri
 import androidx.core.net.toUri
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import domain.models.Token
-import domain.usecases.effects.GetAnimationRepeatTimesUseCase
 import domain.usecases.effects.GetEffectsDurationUseCase
 import domain.usecases.effects.IsWinAnimationOnUseCase
 import domain.usecases.effects.IsWinSoundOnUseCase
 import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
 import domain.usecases.reinforcement.GetReinforcementUriStringUseCase
-import domain.usecases.tokens.ChangeTokensNumberUseCase
 import domain.usecases.tokens.CheckTokenUseCase
 import domain.usecases.tokens.CheckTokensAreGrappedUseCase
 import domain.usecases.tokens.ClearAllTokensUseCase
@@ -25,6 +21,7 @@ import domain.usecases.tokens.UncheckTokenUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -32,8 +29,9 @@ import presentation.tokens_screen.tokens_mvi_contract.CheckTokenEvent
 import presentation.tokens_screen.tokens_mvi_contract.ClearTokensEvent
 import presentation.tokens_screen.tokens_mvi_contract.GetTokensStateEvent
 import presentation.tokens_screen.tokens_mvi_contract.TokensEvent
-import presentation.tokens_screen.tokens_mvi_contract.UncheckTokenEvent
 import presentation.tokens_screen.tokens_mvi_contract.TokensState
+import presentation.tokens_screen.tokens_mvi_contract.UncheckTokenEvent
+import presentation.tokens_screen.win_effects_mvi_contract.WinEffectsState
 
 /**
  * [TokensViewModel] - a view model for
@@ -59,7 +57,6 @@ class TokensViewModel(
     private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
     private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
     private val getEffectsDurationUseCase: GetEffectsDurationUseCase,
-    private val getAnimationRepeatTimesUseCase: GetAnimationRepeatTimesUseCase,
 
     private val getIsReinforcementShowUseCase: GetIsReinforcementShowUseCase,
     private val getReinforcementUriStringUseCase: GetReinforcementUriStringUseCase
@@ -69,19 +66,17 @@ class TokensViewModel(
     private var isSoundPlaying = false
 
     /** Tokens **/
-
     private val tokensStateSharedFlow: MutableSharedFlow<TokensState> = MutableSharedFlow()
-    val tokensStateFlow: MutableSharedFlow<TokensState> = tokensStateSharedFlow
+    val tokensStateFlow: SharedFlow<TokensState> = tokensStateSharedFlow
+
+    /** Animation and sound **/
+    private val winEffectsStateSharedFlow: MutableSharedFlow<WinEffectsState> = MutableSharedFlow()
+    val winEffectsFlow: SharedFlow<WinEffectsState> = winEffectsStateSharedFlow
 
     private val navigateToSettingsMutableFlow: MutableSharedFlow<Boolean> = MutableSharedFlow()
     val navigateToSettingsFlow = navigateToSettingsMutableFlow.asSharedFlow()
 
-    /** Animation and sound **/
-    private val animationMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
-    val animationLiveData: LiveData<Boolean> = animationMutableLiveData
 
-    private val soundMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
-    val soundLiveData: LiveData<Boolean> = soundMutableLiveData
 
     /** Reinforcement **/
     private val getIsReinforcementShowFlow = MutableStateFlow(getIsReinforcementShowUseCase.execute())
@@ -134,36 +129,36 @@ class TokensViewModel(
             is ClearTokensEvent -> clearTokens()
         }
     }
+
     private fun onTokenSelected(tokenIndex: Int) {
 
-            if (checkTokenUseCase.execute(tokenIndex)) {
-                viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
-            }
+        if (checkTokenUseCase.execute(tokenIndex)) {
+            viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
+        }
 
-            if (checkTokensAreGrappedUseCase.execute()) {
-                if (!isAnimationRunning && isWinAnimationOnUseCase.execute()) {
-                    viewModelScope.launch {
-                        isAnimationRunning = true
-                        for (i in 0 until getAnimationRepeatTimesUseCase.execute()) {
-                            animationMutableLiveData.postValue(true)
-                            delay(getEffectsDurationUseCase.execute())
-                        }
-                        animationMutableLiveData.postValue(false)
-                        isAnimationRunning = false
-                    }
-                }
-                if (!isSoundPlaying && isWinSoundOnUseCase.execute()) {
-                    viewModelScope.launch {
-                        isSoundPlaying = true
-                        soundMutableLiveData.postValue(true)
-                        delay(getEffectsDurationUseCase.execute())
-                        soundMutableLiveData.postValue(false)
+        if (checkTokensAreGrappedUseCase.execute()) {
+            viewModelScope.launch {
+                winEffectsStateSharedFlow.emit(
+                    WinEffectsState(
+                        isAnimationRunning = !isAnimationRunning && isWinAnimationOnUseCase.execute(),
+                        isSoundPlaying = !isSoundPlaying && isWinSoundOnUseCase.execute()
+                    )
+                )
+                isAnimationRunning = true
+                isSoundPlaying = true
+
+                delay(getEffectsDurationUseCase.execute())
+                winEffectsStateSharedFlow.emit(
+                    WinEffectsState(
+                        isAnimationRunning = false,
                         isSoundPlaying = false
-                    }
-                }
+                    )
+                )
+                isAnimationRunning = false
+                isSoundPlaying = false
             }
+        }
     }
-
     private fun onTokenUnselected(tokenIndex: Int) {
         if (uncheckTokenUseCase.execute(tokenIndex))
             viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
