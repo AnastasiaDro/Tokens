@@ -8,10 +8,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.net.toFile
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.setNavigationResult
+import com.cerebus.tokens.core.ui.setPhotoImage
 import com.cerebus.tokens.core.ui.showToast
 import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.logger.api.LoggerFactory
@@ -19,6 +21,7 @@ import com.cerebus.tokens.reinforcement_photo.R
 import com.cerebus.tokens.reinforcement_photo.databinding.DialogAskForReinforcementImageBinding
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.io.File
 
 /**
  * [AskForReinforcementImageDialog] - a dialog for selecting a new image of the reinforcement
@@ -112,10 +115,7 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
 
         /** Image Uri callback **/
         subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.photoUriStateFlow) { imageUri ->
-            imageUri?.let {
-                viewBinding.reinforcementImage.setImageURI(null)
-                viewBinding.reinforcementImage.setImageURI(imageUri)
-            }
+                viewBinding.reinforcementImage.setPhotoImage(imageUri, com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
         }
 
         /** Asking permissions **/

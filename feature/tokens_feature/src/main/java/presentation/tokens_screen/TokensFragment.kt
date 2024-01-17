@@ -20,6 +20,8 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.SwipeParser
 import com.cerebus.tokens.core.ui.SwipeParserImpl
 import com.cerebus.tokens.core.ui.getNavigationResultLiveData
+import com.cerebus.tokens.core.ui.setPhotoImage
+import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentTokensBinding
 import com.cerebus.tokens.logger.api.LoggerFactory
@@ -161,28 +163,17 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
             soundLiveData.observe(viewLifecycleOwner) { sound ->
                 if (sound) soundPlayer?.start()
             }
-            viewLifecycleOwner.lifecycleScope.launch {
-                repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    viewModel.navigateToSettingsFlow.collect {
-                        findNavController().navigate(R.id.action_tokensFragment_to_settingsFragment)
-                    }
-                }
+
+            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.navigateToSettingsFlow) {
+                findNavController().navigate(R.id.action_tokensFragment_to_settingsFragment)
             }
-            viewLifecycleOwner.lifecycleScope.launch {
-                repeatOnLifecycle((Lifecycle.State.STARTED)) {
-                    viewModel.isReinforcementFlow.collect { isVisible ->
-                        viewBinding.reinforcementImageCardView.isVisible = isVisible
-                    }
-                }
+
+            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.isReinforcementFlow) { isVisible ->
+                viewBinding.reinforcementImageCardView.isVisible = isVisible
             }
-            viewLifecycleOwner.lifecycleScope.launch {
-                repeatOnLifecycle((Lifecycle.State.STARTED)) {
-                    viewModel.getReinforcementImageStateFlow.collect { uri ->
-                        uri?.let {
-                            viewBinding.reinforcementImage.setImageURI(uri)
-                        }
-                    }
-                }
+
+            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.getReinforcementImageStateFlow) { uri ->
+                viewBinding.reinforcementImage.setPhotoImage(uri, com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
             }
         }
         logger.d("subscribed to viewModel")
