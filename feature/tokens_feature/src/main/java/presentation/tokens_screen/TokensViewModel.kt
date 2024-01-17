@@ -28,12 +28,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import presentation.tokens_screen.events.CheckTokenEvent
-import presentation.tokens_screen.events.ClearTokensEvent
-import presentation.tokens_screen.events.GetTokensStateEvent
-import presentation.tokens_screen.events.TokensEvent
-import presentation.tokens_screen.events.UncheckTokenEvent
-import presentation.tokens_screen.states.TokensState
+import presentation.tokens_screen.tokens_mvi_contract.CheckTokenEvent
+import presentation.tokens_screen.tokens_mvi_contract.ClearTokensEvent
+import presentation.tokens_screen.tokens_mvi_contract.GetTokensStateEvent
+import presentation.tokens_screen.tokens_mvi_contract.TokensEvent
+import presentation.tokens_screen.tokens_mvi_contract.UncheckTokenEvent
+import presentation.tokens_screen.tokens_mvi_contract.TokensState
 
 /**
  * [TokensViewModel] - a view model for
@@ -47,7 +47,6 @@ import presentation.tokens_screen.states.TokensState
  * @since 28.04.2023
  */
 class TokensViewModel(
-    private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
     private val clearAllTokensUseCase: ClearAllTokensUseCase,
     private val checkTokenUseCase: CheckTokenUseCase,
     private val uncheckTokenUseCase: UncheckTokenUseCase,

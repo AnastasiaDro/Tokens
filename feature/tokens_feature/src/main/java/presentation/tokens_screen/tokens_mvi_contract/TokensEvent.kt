@@ -1,4 +1,4 @@
-package presentation.tokens_screen.events
+package presentation.tokens_screen.tokens_mvi_contract
 
 import presentation.tokens_screen.TokensFragment
 import presentation.tokens_screen.TokensViewModel

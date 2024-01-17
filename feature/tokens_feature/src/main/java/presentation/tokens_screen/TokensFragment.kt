@@ -29,10 +29,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import presentation.tokens_screen.events.CheckTokenEvent
-import presentation.tokens_screen.events.ClearTokensEvent
-import presentation.tokens_screen.events.GetTokensStateEvent
-import presentation.tokens_screen.events.UncheckTokenEvent
+import presentation.tokens_screen.tokens_mvi_contract.CheckTokenEvent
+import presentation.tokens_screen.tokens_mvi_contract.ClearTokensEvent
+import presentation.tokens_screen.tokens_mvi_contract.GetTokensStateEvent
+import presentation.tokens_screen.tokens_mvi_contract.UncheckTokenEvent
 
 /**
  * [TokensFragment] - a fragment for tokens displaying
@@ -60,17 +60,18 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()
-        viewArray = getTokensList()
+        viewArray = getTokenViewsList()
+
 
         subscribeToNavigationResultLiveData()
         subscribeToViewModel(viewArray)
-
+        viewModel.sendTokensEvent(GetTokensStateEvent())
         viewBinding.reinforcementImageCardView.setOnClickListener {
             goToImageSelecting()
         }
 
         viewModel.initData()
-        viewModel.sendTokensEvent(GetTokensStateEvent())
+
         view.setOnTouchListener { v, event ->
             if (swipeParser.onSwipeHorizontal(v, event)) viewModel.sendTokensEvent(ClearTokensEvent())
             if (event.action == MotionEvent.ACTION_UP) v.performClick()
@@ -92,7 +93,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         findNavController().navigate(request)
     }
 
-    private fun getTokensList(): List<TokenView> = with(viewBinding) {
+    private fun getTokenViewsList(): List<TokenView> = with(viewBinding) {
         listOf(
             firstRow.tokenButton1,
             firstRow.tokenButton2,
@@ -175,7 +176,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         with(viewModel) {
 //            selectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setChecked() }
 //            unselectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setUnchecked() }
-           subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.tokensStateFlow) { tokensState ->
+           subscribeToHotFlow(Lifecycle.State.CREATED, viewModel.tokensStateFlow) { tokensState ->
                showTokens(viewList, tokensState.tokens)
            }
 
