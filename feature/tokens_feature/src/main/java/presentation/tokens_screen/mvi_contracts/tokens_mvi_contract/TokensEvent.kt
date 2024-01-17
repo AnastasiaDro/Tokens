@@ -11,6 +11,8 @@ import presentation.tokens_screen.mvi_contracts.Event
  *
  * @see TokensFragment
  * @see TokensViewModel
+ * @see TokensState
+ * @see Event
  *
  * @author Anastasia Drogunova
  * @since 17.01.2024

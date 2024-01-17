@@ -44,12 +44,16 @@ import presentation.tokens_screen.mvi_contracts.win_effects_mvi_contract.WinEffe
  * It communicates with domain layer and helps to set
  * tokens views displaying
  *
+ * Uses custom MVI-like communication with a [TokensFragment]
+ *
  * @see TokensFragment
+ * @see Event
  *
  * @author Anastasia Drogunova
  * @since 28.04.2023
  */
 class TokensViewModel(
+    /** Tokens **/
     private val clearAllTokensUseCase: ClearAllTokensUseCase,
     private val checkTokenUseCase: CheckTokenUseCase,
     private val uncheckTokenUseCase: UncheckTokenUseCase,
@@ -59,15 +63,15 @@ class TokensViewModel(
     private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
     private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
 
+    /** Animation and sound **/
     private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
     private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
     private val getEffectsDurationUseCase: GetEffectsDurationUseCase,
 
+    /** Reinforcement **/
     private val getIsReinforcementShowUseCase: GetIsReinforcementShowUseCase,
     private val getReinforcementUriStringUseCase: GetReinforcementUriStringUseCase
     ) : ViewModel() {
-
-
 
     /** Tokens **/
     private val tokensStateSharedFlow: MutableSharedFlow<TokensState> = MutableSharedFlow()
@@ -82,8 +86,6 @@ class TokensViewModel(
     /** Navigation **/
     private val navigateToSettingsMutableFlow: MutableSharedFlow<Boolean> = MutableSharedFlow()
     val navigateToSettingsFlow = navigateToSettingsMutableFlow.asSharedFlow()
-
-
 
     /** Reinforcement **/
     private val reinforcementMutableStateFlow: MutableStateFlow<ReinforcementState> = MutableStateFlow(
@@ -137,7 +139,6 @@ class TokensViewModel(
             is CommonEvent -> parseCommonEvent(event)
         }
     }
-
     private fun parseTokensEvent(event: TokensEvent) {
         when(event) {
             is CheckTokenEvent -> onTokenSelected(event.index)
@@ -146,7 +147,6 @@ class TokensViewModel(
             is ClearTokensEvent -> clearTokens()
         }
     }
-
     private fun parseReinforcementEvent(event: ReinforcementEvent) {
         when(event) {
             is GetReinforcementStateEvent -> sendReinforcementState()
@@ -164,9 +164,8 @@ class TokensViewModel(
 
     private fun onTokenSelected(tokenIndex: Int) {
 
-        if (checkTokenUseCase.execute(tokenIndex)) {
+        if (checkTokenUseCase.execute(tokenIndex))
             viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
-        }
 
         if (checkTokensAreGrappedUseCase.execute()) {
             viewModelScope.launch {
@@ -181,10 +180,7 @@ class TokensViewModel(
 
                 delay(getEffectsDurationUseCase.execute())
                 winEffectsStateSharedFlow.emit(
-                    WinEffectsState(
-                        isAnimationRunning = false,
-                        isSoundPlaying = false
-                    )
+                    WinEffectsState(isAnimationRunning = false, isSoundPlaying = false)
                 )
                 isAnimationRunning = false
                 isSoundPlaying = false

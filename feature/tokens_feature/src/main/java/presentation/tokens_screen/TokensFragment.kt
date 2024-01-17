@@ -200,7 +200,6 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
                     )
                 )
             }
-
             R.id.clearTokens -> viewModel.clearTokens()
             R.id.appSettings -> viewModel.onSettingsPressed()
         }
