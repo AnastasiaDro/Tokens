@@ -7,6 +7,9 @@ interface TokensRepository {
 
     fun getAllTokens(): Flow<Token>
 
+    //tmp
+    fun getTokensList(): List<Token>
+
     fun getTokenById(id: Int): Token
 
     fun removeTokens(number: Int)

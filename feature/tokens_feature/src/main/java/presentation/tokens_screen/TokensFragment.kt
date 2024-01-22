@@ -1,7 +1,7 @@
 package presentation.tokens_screen
 
-import SelectTokensNumberAlertData
-import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import presentation.SelectTokensNumberAlertData
+import presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.MenuItem
@@ -12,7 +12,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDeepLinkRequest
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
@@ -25,11 +24,16 @@ import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentTokensBinding
 import com.cerebus.tokens.logger.api.LoggerFactory
+import domain.models.Token
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import presentation.tokens_screen.mvi_contracts.InitEvent
+import presentation.tokens_screen.mvi_contracts.reinforcement_image_mvi_contract.GetReinforcementStateEvent
+import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.CheckTokenEvent
+import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.ClearTokensEvent
+import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.UncheckTokenEvent
 
 /**
  * [TokensFragment] - a fragment for tokens displaying
@@ -57,18 +61,18 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()
-        viewArray = getTokensList()
 
         subscribeToNavigationResultLiveData()
-        subscribeToViewModel(viewArray)
 
         viewBinding.reinforcementImageCardView.setOnClickListener {
             goToImageSelecting()
         }
+        viewArray = getTokenViewsList()
+        subscribeToViewModel(viewArray)
+        viewModel.sendEvent(InitEvent())
 
-        viewModel.initData()
         view.setOnTouchListener { v, event ->
-            if (swipeParser.onSwipeHorizontal(v, event)) viewModel.clearTokens()
+            if (swipeParser.onSwipeHorizontal(v, event)) viewModel.sendEvent(ClearTokensEvent())
             if (event.action == MotionEvent.ACTION_UP) v.performClick()
             return@setOnTouchListener true
         }
@@ -88,7 +92,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         findNavController().navigate(request)
     }
 
-    private fun getTokensList() = with(viewBinding) {
+    private fun getTokenViewsList(): List<TokenView> = with(viewBinding) {
         listOf(
             firstRow.tokenButton1,
             firstRow.tokenButton2,
@@ -104,37 +108,22 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         )
     }
 
-    private fun showTokens(viewList: List<TokenView>) {
-        lifecycleScope.launch {
-            var i = 0
-            viewModel.getTokens().collectIndexed { index, token ->
-                viewList[index].visibility = View.VISIBLE
-                viewList[index].setCheckedColor(token.checkedColor)
-                if (token.isChecked) {
-                    viewList[index].setChecked()
-                } else
-                    viewList[index].setUnchecked()
-                viewList[index].setOnClickListener { onTokenClick(index) }
-                i = index + 1
-            }
-            logger.d("$i tokens were initialized as visible")
-            for (t in i until viewList.size)
-                viewList[t].isVisible = false
+    private fun showTokens(viewList: List<TokenView>, tokensList: List<Token>) {
+        var i = 0
+        for (index in tokensList.indices) {
+            viewList[index].visibility = View.VISIBLE
+            if (viewList[index].getCheckedColor() != tokensList[index].checkedColor)
+                viewList[index].setCheckedColor(tokensList[index].checkedColor)
+            if (tokensList[index].isChecked)
+                viewList[index].setChecked()
+            else
+                viewList[index].setUnchecked()
+            viewList[index].setOnClickListener { onTokenClick(index) }
+            i = index + 1
         }
+        for (t in i until viewList.size)
+            viewList[t].isVisible = false
         logger.d("All tokens were initialized")
-    }
-
-    private fun refreshTokens(viewList: List<TokenView>) {
-        lifecycleScope.launch {
-            viewModel.getTokens().collectIndexed { index, token ->
-                viewList[index].setCheckedColor(token.checkedColor)
-                if (token.isChecked) {
-                    viewList[index].setChecked()
-                } else
-                    viewList[index].setUnchecked()
-            }
-            logger.d("Tokens are refreshed")
-        }
     }
 
     override fun subscribeToNavigationResultLiveData() {
@@ -145,35 +134,28 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         }
         val imageResult = getNavigationResultLiveData<Boolean>(IS_IMAGE_SET_RESULT)
         imageResult?.observe(viewLifecycleOwner) { res ->
-            if (res) viewModel.askReinforcementImage()
+            if (res) viewModel.sendEvent(GetReinforcementStateEvent())
         }
     }
 
     private fun subscribeToViewModel(viewList: List<TokenView>) {
         with(viewModel) {
-            prefsLoadedLiveData.observe(viewLifecycleOwner) { if (it == true) showTokens(viewList) }
-            selectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setChecked() }
-            unselectedLiveData.observe(viewLifecycleOwner) { index -> viewList[index].setUnchecked() }
-            changedTokensNumLiveData.observe(viewLifecycleOwner) { showTokens(viewList) }
-            changeCheckedTokensNumLiveData.observe(viewLifecycleOwner) { refreshTokens(viewList) }
+           subscribeToHotFlow(Lifecycle.State.CREATED, tokensStateFlow) { tokensState ->
+               showTokens(viewList, tokensState.tokens)
+           }
 
-            animationLiveData.observe(viewLifecycleOwner) { animate ->
-                if (animate) playAnimation() else pauseAnimation()
-            }
-            soundLiveData.observe(viewLifecycleOwner) { sound ->
-                if (sound) soundPlayer?.start()
+            subscribeToHotFlow(Lifecycle.State.STARTED, winEffectsFlow) { effectsState ->
+                if (effectsState.isSoundPlaying) soundPlayer?.start()
+                if (effectsState.isAnimationRunning) playAnimation() else pauseAnimation()
             }
 
-            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.navigateToSettingsFlow) {
+            subscribeToHotFlow(Lifecycle.State.STARTED, navigateToSettingsFlow) {
                 findNavController().navigate(R.id.action_tokensFragment_to_settingsFragment)
             }
 
-            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.isReinforcementFlow) { isVisible ->
-                viewBinding.reinforcementImageCardView.isVisible = isVisible
-            }
-
-            subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.getReinforcementImageStateFlow) { uri ->
-                viewBinding.reinforcementImage.setPhotoImage(uri, com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+            subscribeToHotFlow(Lifecycle.State.STARTED, reinforcementStateFlow) { state ->
+                viewBinding.reinforcementImageCardView.isVisible = state.isReinforcementShow
+                viewBinding.reinforcementImage.setPhotoImage(state.reinforcementImageUri, com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
             }
         }
         logger.d("subscribed to viewModel")
@@ -218,7 +200,6 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
                     )
                 )
             }
-
             R.id.clearTokens -> viewModel.clearTokens()
             R.id.appSettings -> viewModel.onSettingsPressed()
         }
@@ -228,9 +209,10 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
     private fun onTokenClick(index: Int) {
         logger.d("token $index was clicked")
-        if (viewArray[index].getIsChecked()) viewModel.onTokenUnselected(index) else viewModel.onTokenSelected(
-            index
-        )
+        if (viewArray[index].getIsChecked())
+            viewModel.sendEvent(UncheckTokenEvent(index))
+        else
+            viewModel.sendEvent(CheckTokenEvent(index))
     }
 
     override fun getTokensNumberAlertNavAction(

@@ -40,7 +40,7 @@
         tools:layout="@layout/alert_select_tokens_number">
         <argument
             android:name="tokensNumberData"
-            app:argType="SelectTokensNumberAlertData" />
+            app:argType="presentation.SelectTokensNumberAlertData" />
     </dialog>
     <dialog
         android:id="@+id/selectColorDialogFragment"

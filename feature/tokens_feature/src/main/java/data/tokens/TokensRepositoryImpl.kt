@@ -17,6 +17,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     }
 
     override fun getAllTokens(): Flow<Token> = tokensList.asFlow()
+    override fun getTokensList(): List<Token> = tokensList
 
     override fun getTokenById(id: Int) = tokensList[id]
     override fun createTokens(number: Int) {

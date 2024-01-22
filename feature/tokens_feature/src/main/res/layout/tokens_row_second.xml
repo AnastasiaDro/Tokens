@@ -15,6 +15,7 @@
     <presentation.tokens_screen.TokenView
         android:id="@+id/tokenButton1"
         style="@style/TokenViewStyle"
+        android:visibility="gone"
         android:contentDescription="token1"
         tools:visibility="visible"/>
 
