@@ -1,7 +1,7 @@
 package presentation.tokens_screen
 
-import SelectTokensNumberAlertData
-import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import presentation.SelectTokensNumberAlertData
+import presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.MenuItem

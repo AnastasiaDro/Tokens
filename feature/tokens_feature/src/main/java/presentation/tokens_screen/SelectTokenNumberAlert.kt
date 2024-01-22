@@ -1,6 +1,5 @@
 package presentation.tokens_screen
 
-import SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -11,6 +10,7 @@ import com.cerebus.tokens.core.ui.setNavigationResult
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.AlertSelectTokensNumberBinding
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import presentation.settings_screen.SettingsFragment
 
 /**
