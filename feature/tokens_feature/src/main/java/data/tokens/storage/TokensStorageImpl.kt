@@ -17,7 +17,7 @@ class TokensStorageImpl(context: Context, loggerFactory: LoggerFactory) : Tokens
     private val prefs =  context.getSharedPreferences(TOKENS_PREFERENCES, Context.MODE_PRIVATE)
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
     override fun getTokensNumber(): Int {
-       return prefs.getInt(TOKENS_NUMBER, 1)
+       return prefs.getInt(TOKENS_NUMBER, DEFAULT_TOKENS_NUMBER)
     }
 
     override fun saveTokensNumber(num: Int) {
@@ -49,6 +49,7 @@ class TokensStorageImpl(context: Context, loggerFactory: LoggerFactory) : Tokens
         const val CHECKED_TOKENS_NUMBER = "CheckedTokensNumber"
         const val CHECKED_TOKENS_COLOR = "CheckedTokensColor"
 
+        private const val DEFAULT_TOKENS_NUMBER = 5
         private const val defaultColor = -12517557  /** light green **/
         const val TOKENS_PREFERENCES = "TokensPreferences"
     }
