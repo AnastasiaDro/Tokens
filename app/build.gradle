@@ -7,14 +7,14 @@ plugins {
 
 android {
     namespace 'com.cerebus.tokens'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.cerebus.tokens_new"
         minSdk 28
-        targetSdk 34
-        versionCode 3
-        versionName "2"
+        targetSdk 36
+        versionCode 4
+        versionName "2.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
