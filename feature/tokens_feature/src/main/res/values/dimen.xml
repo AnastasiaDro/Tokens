@@ -10,7 +10,7 @@
     <dimen name="image_me_margin">16dp</dimen>
 
     <!-- settings fragment -->
-    <dimen name="divider_padding">12dp</dimen>
+    <dimen name="divider_padding">16dp</dimen>
     <dimen name="app_settings_padding">20dp</dimen>
     <dimen name="about_app_margin">8dp</dimen>
     <dimen name="app_settings_padding_top">12dp</dimen>
@@ -18,9 +18,11 @@
     <dimen name="button_min_height">32dp</dimen>
     <dimen name="photo_card_margin">8dp</dimen>
 
-    <dimen name="settings_item_margin">8dp</dimen>
+    <dimen name="settings_item_padding">8dp</dimen>
     <dimen name="settings_header_margin">16dp</dimen>
     <dimen name="header_padding">4dp</dimen>
+
+    <dimen name="vertical_padding">8dp</dimen>
 
     <!-- select color dialog -->
     <dimen name="dialog_padding">20dp</dimen>

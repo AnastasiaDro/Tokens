@@ -35,8 +35,9 @@
         <FrameLayout
             android:id="@+id/tokens_number"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_min_height"
-            android:layout_margin="@dimen/settings_item_margin">
+            android:layout_height="wrap_content"
+            android:padding="@dimen/settings_item_padding"
+            android:clipToPadding="false">
 
             <androidx.appcompat.widget.AppCompatTextView
                 style="@style/SettingsText"
@@ -69,8 +70,9 @@
         <FrameLayout
             android:id="@+id/tokens_color"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_min_height"
-            android:layout_margin="@dimen/settings_item_margin">
+            android:layout_height="wrap_content"
+            android:padding="@dimen/settings_item_padding"
+            android:clipToPadding="false">
 
             <androidx.appcompat.widget.AppCompatTextView
                 style="@style/SettingsText"
@@ -101,8 +103,8 @@
         <FrameLayout
             android:id="@+id/animation"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_min_height"
-            android:layout_margin="@dimen/settings_item_margin">
+            android:layout_height="wrap_content"
+            android:padding="@dimen/settings_item_padding">
 
             <androidx.appcompat.widget.AppCompatTextView
                 style="@style/SettingsText"
@@ -112,7 +114,7 @@
                 android:gravity="center"
                 android:text="@string/settings_animation" />
 
-            <androidx.appcompat.widget.SwitchCompat
+            <presentation.settings_screen.CustomStyledSwitch
                 android:id="@+id/animation_switch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -122,8 +124,8 @@
         <FrameLayout
             android:id="@+id/sound"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_min_height"
-            android:layout_margin="@dimen/settings_item_margin">
+            android:layout_height="wrap_content"
+            android:padding="@dimen/settings_item_padding">
 
             <androidx.appcompat.widget.AppCompatTextView
                 style="@style/SettingsText"
@@ -133,7 +135,7 @@
                 android:gravity="center"
                 android:text="@string/settings_sound" />
 
-            <androidx.appcompat.widget.SwitchCompat
+            <presentation.settings_screen.CustomStyledSwitch
                 android:id="@+id/sound_switch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -143,8 +145,8 @@
         <FrameLayout
             android:id="@+id/reinforcement"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_min_height"
-            android:layout_margin="@dimen/settings_item_margin">
+            android:layout_height="wrap_content"
+            android:padding="@dimen/settings_item_padding">
 
             <androidx.appcompat.widget.AppCompatTextView
                 style="@style/SettingsText"
@@ -154,7 +156,7 @@
                 android:gravity="center"
                 android:text="@string/reinforcement_image" />
 
-            <androidx.appcompat.widget.SwitchCompat
+            <presentation.settings_screen.CustomStyledSwitch
                 android:id="@+id/reinforcement_switch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
