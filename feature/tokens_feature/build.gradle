@@ -7,10 +7,10 @@ plugins {
 
 android {
     namespace 'com.cerebus.tokens.feature.tokens_feature'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
-        minSdk 26
+        minSdk 28
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
