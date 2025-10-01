@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -45,6 +47,13 @@ class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListen
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+
         with(viewBinding.settingsAppLayout) {
             changeTokensColorButton.setOnClickListener { viewModel.askForChangeTokensColor() }
             changeTokensNumberButton.setOnClickListener { viewModel.askChangeTokensNumber() }

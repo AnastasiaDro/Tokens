@@ -3,6 +3,8 @@
     android:id="@+id/parent_settings_fragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingVertical="@dimen/vertical_padding"
+    android:background="@drawable/bg_settings_gradient"
     android:divider="@drawable/divider_settings_vertical"
     android:dividerPadding="@dimen/divider_padding"
     android:orientation="horizontal"

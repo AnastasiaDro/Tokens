@@ -8,9 +8,28 @@
     <color name="baseStrokeColor">#666666</color>
     <color name="checkedColor">#cc0000</color>
     <color name="checkedStrokeColor">#ff0000</color>
-    <color name="linkColor">#00f0de</color>
 
     <color name="colorTransparent">#00FFFFFF</color>
     <color name="colorWhite">#FFFFFF</color>
     <color name="colorAccent_60">#9903DAC5</color>
+
+    <!-- Settings -->
+    <!-- Settings gradient -->
+    <color name="settingsStartGradient">#A9F0A9</color>
+    <color name="settingsEndGradient">#ADD8E6</color>
+    <!-- Button -->
+    <color name="settingsBgButton">#FFFFFF</color>
+    <color name="settingsTextOnButton">#2C3E50</color>
+    <color name="settingsStrokeButton">#90EE90</color>
+
+    <!-- Text -->
+    <color name="textColor">#444444</color>
+    <color name="secondaryTextColor">#777777</color>
+    <color name="linkColor">#008B8B</color>
+
+    <!-- Switch -->
+    <color name="white">#FFFFFF</color>
+    <color name="switchThumbColor">#81FB68</color>
+    <color name="switchTrackColor">#32CD32</color>
+    <color name="switchTrackColorOff">#E0E0E0</color>
 </resources>

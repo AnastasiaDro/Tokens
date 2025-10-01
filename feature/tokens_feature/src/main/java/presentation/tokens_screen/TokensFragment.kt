@@ -8,6 +8,8 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.net.toUri
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -58,6 +60,12 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
         initOptionsMenu()

@@ -26,7 +26,9 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     }
 
     override fun removeTokens(number: Int) {
-        repeat(number) { tokensList.removeLast() }
+        repeat(number) {
+            tokensList.removeAt(tokensList.lastIndex)
+        }
     }
 
     override fun checkToken(id: Int): Boolean {
