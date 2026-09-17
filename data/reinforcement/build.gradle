@@ -5,7 +5,6 @@ plugins {
 
 android {
     namespace 'com.cerebus.tokens.data.reinforcement'
-    compileSdk 36
 
     defaultConfig {
         minSdk 28

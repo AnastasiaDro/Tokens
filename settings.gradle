@@ -4,7 +4,21 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+    plugins {
+        id 'com.android.settings' version '8.13.2' apply false
+    }
 }
+
+plugins {
+    id 'com.android.settings'
+}
+
+android {
+    compileSdk {
+        version = release(36)
+    }
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {

@@ -5,7 +5,6 @@ plugins {
 
 android {
     namespace 'com.cerebus.tokens.core.logger'
-    compileSdk 36
 
     defaultConfig {
         minSdk 28

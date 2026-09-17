@@ -1,13 +1,13 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
     id 'androidx.navigation.safeargs.kotlin'
     id 'kotlin-parcelize'
 }
 
 android {
     namespace 'com.cerebus.tokens.feature.tokens_feature'
-    compileSdk 36
 
     defaultConfig {
         minSdk 28
@@ -31,6 +31,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        compose true
     }
 }
 
@@ -41,6 +42,13 @@ dependencies {
     def lottieVersion = "3.4.0"
     def nav_version = "2.7.5"
     def koin_version = "3.5.0"
+    def compose_bom = "2025.08.00"
+
+    implementation platform("androidx.compose:compose-bom:$compose_bom")
+    androidTestImplementation platform("androidx.compose:compose-bom:$compose_bom")
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.foundation:foundation"
+    implementation "androidx.compose.ui:ui-tooling-preview"
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.6.1'
