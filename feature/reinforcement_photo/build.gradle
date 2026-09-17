@@ -1,6 +1,6 @@
 plugins {
-    id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
+    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinAndroid)
 }
 
 android {
@@ -33,22 +33,20 @@ android {
 }
 
 dependencies {
-    def koin_version = "3.5.0"
-
     implementation project(path: ':core:logger')
     implementation project(path: ':core:ui')
     implementation project(path: ':data:reinforcement')
 
-    implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.10.0'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.7.5'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.7.5'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation 'com.github.kirich1409:viewbindingpropertydelegate-full:1.5.9'
+    implementation libs.androidxCoreKtx
+    implementation libs.androidxAppcompat
+    implementation libs.material
+    implementation libs.navigationFragmentKtx
+    implementation libs.navigationUiKtx
+    testImplementation libs.junit
+    androidTestImplementation libs.androidxTestJunit
+    androidTestImplementation libs.androidxTestEspresso
+    implementation libs.viewbindingDelegate
 
-    implementation "io.insert-koin:koin-android:$koin_version"
-    implementation "io.insert-koin:koin-test:$koin_version"
+    implementation libs.koinAndroid
+    implementation libs.koinTest
 }

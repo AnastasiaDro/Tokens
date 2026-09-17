@@ -1,8 +1,8 @@
 plugins {
-    id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
-    id 'org.jetbrains.kotlin.plugin.compose'
-    id 'androidx.navigation.safeargs.kotlin'
+    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.kotlinCompose)
+    alias(libs.plugins.navigationSafeArgs)
     id 'kotlin-parcelize'
 }
 
@@ -36,57 +36,51 @@ android {
 }
 
 dependencies {
+    implementation libs.androidxCardview
 
-    implementation 'androidx.cardview:cardview:1.0.0'
-    def lifecycle_version = "2.3.1"
-    def lottieVersion = "3.4.0"
-    def nav_version = "2.7.5"
-    def koin_version = "3.5.0"
-    def compose_bom = "2025.08.00"
-
-    implementation platform("androidx.compose:compose-bom:$compose_bom")
-    androidTestImplementation platform("androidx.compose:compose-bom:$compose_bom")
-    implementation "androidx.compose.ui:ui"
-    implementation "androidx.compose.foundation:foundation"
-    implementation "androidx.compose.ui:ui-tooling-preview"
+    implementation platform(libs.composeBom)
+    androidTestImplementation platform(libs.composeBom)
+    implementation libs.composeUi
+    implementation libs.composeFoundation
+    implementation libs.composeUiToolingPreview
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation libs.androidxAppcompat
+    implementation libs.constraintlayout
+    testImplementation libs.junit
+    androidTestImplementation libs.androidxTestJunit
+    androidTestImplementation libs.androidxTestEspresso
 
-    implementation 'androidx.core:core-ktx:1.10.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-    implementation 'com.google.android.material:material:1.6.0-alpha01'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation libs.androidxCoreKtx
+    implementation libs.androidxLifecycleRuntimeKtx
+    implementation libs.material
+    testImplementation libs.junit
+    androidTestImplementation libs.androidxTestJunit
+    androidTestImplementation libs.androidxTestEspresso
 
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation libs.androidxLifecycleLivedataKtx
+    implementation libs.androidxLifecycleRuntimeKtx
+    implementation libs.androidxLifecycleViewmodelKtx
 
-    implementation "androidx.activity:activity-ktx:1.8.1"
-    implementation "androidx.fragment:fragment-ktx:1.6.2"
+    implementation libs.androidxActivityKtx
+    implementation libs.androidxFragmentKtx
 
-    implementation 'com.github.kirich1409:viewbindingpropertydelegate-full:1.5.9'
+    implementation libs.viewbindingDelegate
 
     // color picker
-    implementation "com.github.skydoves:colorpickerview:2.2.4"
+    implementation libs.colorPicker
 
     // Lottie
-    implementation "com.airbnb.android:lottie:$lottieVersion"
+    implementation libs.lottie
 
     //navigation
-    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
-    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+    implementation libs.navigationFragmentKtx
+    implementation libs.navigationUiKtx
     // Dynamic Feature Module Support
-    implementation "androidx.navigation:navigation-dynamic-features-fragment:$nav_version"
+    implementation libs.navigationDynamicFeaturesFragment
 
     // Testing Navigation
-    androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
+    androidTestImplementation libs.navigationTesting
 
     //domain
     implementation project(path: ':core:ui')
@@ -94,7 +88,7 @@ dependencies {
     implementation project(path: ':data:reinforcement')
 
     //Koin
-    implementation "io.insert-koin:koin-core:$koin_version"
-    implementation "io.insert-koin:koin-android:$koin_version"
-    implementation "io.insert-koin:koin-test:$koin_version"
+    implementation libs.koinCore
+    implementation libs.koinAndroid
+    implementation libs.koinTest
 }
