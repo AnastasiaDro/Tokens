@@ -2,7 +2,6 @@ package presentation.tokens_screen
 
 import presentation.SelectTokensNumberAlertData
 import presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -28,14 +27,13 @@ import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentTokensBindi
 import com.cerebus.tokens.logger.api.LoggerFactory
 import domain.models.Token
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import presentation.tokens_screen.mvi_contracts.InitEvent
 import presentation.tokens_screen.mvi_contracts.reinforcement_image_mvi_contract.GetReinforcementStateEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.CheckTokenEvent
 import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.ClearTokensEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.UncheckTokenEvent
 
 /**
  * [TokensFragment] - a fragment for tokens displaying
@@ -53,7 +51,9 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     private val viewBinding: FragmentTokensBinding by viewBinding()
     private var viewArray: List<TokenView> = listOf()
 
-    private var soundPlayer: MediaPlayer? = null
+    private var soundPlayer: WinSoundPlayer? = null
+    private var animationJob: Job? = null
+    private var lastCelebrationId = 0L
     private val swipeParser: SwipeParser = SwipeParserImpl(this::class.java.simpleName)
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
@@ -67,7 +67,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
             insets
         }
 
-        soundPlayer = MediaPlayer.create(requireActivity(), R.raw.fanfare)
+        soundPlayer = WinSoundPlayer(requireContext(), logger)
         initOptionsMenu()
 
         subscribeToNavigationResultLiveData()
@@ -153,8 +153,13 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
            }
 
             subscribeToHotFlow(Lifecycle.State.STARTED, winEffectsFlow) { effectsState ->
-                if (effectsState.isSoundPlaying) soundPlayer?.start()
-                if (effectsState.isAnimationRunning) playAnimation() else pauseAnimation()
+                if (effectsState.celebrationId != lastCelebrationId) {
+                    lastCelebrationId = effectsState.celebrationId
+                    if (effectsState.isSoundPlaying) soundPlayer?.play()
+                    if (effectsState.isAnimationRunning) playAnimation()
+                }
+                if (!effectsState.isSoundPlaying) soundPlayer?.stop()
+                if (!effectsState.isAnimationRunning) pauseAnimation()
             }
 
             subscribeToHotFlow(Lifecycle.State.STARTED, navigateToSettingsFlow) {
@@ -170,8 +175,9 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     }
 
     private fun playAnimation() = with(viewBinding) {
+        pauseAnimation()
         logger.d("animation started")
-        lifecycleScope.launch {
+        animationJob = viewLifecycleOwner.lifecycleScope.launch {
             animationViewLeft.isVisible = true
             animationViewLeft.playAnimation()
             delay(ANIMATION_FIRST_DELAY)
@@ -184,16 +190,12 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     }
 
     private fun pauseAnimation() = with(viewBinding) {
-        logger.d("animation paused")
-        lifecycleScope.launch {
-            animationViewLeft.pauseAnimation()
-            animationViewLeft.isVisible = false
-            delay(ANIMATION_FIRST_DELAY)
-            animationViewRight.pauseAnimation()
-            animationViewRight.isVisible = false
-            delay(ANIMATION_SECOND_DELAY)
-            animationViewCenter.pauseAnimation()
-            animationViewCenter.isVisible = false
+        animationJob?.cancel()
+        animationJob = null
+        listOf(animationViewLeft, animationViewRight, animationViewCenter).forEach {
+            it.cancelAnimation()
+            it.progress = 0f
+            it.isVisible = false
         }
     }
 
@@ -217,10 +219,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
     private fun onTokenClick(index: Int) {
         logger.d("token $index was clicked")
-        if (viewArray[index].getIsChecked())
-            viewModel.sendEvent(UncheckTokenEvent(index))
-        else
-            viewModel.sendEvent(CheckTokenEvent(index))
+        viewModel.onTokenClicked(index)
     }
 
     override fun getTokensNumberAlertNavAction(
@@ -233,9 +232,20 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         )
     }
 
+    override fun onStop() {
+        viewModel.stopWinEffects()
+        soundPlayer?.stop()
+        pauseAnimation()
+        super.onStop()
+    }
+
     override fun onDestroyView() {
+        animationJob?.cancel()
+        animationJob = null
+        soundPlayer?.stop()
+        soundPlayer = null
+        viewArray = emptyList()
         super.onDestroyView()
-        soundPlayer?.release()
     }
 
     companion object {

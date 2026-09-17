@@ -1,8 +1,8 @@
 package data.tokens
 
-import android.util.Log
 import data.tokens.storage.TokensStorage
 import domain.models.Token
+import domain.models.resizeTokenProgress
 import domain.repository.TokensRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -12,40 +12,41 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     private val tokensList = mutableListOf<Token>()
 
     init {
-        createTokens(tokensStorage.getTokensNumber())
-        checkTokens(tokensStorage.getCheckedTokensNumber())
+        val count = tokensStorage.getTokensNumber().coerceIn(getMinTokensNumber(), getMaxTokensNumber())
+        val checkedIndices = tokensStorage.getCheckedTokenIndices()
+            ?: (0 until tokensStorage.getCheckedTokensNumber().coerceIn(0, count)).toSet()
+        repeat(count) { index -> tokensList += Token(index in checkedIndices, getCheckedColor()) }
+        // Repair legacy count mismatches and migrate to exact positions in one write.
+        saveProgress()
     }
 
-    override fun getAllTokens(): Flow<Token> = tokensList.asFlow()
-    override fun getTokensList(): List<Token> = tokensList
+    override fun getAllTokens(): Flow<Token> = getTokensList().asFlow()
+    override fun getTokensList(): List<Token> = tokensList.map { Token(it.isChecked, it.checkedColor) }
 
-    override fun getTokenById(id: Int) = tokensList[id]
-    override fun createTokens(number: Int) {
-        for (i in 0 until number)
-            tokensList += Token(false, getCheckedColor())
-    }
-
-    override fun removeTokens(number: Int) {
-        repeat(number) {
-            tokensList.removeAt(tokensList.lastIndex)
-        }
+    override fun getTokenById(id: Int) = tokensList[id].let { Token(it.isChecked, it.checkedColor) }
+    override fun resizeTokens(number: Int): Boolean {
+        if (number !in getMinTokensNumber()..getMaxTokensNumber() || number == tokensList.size) return false
+        val progress = resizeTokenProgress(tokensList.map { it.isChecked }, number)
+        val color = getCheckedColor()
+        tokensList.clear()
+        tokensList.addAll(progress.map { Token(it, color) })
+        saveProgress()
+        return true
     }
 
     override fun checkToken(id: Int): Boolean {
-        tokensList[id].isChecked = true
-        var checkedTokensNumber = tokensStorage.getCheckedTokensNumber()
-        checkedTokensNumber++
-        tokensStorage.saveCheckedTokensNumber(checkedTokensNumber)
-        Log.d(TAG, "Token $id was checked")
+        val token = tokensList.getOrNull(id) ?: return false
+        if (token.isChecked) return false
+        token.isChecked = true
+        saveProgress()
         return true
     }
 
     override fun uncheckToken(id: Int): Boolean {
-        tokensList[id].isChecked = false
-        var checkedTokensNumber = tokensStorage.getCheckedTokensNumber()
-        checkedTokensNumber--
-        tokensStorage.saveCheckedTokensNumber(checkedTokensNumber)
-        Log.d(TAG, "Token $id was unchecked")
+        val token = tokensList.getOrNull(id) ?: return false
+        if (!token.isChecked) return false
+        token.isChecked = false
+        saveProgress()
         return true
     }
 
@@ -60,33 +61,22 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
         tokensList.forEach {
             it.isChecked = false
         }
-        tokensStorage.saveCheckedTokensNumber(0)
+        saveProgress()
         return true
     }
 
     override fun getCheckedTokensNumber(): Int {
-        return tokensStorage.getCheckedTokensNumber()
+        return tokensList.count { it.isChecked }
     }
 
-    override fun getTokensNumber() = tokensStorage.getTokensNumber()
-
-    override fun setTokensNumber(num: Int) {
-        tokensStorage.saveTokensNumber(num)
-    }
+    override fun getTokensNumber() = tokensList.size
     override fun getMinTokensNumber() = 1
 
     override fun getMaxTokensNumber() = 10
 
-    private fun checkTokens(num: Int) {
-        for (i in 0 until num) {
-            tokensList[i].isChecked = true
-        }
-        Log.d(TAG, "$num tokens marked as checked")
-    }
+    private fun saveProgress() = tokensStorage.saveProgress(tokensList.map { it.isChecked })
 
     private companion object {
-        const val TAG = "TokensRepository"
-
         private const val defaultColor = -12517557  /** light green **/
     }
 }

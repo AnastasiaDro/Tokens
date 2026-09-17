@@ -34,6 +34,7 @@ android {
 }
 
 dependencies {
+    testImplementation(libs.coroutinesTest)
     implementation(libs.kotlinParcelizeRuntime)
 
     implementation(libs.androidxCardview)

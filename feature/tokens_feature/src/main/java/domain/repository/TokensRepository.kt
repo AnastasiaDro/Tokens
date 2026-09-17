@@ -12,9 +12,7 @@ interface TokensRepository {
 
     fun getTokenById(id: Int): Token
 
-    fun removeTokens(number: Int)
-
-    fun createTokens(number: Int)
+    fun resizeTokens(number: Int): Boolean
 
     fun checkToken(id: Int): Boolean
 
@@ -27,8 +25,6 @@ interface TokensRepository {
     fun uncheckAllTokens(): Boolean
 
     fun getTokensNumber(): Int
-
-    fun setTokensNumber(num: Int)
 
     fun getCheckedTokensNumber(): Int
 

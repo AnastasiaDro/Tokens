@@ -20,16 +20,20 @@ class TokensStorageImpl(context: Context, loggerFactory: LoggerFactory) : Tokens
        return prefs.getInt(TOKENS_NUMBER, DEFAULT_TOKENS_NUMBER)
     }
 
-    override fun saveTokensNumber(num: Int) {
-        prefs.edit().putInt(TOKENS_NUMBER, num).apply()
-    }
-
     override fun getCheckedTokensNumber(): Int {
         return prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
     }
 
-    override fun saveCheckedTokensNumber(num: Int) {
-        prefs.edit().putInt(CHECKED_TOKENS_NUMBER, num).apply()
+    override fun getCheckedTokenIndices(): Set<Int>? =
+        prefs.getStringSet(CHECKED_TOKEN_INDICES, null)?.mapNotNull { it.toIntOrNull() }?.toSet()
+
+    override fun saveProgress(checkedTokens: List<Boolean>) {
+        val indices = checkedTokens.indices.filter { checkedTokens[it] }.map { it.toString() }.toSet()
+        prefs.edit()
+            .putInt(TOKENS_NUMBER, checkedTokens.size)
+            .putInt(CHECKED_TOKENS_NUMBER, indices.size)
+            .putStringSet(CHECKED_TOKEN_INDICES, indices)
+            .apply()
     }
 
     override fun getCheckedTokensColor(): Int {
@@ -47,6 +51,7 @@ class TokensStorageImpl(context: Context, loggerFactory: LoggerFactory) : Tokens
 
         const val TOKENS_NUMBER = "TokensNumber"
         const val CHECKED_TOKENS_NUMBER = "CheckedTokensNumber"
+        const val CHECKED_TOKEN_INDICES = "CheckedTokenIndices"
         const val CHECKED_TOKENS_COLOR = "CheckedTokensColor"
 
         private const val DEFAULT_TOKENS_NUMBER = 5

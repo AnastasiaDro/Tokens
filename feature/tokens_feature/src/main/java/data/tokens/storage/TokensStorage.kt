@@ -13,11 +13,13 @@ interface TokensStorage {
 
     fun getTokensNumber(): Int
 
-    fun saveTokensNumber(num: Int)
-
     fun getCheckedTokensNumber(): Int
 
-    fun saveCheckedTokensNumber(num: Int)
+    /** Null denotes a legacy save containing only the number of checked tokens. */
+    fun getCheckedTokenIndices(): Set<Int>?
+
+    /** Persist the size, count and exact positions together. */
+    fun saveProgress(checkedTokens: List<Boolean>)
 
     fun getCheckedTokensColor(): Int
 

@@ -18,11 +18,12 @@ import domain.usecases.tokens.GetMinTokensNumberUseCase
 import domain.usecases.tokens.GetTokensNumberUseCase
 import domain.usecases.tokens.UncheckTokenUseCase
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import presentation.tokens_screen.mvi_contracts.CommonEvent
 import presentation.tokens_screen.mvi_contracts.Event
@@ -74,14 +75,14 @@ class TokensViewModel(
     ) : ViewModel() {
 
     /** Tokens **/
-    private val tokensStateSharedFlow: MutableSharedFlow<TokensState> = MutableSharedFlow()
-    val tokensStateFlow: SharedFlow<TokensState> = tokensStateSharedFlow
+    private val tokensState = MutableStateFlow(TokensState(getTokensList()))
+    val tokensStateFlow: StateFlow<TokensState> = tokensState.asStateFlow()
 
     /** Animation and sound **/
-    private var isAnimationRunning = false
-    private var isSoundPlaying = false
-    private val winEffectsStateSharedFlow: MutableSharedFlow<WinEffectsState> = MutableSharedFlow()
-    val winEffectsFlow: SharedFlow<WinEffectsState> = winEffectsStateSharedFlow
+    private var winEffectsJob: Job? = null
+    private var celebrationId = 0L
+    private val winEffectsState = MutableStateFlow(WinEffectsState(false, false))
+    val winEffectsFlow: StateFlow<WinEffectsState> = winEffectsState.asStateFlow()
 
     /** Navigation **/
     private val navigateToSettingsMutableFlow: MutableSharedFlow<Boolean> = MutableSharedFlow()
@@ -101,7 +102,7 @@ class TokensViewModel(
     private fun getTokensList(): List<Token> = getAllTokensUseCase.execute()
 
     private fun sendTokensState() {
-        viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
+        tokensState.value = TokensState(getTokensList())
     }
     private fun sendReinforcementState() {
         viewModelScope.launch {
@@ -115,12 +116,14 @@ class TokensViewModel(
     }
 
     fun updateTokensNum() {
-        viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
+        stopWinEffects()
+        sendTokensState()
     }
 
     fun clearTokens() {
+        stopWinEffects()
         clearAllTokensUseCase.execute()
-        viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
+        sendTokensState()
     }
 
     fun getMinTokensNum() = getMinTokensNumberUseCase.execute()
@@ -163,32 +166,36 @@ class TokensViewModel(
     }
 
     private fun onTokenSelected(tokenIndex: Int) {
-
-        if (checkTokenUseCase.execute(tokenIndex))
-            viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
-
+        if (!checkTokenUseCase.execute(tokenIndex)) return
+        sendTokensState()
         if (checkTokensAreGrappedUseCase.execute()) {
-            viewModelScope.launch {
-                winEffectsStateSharedFlow.emit(
-                    WinEffectsState(
-                        isAnimationRunning = !isAnimationRunning && isWinAnimationOnUseCase.execute(),
-                        isSoundPlaying = !isSoundPlaying && isWinSoundOnUseCase.execute()
-                    )
-                )
-                isAnimationRunning = true
-                isSoundPlaying = true
-
+            winEffectsJob?.cancel()
+            winEffectsState.value = WinEffectsState(
+                isAnimationRunning = isWinAnimationOnUseCase.execute(),
+                isSoundPlaying = isWinSoundOnUseCase.execute(),
+                celebrationId = ++celebrationId,
+            )
+            winEffectsJob = viewModelScope.launch {
                 delay(getEffectsDurationUseCase.execute())
-                winEffectsStateSharedFlow.emit(
-                    WinEffectsState(isAnimationRunning = false, isSoundPlaying = false)
-                )
-                isAnimationRunning = false
-                isSoundPlaying = false
+                winEffectsState.value = WinEffectsState(false, false)
             }
         }
     }
     private fun onTokenUnselected(tokenIndex: Int) {
-        if (uncheckTokenUseCase.execute(tokenIndex))
-            viewModelScope.launch { tokensStateSharedFlow.emit(TokensState(getTokensList())) }
+        if (uncheckTokenUseCase.execute(tokenIndex)) {
+            stopWinEffects()
+            sendTokensState()
+        }
+    }
+
+    fun onTokenClicked(index: Int) {
+        val token = getTokensList().getOrNull(index) ?: return
+        if (token.isChecked) onTokenUnselected(index) else onTokenSelected(index)
+    }
+
+    fun stopWinEffects() {
+        winEffectsJob?.cancel()
+        winEffectsJob = null
+        winEffectsState.value = WinEffectsState(false, false)
     }
 }

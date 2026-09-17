@@ -19,12 +19,11 @@ enum class ToastDuration(val value: Int) {
 
 fun <T> Fragment.subscribeToHotFlow(lifecycleState: Lifecycle.State, observable: SharedFlow<T>, action: (data: T) -> Unit) {
     viewLifecycleOwner.lifecycleScope.launch {
-        repeatOnLifecycle(lifecycleState) {
+        viewLifecycleOwner.repeatOnLifecycle(lifecycleState) {
             observable.collect { data ->
                 action.invoke(data)
             }
         }
     }
 }
-
 
