@@ -5,12 +5,12 @@ pluginManagement {
         gradlePluginPortal()
     }
     plugins {
-        id 'com.android.settings' version '8.13.2' apply false
+        id("com.android.settings") version "9.0.1" apply false
     }
 }
 
 plugins {
-    id 'com.android.settings'
+    id("com.android.settings")
 }
 
 android {
@@ -26,15 +26,14 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
 rootProject.name = "Tokens"
-include ':app'
-include ':feature:tokens_feature'
-include ':feature:reinforcement_photo'
+include(":app")
+include(":feature:tokens_feature")
+include(":feature:reinforcement_photo")
 
-
-//data layer
-//
-include ':core:ui'
-include ':core:logger'
-include ':feature:reinforcement_photo'
-include ':data:reinforcement'
+// data layer
+include(":core:ui")
+include(":core:logger")
+include(":feature:reinforcement_photo")
+include(":data:reinforcement")
