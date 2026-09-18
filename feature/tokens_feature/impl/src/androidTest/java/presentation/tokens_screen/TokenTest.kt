@@ -110,20 +110,7 @@ class TokenTest {
     @Test
     fun pressScalesTokenWithoutRippleAndReturnsAfterRelease() {
         val clicks = mutableListOf<Unit>()
-        compose.mainClock.autoAdvance = false
-        compose.setContent {
-            TokensTheme {
-                Box(Modifier.background(Color.White)) {
-                    Token(
-                        token(checked = true),
-                        onClick = { clicks += Unit },
-                        modifier = Modifier.size(TOKEN_SIZE).testTag(TOKEN_TAG),
-                    )
-                }
-            }
-        }
-        compose.waitForIdle()
-        val node = compose.onNodeWithTag(TOKEN_TAG)
+        val node = setPressContent(onClick = { clicks += Unit })
         val initialPixelCount = node.coloredPixelCount(INITIAL_COLOR)
 
         node.performTouchInput { down(center) }
@@ -132,14 +119,90 @@ class TokenTest {
         val pressedPixelCount = node.coloredPixelCount(INITIAL_COLOR)
         assertTrue(pressedPixelCount > initialPixelCount)
         assertCornersStayBackground(node)
+        node.assertWidthIsEqualTo(TOKEN_SIZE).assertHeightIsEqualTo(TOKEN_SIZE)
 
         compose.mainClock.advanceTimeBy(HOLD_DURATION_MILLIS)
         assertEquals(pressedPixelCount, node.coloredPixelCount(INITIAL_COLOR))
 
         node.performTouchInput { up() }
         assertEquals(listOf(Unit), clicks)
+        compose.mainClock.advanceTimeBy(RELEASE_ANIMATION_DURATION_MILLIS + ANIMATION_SETTLE_MILLIS)
+        assertEquals(initialPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+    }
+
+    @Test
+    fun quickTapStillGrowsAfterReleaseAndCallsParentImmediately() {
+        val clicks = mutableListOf<Unit>()
+        val node = setPressContent(onClick = { clicks += Unit })
+        val initialPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+
+        // Both events arrive before the next Compose frame, as with a very short tap.
+        node.performTouchInput { click() }
+        compose.runOnIdle { assertEquals(listOf(Unit), clicks) }
+        compose.mainClock.advanceTimeBy(EARLY_ANIMATION_MILLIS)
+        val earlyPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+        assertTrue(earlyPixelCount > initialPixelCount)
+        compose.mainClock.advanceTimeBy(EARLY_ANIMATION_MILLIS)
+        assertTrue(node.coloredPixelCount(INITIAL_COLOR) > earlyPixelCount)
+        assertCornersStayBackground(node)
+
+        compose.mainClock.advanceTimeBy(FULL_PULSE_SETTLE_MILLIS)
+        assertEquals(initialPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+        node.assertIsOn()
+    }
+
+    @Test
+    fun newPressDuringReturnGrowsAgainAndDoesNotQueuePulses() {
+        val clicks = mutableListOf<Unit>()
+        val node = setPressContent(onClick = { clicks += Unit })
+        val initialPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+        node.performTouchInput { click() }
+        compose.mainClock.advanceTimeBy(PRESS_ANIMATION_DURATION_MILLIS + ANIMATION_SETTLE_MILLIS)
+        val returningPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+        assertTrue(returningPixelCount > initialPixelCount)
+
+        node.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(PRESS_ANIMATION_DURATION_MILLIS + ANIMATION_SETTLE_MILLIS)
+        val heldPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+        assertTrue(heldPixelCount > returningPixelCount)
+        compose.mainClock.advanceTimeBy(FULL_PULSE_SETTLE_MILLIS)
+        assertEquals(heldPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+
+        node.performTouchInput { up() }
+        compose.runOnIdle { assertEquals(listOf(Unit, Unit), clicks) }
+        compose.mainClock.advanceTimeBy(FULL_PULSE_SETTLE_MILLIS)
+        assertEquals(initialPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+    }
+
+    @Test
+    fun cancelledPressReturnsWithoutClick() {
+        val clicks = mutableListOf<Unit>()
+        val node = setPressContent(onClick = { clicks += Unit })
+        val initialPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+        node.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(EARLY_ANIMATION_MILLIS)
+        assertTrue(node.coloredPixelCount(INITIAL_COLOR) > initialPixelCount)
+
+        node.performTouchInput { cancel() }
+        compose.mainClock.advanceTimeBy(RELEASE_ANIMATION_DURATION_MILLIS + ANIMATION_SETTLE_MILLIS)
+        assertEquals(initialPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+        assertTrue(clicks.isEmpty())
+    }
+
+    @Test
+    fun disabledTokenDoesNotAnimateOnHoldOrTap() {
+        val clicks = mutableListOf<Unit>()
+        val node = setPressContent(enabled = false, onClick = { clicks += Unit })
+        val initialPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+        node.assertIsNotEnabled().performTouchInput { down(center) }
         compose.mainClock.advanceTimeBy(PRESS_ANIMATION_DURATION_MILLIS + ANIMATION_SETTLE_MILLIS)
         assertEquals(initialPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+        node.performTouchInput { up(); click() }
+        compose.mainClock.advanceTimeBy(EARLY_ANIMATION_MILLIS)
+        assertEquals(initialPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+        compose.mainClock.advanceTimeBy(FULL_PULSE_SETTLE_MILLIS)
+        assertEquals(initialPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+        assertTrue(clicks.isEmpty())
     }
 
     @Test
@@ -217,6 +280,27 @@ class TokenTest {
         node.assertCenterColor(INITIAL_COLOR)
     }
 
+    private fun setPressContent(
+        enabled: Boolean = true,
+        onClick: () -> Unit,
+    ): SemanticsNodeInteraction {
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            TokensTheme {
+                Box(Modifier.background(Color.White)) {
+                    Token(
+                        token(checked = true),
+                        onClick = onClick,
+                        enabled = enabled,
+                        modifier = Modifier.size(TOKEN_SIZE).testTag(TOKEN_TAG),
+                    )
+                }
+            }
+        }
+        compose.waitForIdle()
+        return compose.onNodeWithTag(TOKEN_TAG)
+    }
+
     private fun SemanticsNodeInteraction.assertCenterColor(expected: Int) {
         val pixels = captureToImage().toPixelMap()
         assertEquals(expected, pixels[pixels.width / CENTER_DIVISOR, pixels.height / CENTER_DIVISOR].toArgb())
@@ -262,8 +346,12 @@ class TokenTest {
         const val CORNER_OFFSET = 1
         const val FIRST_PIXEL = 0
         const val PIXEL_STEP = 1
-        const val PRESS_ANIMATION_DURATION_MILLIS = 300L
+        const val PRESS_ANIMATION_DURATION_MILLIS = 100L
+        const val RELEASE_ANIMATION_DURATION_MILLIS = 180L
+        const val EARLY_ANIMATION_MILLIS = 48L
         const val ANIMATION_SETTLE_MILLIS = 100L
+        const val FULL_PULSE_SETTLE_MILLIS =
+            PRESS_ANIMATION_DURATION_MILLIS + RELEASE_ANIMATION_DURATION_MILLIS + ANIMATION_SETTLE_MILLIS
         const val HOLD_DURATION_MILLIS = 100L
         val INITIAL_COLOR = Color.Red.toArgb()
         val UPDATED_COLOR = Color.Blue.toArgb()
