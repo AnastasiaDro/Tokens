@@ -108,11 +108,17 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         }
 
         viewBinding.storageStatus.setOnClickListener { viewModel.retry() }
+        var renderedPhotoUri: String? = null
+        var imageInitialized = false
         subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.state) { state ->
             if (state.saved) dismiss()
             with(viewBinding) {
-                reinforcementImage.setPhotoImage(state.photoUri?.toUri(),
-                    com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+                if (!imageInitialized || renderedPhotoUri != state.photoUri) {
+                    imageInitialized = true
+                    renderedPhotoUri = state.photoUri
+                    reinforcementImage.setPhotoImage(state.photoUri?.toUri(),
+                        com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+                }
                 val enabled = !state.loading && !state.saving && state.error != PhotoError.READ
                 makePhotoButton.isEnabled = enabled
                 getFromGalleryButton.isEnabled = enabled

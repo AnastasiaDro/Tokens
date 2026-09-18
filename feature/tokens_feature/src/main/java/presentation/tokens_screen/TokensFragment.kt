@@ -27,6 +27,7 @@ import presentation.state.StorageFailure
 import domain.repository.MIN_TOKEN_COUNT
 import domain.repository.MAX_TOKEN_COUNT
 import android.content.pm.PackageManager
+import com.cerebus.tokens.data.reinforcement.ReinforcementSettings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -52,6 +53,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens) {
     private var soundPlayer: WinSoundPlayer? = null
     private var animationJob: Job? = null
     private var lastCelebrationId = WinEffectsState.NO_CELEBRATION_ID
+    private var renderedReinforcement: ReinforcementSettings? = null
     private val swipeParser: SwipeParser = SwipeParserImpl(this::class.java.simpleName)
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
@@ -148,8 +150,11 @@ class TokensFragment : Fragment(R.layout.fragment_tokens) {
             if (!effectsState.isAnimationRunning) pauseAnimation()
             viewBinding.reinforcementImageCardView.isVisible = state.reinforcement?.enabled == true &&
                 requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
-            viewBinding.reinforcementImage.setPhotoImage(state.reinforcement?.photoUri?.toUri(),
-                com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+            if (renderedReinforcement != state.reinforcement) {
+                renderedReinforcement = state.reinforcement
+                viewBinding.reinforcementImage.setPhotoImage(state.reinforcement?.photoUri?.toUri(),
+                    com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+            }
             with(viewBinding.storageStatus) {
                 isVisible = state.loading || state.error != null
                 isEnabled = state.error != null
@@ -219,6 +224,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens) {
         soundPlayer?.stop()
         soundPlayer = null
         viewArray = emptyList()
+        renderedReinforcement = null
         super.onDestroyView()
     }
 

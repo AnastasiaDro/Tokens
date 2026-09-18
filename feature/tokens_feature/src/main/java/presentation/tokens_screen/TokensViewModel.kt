@@ -62,8 +62,15 @@ class TokensViewModel(
         mutate({ onTokenClicked(id) }) {
             val result = tokens.toggle(id)
             if (result.changed && !result.board.completed) stopWinEffects()
+            // A read needed only to guard an effect must not turn a committed toggle
+            // into a retryable write failure (retrying would toggle it back).
+            val currentRevision = if (result.completedByUser) {
+                try { tokens.board.first().revision }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { return@mutate }
+            } else null
             if (result.completedByUser && foreground && clickVisit == visit &&
-                tokens.board.first().revision == result.board.revision) {
+                currentRevision == result.board.revision) {
                 val flags = snapshot?.effects ?: return@mutate
                 timer?.cancel()
                 celebrationRevision = result.board.revision

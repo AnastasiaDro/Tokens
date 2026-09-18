@@ -22,7 +22,10 @@ class SelectTokenNumberAlert : DialogFragment(R.layout.alert_select_tokens_numbe
             tokensNumPicker.minValue = args.tokensNumberData.minTokensNum
             tokensNumPicker.maxValue = args.tokensNumberData.maxTokensNum
             if (savedInstanceState == null) tokensNumPicker.value = args.tokensNumberData.currentTokensNum
-            okBtn.setOnClickListener { viewModel.changeTokensNum(tokensNumPicker.value) }
+            okBtn.setOnClickListener {
+                tokensNumPicker.clearFocus()
+                viewModel.changeTokensNum(tokensNumPicker.value)
+            }
             cancelBtn.setOnClickListener { dismiss() }
         }
         subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.state) { state ->

@@ -136,6 +136,17 @@ class TokensViewModelTest {
         assertFalse(tokens.values.value.completed)
     }
 
+    @Test fun effectReadFailureCannotMakeCommittedToggleRetryable() = runTest(dispatcher) {
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        tokens.failReadAfterWrite = true
+        vm.onTokenClicked(tokens.values.value.tokens.single().id)
+        runCurrent()
+        assertTrue(tokens.values.value.completed)
+        assertNotEquals(StorageFailure.WRITE, vm.state.value.error)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+    }
+
     private companion object {
         const val RESTART_DELAY_MS = 1000L
         const val SINGLE_TOKEN = 1

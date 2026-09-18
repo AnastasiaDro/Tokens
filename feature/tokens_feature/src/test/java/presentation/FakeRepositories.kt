@@ -11,6 +11,7 @@ class FakeBoardRepository : TokenBoardRepository {
     val values = MutableStateFlow(TokenBoard(List(BOARD_SIZE) { Token(false, COLOR, "token-$it") }, COLOR, INITIAL_BOARD_REVISION))
     var failRead = false
     var failWrite = false
+    var failReadAfterWrite = false
     var beforeWrite: suspend () -> Unit = {}
     override val board = flow {
         if (failRead) throw IOException("Read failed")
@@ -26,6 +27,7 @@ class FakeBoardRepository : TokenBoardRepository {
         val changed = tokens != current.tokens
         val result = if (changed) current.copy(tokens = tokens, revision = current.revision + REVISION_STEP) else current
         values.value = result
+        if (failReadAfterWrite) failRead = true
         return TokenChange(result, changed, changed && !current.completed && result.completed)
     }
     override suspend fun resize(count: Int) {
@@ -74,4 +76,3 @@ class FakeReinforcementRepository : ReinforcementRepository {
     override suspend fun setEnabled(enabled: Boolean) { settings.update { it.copy(enabled = enabled) } }
     override suspend fun setPhotoUri(uri: String) { settings.update { it.copy(photoUri = uri) } }
 }
-

@@ -2,6 +2,8 @@ package presentation.settings_screen
 
 import android.content.DialogInterface
 import android.os.Bundle
+import android.view.View
+import androidx.core.view.isVisible
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
@@ -51,12 +53,15 @@ class SelectColorDialogFragment : DialogFragment() {
                 alert.getButton(AlertDialog.BUTTON_NEGATIVE).isEnabled = !saving
                 alert.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = !saving && (state.color != null || state.readError)
                 picker?.isEnabled = !saving && state.color != null && !state.readError
-                alert.setMessage(when {
+                val message = when {
                     state.readError -> getString(com.cerebus.tokens.core.ui.R.string.storage_read_error)
                     state.save == SaveState.ERROR -> getString(com.cerebus.tokens.core.ui.R.string.storage_save_error)
                     state.color == null -> getString(com.cerebus.tokens.core.ui.R.string.storage_loading)
                     else -> null
-                })
+                }
+                alert.setMessage(message)
+                alert.findViewById<View>(androidx.appcompat.R.id.contentPanel)?.isVisible = message != null
+                alert.findViewById<View>(androidx.appcompat.R.id.customPanel)?.isVisible = message == null
             }
         }
     }

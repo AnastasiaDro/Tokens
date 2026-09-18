@@ -3,6 +3,7 @@ package data.persistence
 import androidx.datastore.core.CorruptionException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.json.Json
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -62,7 +63,8 @@ class JsonStoresTest {
     }
 
     @Test fun malformedAndFutureDocumentsAreNotReplaced() = runBlocking {
-        for (content in listOf("{broken", "{}", """{"version":999}""")) {
+        val future = Json.encodeToString(TokensDocument.serializer(), TokensDocument(version = 999))
+        for (content in listOf("{broken", "{}", future)) {
             val file = folder.newFile()
             file.writeText(content)
             val job = SupervisorJob()
