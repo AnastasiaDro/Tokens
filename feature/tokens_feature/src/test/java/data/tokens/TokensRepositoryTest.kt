@@ -97,9 +97,23 @@ class TokensRepositoryTest {
 
     @Test fun `returned tokens do not expose mutable repository state`() {
         val repository = TokensRepositoryImpl(FakeTokensStorage())
-        repository.getTokensList()[FIRST_TOKEN_INDEX].isChecked = true
-        repository.getTokenById(SECOND_TOKEN_INDEX).isChecked = true
+        val snapshot = repository.getTokensList()
+        val changedCopy = repository.getTokenById(SECOND_TOKEN_INDEX).copy(isChecked = true)
+        assertTrue(changedCopy.isChecked)
         assertEquals(NO_CHECKED_TOKENS, repository.getCheckedTokensNumber())
+        repository.checkToken(FIRST_TOKEN_INDEX)
+        assertFalse(snapshot[FIRST_TOKEN_INDEX].isChecked)
+    }
+
+    @Test fun `resize preserves surviving identities and creates fresh appended identities`() {
+        val repository = TokensRepositoryImpl(FakeTokensStorage())
+        val original = repository.getTokensList().map { it.id }
+        repository.resizeTokens(PAIR_BOARD_SIZE)
+        assertEquals(original.take(PAIR_BOARD_SIZE), repository.getTokensList().map { it.id })
+        repository.resizeTokens(DEFAULT_TOKENS_NUMBER)
+        val expanded = repository.getTokensList().map { it.id }
+        assertEquals(original.take(PAIR_BOARD_SIZE), expanded.take(PAIR_BOARD_SIZE))
+        assertTrue(expanded.drop(PAIR_BOARD_SIZE).none { it in original })
     }
 
     @Test fun `clearing a board persists no marks`() {

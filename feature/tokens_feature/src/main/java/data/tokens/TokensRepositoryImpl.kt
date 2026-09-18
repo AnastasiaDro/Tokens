@@ -21,15 +21,18 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     }
 
     override fun getAllTokens(): Flow<Token> = getTokensList().asFlow()
-    override fun getTokensList(): List<Token> = tokensList.map { Token(it.isChecked, it.checkedColor) }
+    override fun getTokensList(): List<Token> = tokensList.toList()
 
-    override fun getTokenById(id: Int) = tokensList[id].let { Token(it.isChecked, it.checkedColor) }
+    override fun getTokenById(id: Int) = tokensList[id]
     override fun resizeTokens(number: Int): Boolean {
         if (number !in getMinTokensNumber()..getMaxTokensNumber() || number == tokensList.size) return false
         val progress = resizeTokenProgress(tokensList.map { it.isChecked }, number)
         val color = getCheckedColor()
+        val resized = progress.mapIndexed { index, checked ->
+            tokensList.getOrNull(index)?.copy(isChecked = checked) ?: Token(checked, color)
+        }
         tokensList.clear()
-        tokensList.addAll(progress.map { Token(it, color) })
+        tokensList.addAll(resized)
         saveProgress()
         return true
     }
@@ -37,7 +40,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     override fun checkToken(id: Int): Boolean {
         val token = tokensList.getOrNull(id) ?: return false
         if (token.isChecked) return false
-        token.isChecked = true
+        tokensList[id] = token.copy(isChecked = true)
         saveProgress()
         return true
     }
@@ -45,7 +48,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     override fun uncheckToken(id: Int): Boolean {
         val token = tokensList.getOrNull(id) ?: return false
         if (!token.isChecked) return false
-        token.isChecked = false
+        tokensList[id] = token.copy(isChecked = false)
         saveProgress()
         return true
     }
@@ -54,12 +57,12 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
 
     override fun changeCheckedColor(color: Int) {
         tokensStorage.saveCheckedTokensColor(color)
-        tokensList.forEach { it.checkedColor = color }
+        tokensList.indices.forEach { index -> tokensList[index] = tokensList[index].copy(checkedColor = color) }
     }
 
     override fun uncheckAllTokens(): Boolean {
-        tokensList.forEach {
-            it.isChecked = false
+        tokensList.indices.forEach { index ->
+            tokensList[index] = tokensList[index].copy(isChecked = false)
         }
         saveProgress()
         return true

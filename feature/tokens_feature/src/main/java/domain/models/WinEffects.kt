@@ -1,8 +1,8 @@
 package domain.models
 
-class WinEffects(
-    var isWinAnimationOn: Boolean,
-    var isWinSoundOn: Boolean,
-    var duration: Long,
-    var animationRepeatTimes: Int
+data class WinEffects(
+    val isWinAnimationOn: Boolean,
+    val isWinSoundOn: Boolean,
+    val duration: Long,
+    val animationRepeatTimes: Int
 )
