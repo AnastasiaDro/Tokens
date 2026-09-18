@@ -1,6 +1,9 @@
 package presentation
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
+import domain.repository.MIN_TOKEN_COUNT
+import domain.repository.MAX_TOKEN_COUNT
 import androidx.lifecycle.ViewModelStore
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
@@ -28,10 +31,12 @@ class ScreenStateTest {
         val settings = track(SettingsViewModel(tokens, effects, reinforcement))
         assertTrue(board.state.value.loading)
         runCurrent()
-        val dialog = track(SelectTokensNumberViewModel(tokens))
-        dialog.changeTokensNum(SHRUNK_COUNT)
+        val dialog = track(SelectTokensNumberViewModel(tokens, SavedStateHandle()))
+        dialog.initialize(SelectTokensNumberAlertData(MIN_TOKEN_COUNT, MAX_TOKEN_COUNT, FakeBoardRepository.BOARD_SIZE))
+        dialog.selectCount(SHRUNK_COUNT)
+        dialog.save()
         runCurrent()
-        assertEquals(SaveState.SAVED, dialog.state.value)
+        assertEquals(SaveState.SAVED, dialog.state.value.save)
         assertEquals(SHRUNK_COUNT, settings.state.value.tokens?.count)
         assertEquals(SHRUNK_COUNT, board.state.value.board?.count)
         reinforcement.setPhotoUri(PHOTO_URI)
@@ -76,19 +81,21 @@ class ScreenStateTest {
     @Test fun countDialogOnlyCompletesAfterSuccessfulWrite() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         tokens.beforeWrite = { gate.await() }
-        val vm = track(SelectTokensNumberViewModel(tokens))
-        vm.changeTokensNum(SHRUNK_COUNT)
+        val vm = track(SelectTokensNumberViewModel(tokens, SavedStateHandle()))
+        vm.initialize(SelectTokensNumberAlertData(MIN_TOKEN_COUNT, MAX_TOKEN_COUNT, FakeBoardRepository.BOARD_SIZE))
+        vm.selectCount(SHRUNK_COUNT)
+        vm.save()
         runCurrent()
-        assertEquals(SaveState.SAVING, vm.state.value)
+        assertEquals(SaveState.SAVING, vm.state.value.save)
         tokens.failWrite = true
         gate.complete(Unit)
         runCurrent()
-        assertEquals(SaveState.ERROR, vm.state.value)
+        assertEquals(SaveState.ERROR, vm.state.value.save)
         assertEquals(FakeBoardRepository.BOARD_SIZE, tokens.values.value.count)
         tokens.failWrite = false
-        vm.changeTokensNum(SHRUNK_COUNT)
+        vm.save()
         runCurrent()
-        assertEquals(SaveState.SAVED, vm.state.value)
+        assertEquals(SaveState.SAVED, vm.state.value.save)
     }
 
     @Test fun colorHasItsOwnViewModelAndOnlyCompletesAfterWrite() = runTest(dispatcher) {

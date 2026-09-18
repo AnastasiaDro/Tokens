@@ -1,0 +1,4 @@
+<resources>
+    <item name="settings_compose_view" type="id" />
+    <item name="tokens_number_compose_view" type="id" />
+</resources>

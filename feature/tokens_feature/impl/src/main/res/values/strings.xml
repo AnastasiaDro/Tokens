@@ -6,6 +6,10 @@
     <string name="aboutAppTV">""</string>
 
 <!-- Settings -->
+    <string name="settings_saving">Saving…</string>
+    <string name="decrease_tokens_count">Decrease token count</string>
+    <string name="increase_tokens_count">Increase token count</string>
+    <string name="link_open_error">No app is available to open this link.</string>
     <!-- About app -->
     <string name="aboutAppTitle">About app</string>
     <string name="aboutAppText">Hello everyone!

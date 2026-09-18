@@ -2,6 +2,10 @@
 <resources>
     <string name="app_name">Жетоны</string>
     <string name="settings">Настройки</string>
+    <string name="settings_saving">Сохранение…</string>
+    <string name="decrease_tokens_count">Уменьшить количество жетонов</string>
+    <string name="increase_tokens_count">Увеличить количество жетонов</string>
+    <string name="link_open_error">Нет приложения для открытия ссылки.</string>
     <string name="changeChips">Кол-во жетонов</string>
     <string name="clearChecked">Очистить</string>
     <string name="aboutAppTV">""</string>

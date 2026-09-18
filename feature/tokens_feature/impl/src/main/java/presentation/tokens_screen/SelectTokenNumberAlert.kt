@@ -1,43 +1,54 @@
 package presentation.tokens_screen
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.navArgs
-import by.kirich1409.viewbindingdelegate.viewBinding
+import com.cerebus.tokens.core.ui.setTokensContent
 import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.feature.tokens_feature.R
-import com.cerebus.tokens.feature.tokens_feature.databinding.AlertSelectTokensNumberBinding
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import presentation.state.SaveState
 
-class SelectTokenNumberAlert : DialogFragment(R.layout.alert_select_tokens_number) {
-    private val binding: AlertSelectTokensNumberBinding by viewBinding()
+class SelectTokenNumberAlert : DialogFragment() {
     private val args: SelectTokenNumberAlertArgs by navArgs()
     private val viewModel: SelectTokensNumberViewModel by viewModel()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(STYLE_NO_TITLE, DEFAULT_DIALOG_THEME)
+        viewModel.initialize(args.tokensNumberData)
+        isCancelable = viewModel.state.value.editable
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        ComposeView(requireContext()).apply {
+            id = R.id.tokens_number_compose_view
+            setTokensContent {
+                SelectTokensNumberRoute(
+                    viewModel = viewModel,
+                    onConfirm = {
+                        viewModel.save()
+                        // Block native Back/outside dismissal before the next frame.
+                        isCancelable = viewModel.state.value.editable
+                    },
+                    onCancel = { if (viewModel.state.value.editable) dismiss() },
+                )
+            }
+        }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        with(binding) {
-            tokensNumPicker.minValue = args.tokensNumberData.minTokensNum
-            tokensNumPicker.maxValue = args.tokensNumberData.maxTokensNum
-            if (savedInstanceState == null) tokensNumPicker.value = args.tokensNumberData.currentTokensNum
-            okBtn.setOnClickListener {
-                tokensNumPicker.clearFocus()
-                viewModel.changeTokensNum(tokensNumPicker.value)
-            }
-            cancelBtn.setOnClickListener { dismiss() }
-        }
         subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.state) { state ->
-            if (state == SaveState.SAVED) dismiss()
-            with(binding) {
-                val saving = state == SaveState.SAVING
-                isCancelable = !saving
-                okBtn.isEnabled = !saving
-                cancelBtn.isEnabled = !saving
-                tokensNumPicker.isEnabled = !saving
-                storageError.visibility = if (state == SaveState.ERROR) View.VISIBLE else View.GONE
-            }
+            isCancelable = state.editable
+            if (state.save == SaveState.SAVED) dismiss()
         }
+    }
+
+    private companion object {
+        const val DEFAULT_DIALOG_THEME = 0
     }
 }

@@ -19,6 +19,6 @@ val tokensFeatureModule = module {
     single<WinEffectsRepository> { DataStoreWinEffectsRepository(get<android.content.Context>()) }
     viewModel { TokensViewModel(get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), get()) }
-    viewModel { SelectTokensNumberViewModel(get()) }
+    viewModel { SelectTokensNumberViewModel(get(), get()) }
     viewModel { SelectColorViewModel(get()) }
 }
