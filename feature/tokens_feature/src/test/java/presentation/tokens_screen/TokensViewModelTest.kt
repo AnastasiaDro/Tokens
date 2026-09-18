@@ -147,8 +147,47 @@ class TokensViewModelTest {
         assertFalse(vm.state.value.effects.isSoundPlaying)
     }
 
+    @Test fun readRecoveryRetriesFailedToggleOnceAndKeepsObserving() = runTest(dispatcher) {
+        runCurrent()
+        val gate = CompletableDeferred<Unit>()
+        tokens.beforeWrite = { gate.await() }
+        val id = tokens.values.value.tokens.first().id
+
+        vm.onTokenClicked(id)
+        runCurrent()
+        tokens.failRead = true
+        runCurrent()
+        assertTrue(vm.state.value.readFailure)
+        assertTrue(vm.state.value.saving)
+
+        tokens.failWrite = true
+        gate.complete(Unit)
+        runCurrent()
+        assertTrue(vm.state.value.readFailure)
+        assertTrue(vm.state.value.writeFailure)
+        assertEquals(StorageFailure.READ, vm.state.value.error)
+
+        tokens.beforeWrite = {}
+        tokens.failRead = false
+        tokens.failWrite = false
+        vm.retry()
+        runCurrent()
+
+        assertTrue(tokens.values.value.tokens.first().isChecked)
+        assertTrue(vm.state.value.board!!.tokens.first().checked)
+        assertEquals(EXPECTED_RETRY_ATTEMPTS, tokens.writeAttempts)
+        assertEquals(EXPECTED_SUCCESSFUL_WRITES, tokens.successfulWrites)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        assertEquals(SINGLE_TOKEN, vm.state.value.board!!.count)
+    }
+
     private companion object {
         const val RESTART_DELAY_MS = 1000L
         const val SINGLE_TOKEN = 1
+        const val EXPECTED_RETRY_ATTEMPTS = 2
+        const val EXPECTED_SUCCESSFUL_WRITES = 1
     }
 }

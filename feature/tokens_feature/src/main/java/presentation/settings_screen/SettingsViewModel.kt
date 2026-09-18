@@ -25,18 +25,38 @@ class SettingsViewModel(
     init { observe() }
     private fun dispatch(action: SettingsAction) { mutableState.update { reduceSettings(it, action) } }
 
-    private fun observe() {
+    private fun observe(retryPendingWrite: Boolean = false) {
         observation?.cancel()
         dispatch(SettingsAction.Loading)
         observation = viewModelScope.launch {
-            try { observeSettings(tokens, effects, reinforcement).collect { dispatch(SettingsAction.Loaded(it)) } }
+            var shouldRetryWrite = retryPendingWrite
+            try {
+                observeSettings(tokens, effects, reinforcement).collect {
+                    dispatch(SettingsAction.Loaded(it))
+                    if (shouldRetryWrite) {
+                        shouldRetryWrite = false
+                        retryFailedWrite()
+                    }
+                }
+            }
             catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { dispatch(SettingsAction.Failed(StorageFailure.READ)) }
+            catch (_: Exception) { dispatch(SettingsAction.ReadFailed) }
         }
     }
 
     fun retry() {
-        if (state.value.error == StorageFailure.WRITE) retryWrite?.let { save(it) } else observe()
+        val current = state.value
+        when {
+            current.readFailure -> observe(current.writeFailure && retryWrite != null)
+            current.writeFailure -> retryFailedWrite()
+            else -> observe()
+        }
+    }
+
+    private fun retryFailedWrite() {
+        val action = retryWrite ?: return
+        retryWrite = null
+        save(action)
     }
 
     fun changeAnimation(enabled: Boolean) = save { effects.setAnimation(enabled) }
@@ -47,14 +67,16 @@ class SettingsViewModel(
         if (state.value.loading || state.value.tokens == null || state.value.error == StorageFailure.READ) return
         viewModelScope.launch {
             writes.withLock {
-                retryWrite = action
-                dispatch(SettingsAction.Saving(true))
+                retryWrite = null
+                dispatch(SettingsAction.WriteStarted)
                 try {
                     action()
-                    retryWrite = null
-                    dispatch(SettingsAction.Saving(false))
+                    dispatch(SettingsAction.WriteSucceeded)
                 } catch (cancelled: CancellationException) { throw cancelled }
-                catch (_: Exception) { dispatch(SettingsAction.Failed(StorageFailure.WRITE)) }
+                catch (_: Exception) {
+                    retryWrite = action
+                    dispatch(SettingsAction.WriteFailed)
+                }
             }
         }
     }

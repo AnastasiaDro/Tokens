@@ -60,36 +60,55 @@ class ChangePhotoViewModel(
 
     init { observe() }
 
-    private fun observe() {
+    private fun observe(retryPendingSave: Boolean = false) {
         observation?.cancel()
-        mutableState.update { it.copy(loading = true, error = null) }
+        mutableState.update { it.copy(loading = true) }
         observation = viewModelScope.launch {
+            var shouldRetrySave = retryPendingSave
             try {
                 repository.settings.collect { value ->
                     mutableState.update { it.copy(photoUri = value.photoUri, loading = false,
-                        error = it.error?.takeIf { error -> error == PhotoError.WRITE }) }
+                        readFailure = false) }
+                    if (shouldRetrySave) {
+                        shouldRetrySave = false
+                        retryFailedSave()
+                    }
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { mutableState.update { it.copy(loading = false, error = PhotoError.READ) } }
+            catch (_: Exception) { mutableState.update { it.copy(loading = false, readFailure = true) } }
         }
     }
 
     fun retry() {
-        if (state.value.error == PhotoError.WRITE) retrySave?.invoke() else observe()
+        val current = state.value
+        when {
+            current.readFailure -> observe(current.writeFailure && retrySave != null)
+            current.writeFailure -> retryFailedSave()
+            else -> observe()
+        }
+    }
+
+    private fun retryFailedSave() {
+        val action = retrySave ?: return
+        retrySave = null
+        action()
     }
 
     internal fun saveSelection(uri: String?, acquireAccess: suspend () -> Unit = {}) {
         if (uri == null || state.value.loading || state.value.saving || state.value.saved || state.value.error == PhotoError.READ) return
-        retrySave = { saveSelection(uri, acquireAccess) }
-        mutableState.update { it.copy(saving = true, error = null) }
+        retrySave = null
+        mutableState.update { it.copy(saving = true, writeFailure = false) }
         viewModelScope.launch {
             try {
                 acquireAccess()
                 repository.setPhotoUri(uri)
                 retrySave = null
-                mutableState.update { it.copy(saving = false, saved = true) }
+                mutableState.update { it.copy(saving = false, saved = true, writeFailure = false) }
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { mutableState.update { it.copy(saving = false, error = PhotoError.WRITE) } }
+            catch (_: Exception) {
+                retrySave = { saveSelection(uri, acquireAccess) }
+                mutableState.update { it.copy(saving = false, writeFailure = true) }
+            }
         }
     }
 

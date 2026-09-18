@@ -31,26 +31,42 @@ class TokensViewModel(
 
     private fun dispatch(action: TokensAction) { mutableState.update { reduceTokens(it, action) } }
 
-    private fun observe() {
+    private fun observe(retryPendingWrite: Boolean = false) {
         observation?.cancel()
         dispatch(TokensAction.Loading)
         observation = viewModelScope.launch {
+            var shouldRetryWrite = retryPendingWrite
             try {
                 observeSettings(tokens, effects, reinforcement).collect {
                     if (celebrationRevision != null && celebrationRevision != it.board.revision) stopWinEffects()
                     snapshot = it
                     dispatch(TokensAction.Loaded(it))
+                    if (shouldRetryWrite) {
+                        shouldRetryWrite = false
+                        retryFailedWrite()
+                    }
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
                 stopWinEffects()
-                dispatch(TokensAction.Failed(StorageFailure.READ))
+                dispatch(TokensAction.ReadFailed)
             }
         }
     }
 
     fun retry() {
-        if (state.value.error == StorageFailure.WRITE) retryWrite?.invoke() else observe()
+        val current = state.value
+        when {
+            current.readFailure -> observe(current.writeFailure && retryWrite != null)
+            current.writeFailure -> retryFailedWrite()
+            else -> observe()
+        }
+    }
+
+    private fun retryFailedWrite() {
+        val action = retryWrite ?: return
+        retryWrite = null
+        action()
     }
 
     fun onStart() { foreground = true }
@@ -94,14 +110,16 @@ class TokensViewModel(
     private fun mutate(retry: () -> Unit, action: suspend () -> Unit) {
         viewModelScope.launch {
             writes.withLock {
-                retryWrite = retry
-                dispatch(TokensAction.Saving(true))
+                retryWrite = null
+                dispatch(TokensAction.WriteStarted)
                 try {
                     action()
-                    retryWrite = null
-                    dispatch(TokensAction.Saving(false))
+                    dispatch(TokensAction.WriteSucceeded)
                 } catch (cancelled: CancellationException) { throw cancelled }
-                catch (_: Exception) { dispatch(TokensAction.Failed(StorageFailure.WRITE)) }
+                catch (_: Exception) {
+                    retryWrite = retry
+                    dispatch(TokensAction.WriteFailed)
+                }
             }
         }
     }

@@ -108,20 +108,82 @@ class ScreenStateTest {
 
     @Test fun reducersPreserveSavedDataOnFailureWithoutMutatingOldState() {
         val initial = TokensUiState()
-        val snapshot = SettingsSnapshot(tokens.values.value, effects.settings.value, reinforcement.settings.value)
+        val snapshot = SettingsSnapshot(tokens.values.value, effects.values.value, reinforcement.settings.value)
         val loaded = reduceTokens(initial, TokensAction.Loaded(snapshot))
-        val failed = reduceTokens(loaded, TokensAction.Failed(StorageFailure.WRITE))
+        val failed = reduceTokens(loaded, TokensAction.WriteFailed)
         assertNull(initial.board)
         assertEquals(loaded.board, failed.board)
         assertNull(loaded.error)
         val settings = reduceSettings(SettingsUiState(), SettingsAction.Loaded(snapshot))
-        assertEquals(settings.tokens, reduceSettings(settings, SettingsAction.Failed(StorageFailure.WRITE)).tokens)
+        assertEquals(settings.tokens, reduceSettings(settings, SettingsAction.WriteFailed).tokens)
+    }
+
+    @Test fun readRecoveryRetriesFailedSettingsWriteOnceAndKeepsObserving() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        effects.beforeWrite = { gate.await() }
+        val vm = track(SettingsViewModel(tokens, effects, reinforcement))
+        runCurrent()
+
+        vm.changeSound(false)
+        runCurrent()
+        effects.failRead = true
+        runCurrent()
+        assertTrue(vm.state.value.readFailure)
+        assertTrue(vm.state.value.saving)
+
+        effects.failWrite = true
+        gate.complete(Unit)
+        runCurrent()
+        assertTrue(vm.state.value.readFailure)
+        assertTrue(vm.state.value.writeFailure)
+        assertEquals(StorageFailure.READ, vm.state.value.error)
+
+        effects.beforeWrite = {}
+        effects.failRead = false
+        effects.failWrite = false
+        vm.retry()
+        runCurrent()
+
+        assertFalse(effects.values.value.sound)
+        assertFalse(vm.state.value.effects!!.sound)
+        assertFalse(vm.state.value.readFailure)
+        assertFalse(vm.state.value.writeFailure)
+        assertEquals(EXPECTED_RETRY_ATTEMPTS, effects.writeAttempts)
+        assertEquals(EXPECTED_SUCCESSFUL_WRITES, effects.successfulWrites)
+
+        effects.setAnimation(false)
+        runCurrent()
+        assertFalse(vm.state.value.effects!!.animation)
+    }
+
+    @Test fun readRetryDoesNotDuplicateWriteStillInProgress() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        effects.beforeWrite = { gate.await() }
+        val vm = track(SettingsViewModel(tokens, effects, reinforcement))
+        runCurrent()
+
+        vm.changeSound(false)
+        runCurrent()
+        effects.failRead = true
+        runCurrent()
+        effects.failRead = false
+        vm.retry()
+        runCurrent()
+
+        gate.complete(Unit)
+        runCurrent()
+        assertFalse(effects.values.value.sound)
+        assertFalse(vm.state.value.effects!!.sound)
+        assertEquals(EXPECTED_SINGLE_ATTEMPT, effects.writeAttempts)
+        assertEquals(EXPECTED_SUCCESSFUL_WRITES, effects.successfulWrites)
     }
 
     private companion object {
         const val SHRUNK_COUNT = 1
         const val COLOR = -65536
         const val PHOTO_URI = "content://test/photo"
+        const val EXPECTED_SINGLE_ATTEMPT = 1
+        const val EXPECTED_RETRY_ATTEMPTS = 2
+        const val EXPECTED_SUCCESSFUL_WRITES = 1
     }
 }
-

@@ -7,6 +7,13 @@ data class PhotoUiState(
     val loading: Boolean = true,
     val saving: Boolean = false,
     val saved: Boolean = false,
-    val error: PhotoError? = null,
-)
-
+    val readFailure: Boolean = false,
+    val writeFailure: Boolean = false,
+) {
+    val error: PhotoError?
+        get() = when {
+            readFailure -> PhotoError.READ
+            writeFailure -> PhotoError.WRITE
+            else -> null
+        }
+}

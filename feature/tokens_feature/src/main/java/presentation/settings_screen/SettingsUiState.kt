@@ -11,23 +11,34 @@ data class SettingsUiState(
     val reinforcement: ReinforcementSettings? = null,
     val loading: Boolean = true,
     val saving: Boolean = false,
-    val error: StorageFailure? = null,
-)
+    val readFailure: Boolean = false,
+    val writeFailure: Boolean = false,
+) {
+    val error: StorageFailure?
+        get() = when {
+            readFailure -> StorageFailure.READ
+            writeFailure -> StorageFailure.WRITE
+            else -> null
+        }
+}
 
 sealed interface SettingsAction {
     data object Loading : SettingsAction
     data class Loaded(val snapshot: SettingsSnapshot) : SettingsAction
-    data class Failed(val failure: StorageFailure) : SettingsAction
-    data class Saving(val saving: Boolean) : SettingsAction
+    data object ReadFailed : SettingsAction
+    data object WriteStarted : SettingsAction
+    data object WriteSucceeded : SettingsAction
+    data object WriteFailed : SettingsAction
 }
 
 fun reduceSettings(state: SettingsUiState, action: SettingsAction): SettingsUiState = when (action) {
-    SettingsAction.Loading -> state.copy(loading = true, error = null)
+    SettingsAction.Loading -> state.copy(loading = true)
     is SettingsAction.Loaded -> state.copy(
         tokens = TokenSettingsState(action.snapshot.board.count, action.snapshot.board.color),
-        effects = action.snapshot.effects, reinforcement = action.snapshot.reinforcement, loading = false,
-        error = state.error?.takeIf { it == StorageFailure.WRITE })
-    is SettingsAction.Failed -> state.copy(loading = false, saving = false, error = action.failure)
-    is SettingsAction.Saving -> state.copy(saving = action.saving, error = if (action.saving) null else state.error)
+        effects = action.snapshot.effects, reinforcement = action.snapshot.reinforcement,
+        loading = false, readFailure = false)
+    SettingsAction.ReadFailed -> state.copy(loading = false, readFailure = true)
+    SettingsAction.WriteStarted -> state.copy(saving = true, writeFailure = false)
+    SettingsAction.WriteSucceeded -> state.copy(saving = false, writeFailure = false)
+    SettingsAction.WriteFailed -> state.copy(saving = false, writeFailure = true)
 }
-
