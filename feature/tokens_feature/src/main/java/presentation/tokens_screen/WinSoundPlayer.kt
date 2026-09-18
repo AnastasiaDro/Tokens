@@ -21,7 +21,7 @@ internal class WinSoundPlayer(context: Context, private val logger: Logger) {
     private val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
         .setAudioAttributes(attributes)
         .setOnAudioFocusChangeListener({ change ->
-            if (change < 0) stop()
+            if (change < AudioManager.AUDIOFOCUS_NONE) stop()
         }, Handler(Looper.getMainLooper()))
         .build()
     private var player: MediaPlayer? = null
@@ -35,7 +35,7 @@ internal class WinSoundPlayer(context: Context, private val logger: Logger) {
                 logger.w("Fanfare: audio focus denied")
                 return
             }
-            val nextPlayer = MediaPlayer.create(appContext, R.raw.fanfare, attributes, 0)
+            val nextPlayer = MediaPlayer.create(appContext, R.raw.fanfare, attributes, GENERATE_AUDIO_SESSION_ID)
             if (nextPlayer == null) {
                 logger.e("Fanfare: MediaPlayer could not prepare the audio resource")
                 stop()
@@ -66,5 +66,9 @@ internal class WinSoundPlayer(context: Context, private val logger: Logger) {
             audioManager.abandonAudioFocusRequest(focusRequest)
             hasFocus = false
         }
+    }
+
+    private companion object {
+        const val GENERATE_AUDIO_SESSION_ID = 0
     }
 }

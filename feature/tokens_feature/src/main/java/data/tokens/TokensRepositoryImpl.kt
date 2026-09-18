@@ -14,7 +14,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     init {
         val count = tokensStorage.getTokensNumber().coerceIn(getMinTokensNumber(), getMaxTokensNumber())
         val checkedIndices = tokensStorage.getCheckedTokenIndices()
-            ?: (0 until tokensStorage.getCheckedTokensNumber().coerceIn(0, count)).toSet()
+            ?: (FIRST_TOKEN_INDEX until tokensStorage.getCheckedTokensNumber().coerceIn(NO_CHECKED_TOKENS, count)).toSet()
         repeat(count) { index -> tokensList += Token(index in checkedIndices, getCheckedColor()) }
         // Repair legacy count mismatches and migrate to exact positions in one write.
         saveProgress()
@@ -50,7 +50,7 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
         return true
     }
 
-    override fun getCheckedColor(): Int = if (tokensStorage.getCheckedTokensColor() == 0) defaultColor else tokensStorage.getCheckedTokensColor()
+    override fun getCheckedColor(): Int = if (tokensStorage.getCheckedTokensColor() == UNSET_COLOR) defaultColor else tokensStorage.getCheckedTokensColor()
 
     override fun changeCheckedColor(color: Int) {
         tokensStorage.saveCheckedTokensColor(color)
@@ -70,13 +70,18 @@ class TokensRepositoryImpl(private val tokensStorage: TokensStorage): TokensRepo
     }
 
     override fun getTokensNumber() = tokensList.size
-    override fun getMinTokensNumber() = 1
+    override fun getMinTokensNumber() = MIN_TOKENS_NUMBER
 
-    override fun getMaxTokensNumber() = 10
+    override fun getMaxTokensNumber() = MAX_TOKENS_NUMBER
 
     private fun saveProgress() = tokensStorage.saveProgress(tokensList.map { it.isChecked })
 
     private companion object {
+        private const val FIRST_TOKEN_INDEX = 0
+        private const val NO_CHECKED_TOKENS = 0
+        private const val UNSET_COLOR = 0
+        private const val MIN_TOKENS_NUMBER = 1
+        private const val MAX_TOKENS_NUMBER = 10
         private const val defaultColor = -12517557  /** light green **/
     }
 }

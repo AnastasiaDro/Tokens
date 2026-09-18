@@ -80,7 +80,7 @@ class TokensViewModel(
 
     /** Animation and sound **/
     private var winEffectsJob: Job? = null
-    private var celebrationId = 0L
+    private var celebrationId = WinEffectsState.NO_CELEBRATION_ID
     private val winEffectsState = MutableStateFlow(WinEffectsState(false, false))
     val winEffectsFlow: StateFlow<WinEffectsState> = winEffectsState.asStateFlow()
 

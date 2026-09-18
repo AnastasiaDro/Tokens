@@ -3,12 +3,12 @@ package data.tokens
 import data.tokens.storage.TokensStorage
 
 internal class FakeTokensStorage(
-    var count: Int = 5,
-    var checkedCount: Int = 0,
+    var count: Int = DEFAULT_TOKENS_NUMBER,
+    var checkedCount: Int = NO_CHECKED_TOKENS,
     var indices: Set<Int>? = null,
-    var color: Int = -12517557,
+    var color: Int = DEFAULT_COLOR,
 ) : TokensStorage {
-    var writes = 0
+    var writes = NO_WRITES
         private set
 
     override fun getTokensNumber() = count
@@ -21,5 +21,12 @@ internal class FakeTokensStorage(
         indices = checkedTokens.indices.filter { checkedTokens[it] }.toSet()
         checkedCount = indices!!.size
         writes++
+    }
+
+    companion object {
+        const val DEFAULT_TOKENS_NUMBER = 5
+        const val NO_CHECKED_TOKENS = 0
+        private const val DEFAULT_COLOR = -12517557
+        private const val NO_WRITES = 0
     }
 }

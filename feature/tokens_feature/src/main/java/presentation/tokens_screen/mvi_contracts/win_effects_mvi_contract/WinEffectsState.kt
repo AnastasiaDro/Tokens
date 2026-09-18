@@ -20,5 +20,9 @@ import presentation.tokens_screen.mvi_contracts.Event
 data class WinEffectsState(
     val isAnimationRunning: Boolean,
     val isSoundPlaying: Boolean,
-    val celebrationId: Long = 0,
-)
+    val celebrationId: Long = NO_CELEBRATION_ID,
+) {
+    companion object {
+        const val NO_CELEBRATION_ID = 0L
+    }
+}

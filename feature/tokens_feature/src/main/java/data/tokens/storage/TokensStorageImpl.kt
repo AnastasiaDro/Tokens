@@ -21,7 +21,7 @@ class TokensStorageImpl(context: Context, loggerFactory: LoggerFactory) : Tokens
     }
 
     override fun getCheckedTokensNumber(): Int {
-        return prefs.getInt(CHECKED_TOKENS_NUMBER, 0)
+        return prefs.getInt(CHECKED_TOKENS_NUMBER, DEFAULT_CHECKED_TOKENS_NUMBER)
     }
 
     override fun getCheckedTokenIndices(): Set<Int>? =
@@ -37,7 +37,7 @@ class TokensStorageImpl(context: Context, loggerFactory: LoggerFactory) : Tokens
     }
 
     override fun getCheckedTokensColor(): Int {
-        val color = prefs.getInt(CHECKED_TOKENS_COLOR, -12517557)
+        val color = prefs.getInt(CHECKED_TOKENS_COLOR, defaultColor)
         logger.d("get checkedTokensColor = $color")
         return color
     }
@@ -55,6 +55,7 @@ class TokensStorageImpl(context: Context, loggerFactory: LoggerFactory) : Tokens
         const val CHECKED_TOKENS_COLOR = "CheckedTokensColor"
 
         private const val DEFAULT_TOKENS_NUMBER = 5
+        private const val DEFAULT_CHECKED_TOKENS_NUMBER = 0
         private const val defaultColor = -12517557  /** light green **/
         const val TOKENS_PREFERENCES = "TokensPreferences"
     }

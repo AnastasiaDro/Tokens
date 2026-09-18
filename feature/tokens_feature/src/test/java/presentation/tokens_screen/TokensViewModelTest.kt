@@ -22,7 +22,7 @@ import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.UncheckToken
 @OptIn(ExperimentalCoroutinesApi::class)
 class TokensViewModelTest {
     private val dispatcher = StandardTestDispatcher()
-    private val storage = FakeTokensStorage(2)
+    private val storage = FakeTokensStorage(BOARD_SIZE)
     private val repository = TokensRepositoryImpl(storage)
     private val effects = FakeEffectsRepository()
     private lateinit var viewModel: TokensViewModel
@@ -49,8 +49,8 @@ class TokensViewModelTest {
     }
 
     private fun win() {
-        viewModel.sendEvent(CheckTokenEvent(0))
-        viewModel.sendEvent(CheckTokenEvent(1))
+        viewModel.sendEvent(CheckTokenEvent(FIRST_TOKEN_INDEX))
+        viewModel.sendEvent(CheckTokenEvent(LAST_TOKEN_INDEX))
     }
 
     @Test fun `first victory is available even before UI subscribes`() = runTest(dispatcher) {
@@ -59,7 +59,7 @@ class TokensViewModelTest {
         assertTrue(viewModel.winEffectsFlow.value.isAnimationRunning)
         assertTrue(viewModel.tokensStateFlow.value.tokens.all { it.isChecked })
         runCurrent()
-        advanceTimeBy(5000)
+        advanceTimeBy(EFFECTS_DURATION_MS)
         runCurrent()
         assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
         assertFalse(viewModel.winEffectsFlow.value.isAnimationRunning)
@@ -68,25 +68,25 @@ class TokensViewModelTest {
     @Test fun `duplicate check never restarts a victory`() = runTest(dispatcher) {
         win()
         val first = viewModel.winEffectsFlow.value
-        viewModel.sendEvent(CheckTokenEvent(1))
+        viewModel.sendEvent(CheckTokenEvent(LAST_TOKEN_INDEX))
         assertEquals(first, viewModel.winEffectsFlow.value)
-        assertEquals(2, repository.getCheckedTokensNumber())
+        assertEquals(BOARD_SIZE, repository.getCheckedTokensNumber())
     }
 
     @Test fun `next victory has its own full duration and cancels previous timer`() = runTest(dispatcher) {
         win()
         runCurrent()
         val firstId = viewModel.winEffectsFlow.value.celebrationId
-        advanceTimeBy(1000)
-        viewModel.sendEvent(UncheckTokenEvent(1))
+        advanceTimeBy(RESTART_DELAY_MS)
+        viewModel.sendEvent(UncheckTokenEvent(LAST_TOKEN_INDEX))
         assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
-        viewModel.sendEvent(CheckTokenEvent(1))
+        viewModel.sendEvent(CheckTokenEvent(LAST_TOKEN_INDEX))
         runCurrent()
         assertTrue(viewModel.winEffectsFlow.value.celebrationId > firstId)
-        advanceTimeBy(4000)
+        advanceTimeBy(EFFECTS_DURATION_MS - RESTART_DELAY_MS)
         runCurrent()
         assertTrue(viewModel.winEffectsFlow.value.isSoundPlaying)
-        advanceTimeBy(1000)
+        advanceTimeBy(RESTART_DELAY_MS)
         runCurrent()
         assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
     }
@@ -114,9 +114,9 @@ class TokensViewModelTest {
 
     @Test fun `clear and resize stop effects without triggering a new victory`() = runTest(dispatcher) {
         win()
-        repository.resizeTokens(1)
+        repository.resizeTokens(SHRUNK_BOARD_SIZE)
         viewModel.updateTokensNum()
-        assertEquals(1, viewModel.tokensStateFlow.value.tokens.size)
+        assertEquals(SHRUNK_BOARD_SIZE, viewModel.tokensStateFlow.value.tokens.size)
         assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
         viewModel.clearTokens()
         assertFalse(viewModel.tokensStateFlow.value.tokens.single().isChecked)
@@ -125,10 +125,10 @@ class TokensViewModelTest {
     }
 
     @Test fun `rapid clicks use current model rather than stale rendered state`() = runTest(dispatcher) {
-        viewModel.onTokenClicked(0)
-        viewModel.onTokenClicked(0)
-        viewModel.onTokenClicked(99)
-        assertEquals(0, repository.getCheckedTokensNumber())
+        viewModel.onTokenClicked(FIRST_TOKEN_INDEX)
+        viewModel.onTokenClicked(FIRST_TOKEN_INDEX)
+        viewModel.onTokenClicked(OUT_OF_RANGE_TOKEN_INDEX)
+        assertEquals(FakeTokensStorage.NO_CHECKED_TOKENS, repository.getCheckedTokensNumber())
         assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
     }
 
@@ -139,6 +139,17 @@ class TokensViewModelTest {
         override fun plugWinAnimationOff() { animation = false }
         override fun plugWinSoundOn() { sound = true }
         override fun plugWinSoundOff() { sound = false }
-        override fun getWinEffects() = WinEffects(animation, sound, 5000L, 1)
+        override fun getWinEffects() = WinEffects(animation, sound, EFFECTS_DURATION_MS, ANIMATION_SPEED)
+    }
+
+    private companion object {
+        const val BOARD_SIZE = 2
+        const val FIRST_TOKEN_INDEX = 0
+        const val LAST_TOKEN_INDEX = 1
+        const val SHRUNK_BOARD_SIZE = 1
+        const val EFFECTS_DURATION_MS = 5000L
+        const val RESTART_DELAY_MS = 1000L
+        const val ANIMATION_SPEED = 1
+        const val OUT_OF_RANGE_TOKEN_INDEX = 99
     }
 }

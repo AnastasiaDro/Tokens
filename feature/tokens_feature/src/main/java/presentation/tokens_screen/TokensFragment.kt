@@ -34,6 +34,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import presentation.tokens_screen.mvi_contracts.InitEvent
 import presentation.tokens_screen.mvi_contracts.reinforcement_image_mvi_contract.GetReinforcementStateEvent
 import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.ClearTokensEvent
+import presentation.tokens_screen.mvi_contracts.win_effects_mvi_contract.WinEffectsState
 
 /**
  * [TokensFragment] - a fragment for tokens displaying
@@ -53,7 +54,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
 
     private var soundPlayer: WinSoundPlayer? = null
     private var animationJob: Job? = null
-    private var lastCelebrationId = 0L
+    private var lastCelebrationId = WinEffectsState.NO_CELEBRATION_ID
     private val swipeParser: SwipeParser = SwipeParserImpl(this::class.java.simpleName)
     private val loggerFactory: LoggerFactory by inject()
     private val logger = loggerFactory.createLogger(this::class.java.simpleName)
@@ -117,7 +118,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     }
 
     private fun showTokens(viewList: List<TokenView>, tokensList: List<Token>) {
-        var i = 0
+        var i = FIRST_TOKEN_INDEX
         for (index in tokensList.indices) {
             viewList[index].visibility = View.VISIBLE
             if (viewList[index].getCheckedColor() != tokensList[index].checkedColor)
@@ -127,7 +128,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
             else
                 viewList[index].setUnchecked()
             viewList[index].setOnClickListener { onTokenClick(index) }
-            i = index + 1
+            i = index + NEXT_TOKEN_OFFSET
         }
         for (t in i until viewList.size)
             viewList[t].isVisible = false
@@ -194,7 +195,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         animationJob = null
         listOf(animationViewLeft, animationViewRight, animationViewCenter).forEach {
             it.cancelAnimation()
-            it.progress = 0f
+            it.progress = INITIAL_ANIMATION_PROGRESS
             it.isVisible = false
         }
     }
@@ -249,6 +250,9 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     }
 
     companion object {
+        private const val FIRST_TOKEN_INDEX = 0
+        private const val NEXT_TOKEN_OFFSET = 1
+        private const val INITIAL_ANIMATION_PROGRESS = 0f
         const val ANIMATION_FIRST_DELAY = 500L
         const val ANIMATION_SECOND_DELAY = 300L
 

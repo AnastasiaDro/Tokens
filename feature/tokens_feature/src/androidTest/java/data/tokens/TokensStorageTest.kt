@@ -25,36 +25,54 @@ class TokensStorageTest {
     @After fun tearDown() { prefs.edit().clear().commit() }
 
     @Test fun migratesCorruptLegacyProgressAndPreservesColor() {
-        prefs.edit().putInt("TokensNumber", 3).putInt("CheckedTokensNumber", 9)
-            .putInt("CheckedTokensColor", -65536).commit()
+        prefs.edit().putInt("TokensNumber", SMALL_BOARD_SIZE).putInt("CheckedTokensNumber", CORRUPT_CHECKED_COUNT)
+            .putInt("CheckedTokensColor", CUSTOM_COLOR).commit()
         val repository = TokensRepositoryImpl(storage())
-        assertEquals(3, repository.getTokensNumber())
-        assertEquals(3, repository.getCheckedTokensNumber())
-        assertEquals(-65536, repository.getCheckedColor())
-        assertEquals(setOf("0", "1", "2"), prefs.getStringSet("CheckedTokenIndices", null))
-        assertEquals(3, prefs.getInt("CheckedTokensNumber", -1))
+        assertEquals(SMALL_BOARD_SIZE, repository.getTokensNumber())
+        assertEquals(SMALL_BOARD_SIZE, repository.getCheckedTokensNumber())
+        assertEquals(CUSTOM_COLOR, repository.getCheckedColor())
+        assertEquals(setOf(FIRST_TOKEN_INDEX.toString(), SECOND_TOKEN_INDEX.toString(), THIRD_TOKEN_INDEX.toString()),
+            prefs.getStringSet("CheckedTokenIndices", null))
+        assertEquals(SMALL_BOARD_SIZE, prefs.getInt("CheckedTokensNumber", MISSING_PREFERENCE))
     }
 
     @Test fun exactPositionsSurviveRepositoryRecreationAndResize() {
         val repository = TokensRepositoryImpl(storage())
-        repository.checkToken(1)
-        repository.checkToken(4)
+        repository.checkToken(SECOND_TOKEN_INDEX)
+        repository.checkToken(LAST_TOKEN_INDEX)
         assertEquals(listOf(false, true, false, false, true),
             TokensRepositoryImpl(storage()).getTokensList().map { it.isChecked })
-        repository.resizeTokens(2)
-        repository.resizeTokens(5)
+        repository.resizeTokens(SHRUNK_BOARD_SIZE)
+        repository.resizeTokens(DEFAULT_BOARD_SIZE)
         val restored = TokensRepositoryImpl(storage())
         assertEquals(listOf(false, true, false, false, false), restored.getTokensList().map { it.isChecked })
-        assertEquals(5, prefs.getInt("TokensNumber", -1))
-        assertEquals(1, prefs.getInt("CheckedTokensNumber", -1))
+        assertEquals(DEFAULT_BOARD_SIZE, prefs.getInt("TokensNumber", MISSING_PREFERENCE))
+        assertEquals(SINGLE_CHECKED_TOKEN, prefs.getInt("CheckedTokensNumber", MISSING_PREFERENCE))
     }
 
     @Test fun normalizesInvalidPersistedPositions() {
-        prefs.edit().putInt("TokensNumber", 3).putInt("CheckedTokensNumber", 9)
-            .putStringSet("CheckedTokenIndices", setOf("-1", "1", "9", "invalid")).commit()
+        prefs.edit().putInt("TokensNumber", SMALL_BOARD_SIZE).putInt("CheckedTokensNumber", CORRUPT_CHECKED_COUNT)
+            .putStringSet("CheckedTokenIndices", setOf(NEGATIVE_TOKEN_INDEX.toString(), SECOND_TOKEN_INDEX.toString(),
+                OUT_OF_RANGE_TOKEN_INDEX.toString(), "invalid")).commit()
         val restored = TokensRepositoryImpl(storage())
         assertEquals(listOf(false, true, false), restored.getTokensList().map { it.isChecked })
-        assertEquals(setOf("1"), prefs.getStringSet("CheckedTokenIndices", null))
-        assertEquals(1, prefs.getInt("CheckedTokensNumber", -1))
+        assertEquals(setOf(SECOND_TOKEN_INDEX.toString()), prefs.getStringSet("CheckedTokenIndices", null))
+        assertEquals(SINGLE_CHECKED_TOKEN, prefs.getInt("CheckedTokensNumber", MISSING_PREFERENCE))
+    }
+
+    private companion object {
+        const val SMALL_BOARD_SIZE = 3
+        const val DEFAULT_BOARD_SIZE = 5
+        const val SHRUNK_BOARD_SIZE = 2
+        const val CORRUPT_CHECKED_COUNT = 9
+        const val SINGLE_CHECKED_TOKEN = 1
+        const val CUSTOM_COLOR = -65536
+        const val MISSING_PREFERENCE = -1
+        const val FIRST_TOKEN_INDEX = 0
+        const val SECOND_TOKEN_INDEX = 1
+        const val THIRD_TOKEN_INDEX = 2
+        const val LAST_TOKEN_INDEX = 4
+        const val NEGATIVE_TOKEN_INDEX = -1
+        const val OUT_OF_RANGE_TOKEN_INDEX = 9
     }
 }
