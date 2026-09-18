@@ -78,7 +78,7 @@ dependencies {
     implementation(libs.viewbindingDelegate)
 
     // color picker
-    implementation(libs.colorPicker)
+    implementation(libs.colorPickerCompose)
 
     // Lottie
     implementation(libs.lottie)

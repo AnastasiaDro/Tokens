@@ -141,7 +141,8 @@ private fun SettingsControls(
             horizontalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing)) {
             Text(stringResource(R.string.settings_tokens_color), modifier = Modifier.weight(LABEL_WEIGHT))
             state.tokens?.let {
-                Box(Modifier.size(COLOR_PREVIEW_SIZE_DP.dp).background(Color(it.color), CircleShape))
+                Box(Modifier.size(COLOR_PREVIEW_SIZE_DP.dp).background(Color(it.color), CircleShape)
+                    .testTag(SETTINGS_COLOR_TAG))
             }
             TextButton(onClick = onSelectColor, enabled = enabled) { Text(stringResource(R.string.select_button_text)) }
         }
@@ -200,6 +201,7 @@ private fun AboutApp(onYoutube: () -> Unit, onDonate: () -> Unit) {
 }
 
 internal const val SETTINGS_COUNT_TAG = "settings-token-count"
+internal const val SETTINGS_COLOR_TAG = "settings-token-color"
 private const val TWO_PANE_MIN_WIDTH_DP = 600
 private const val PANE_WEIGHT = 1f
 private const val LABEL_WEIGHT = 1f

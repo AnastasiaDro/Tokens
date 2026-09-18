@@ -99,15 +99,17 @@ class ScreenStateTest {
     }
 
     @Test fun colorHasItsOwnViewModelAndOnlyCompletesAfterWrite() = runTest(dispatcher) {
-        val vm = track(SelectColorViewModel(tokens))
+        val vm = track(SelectColorViewModel(tokens, androidx.lifecycle.SavedStateHandle()))
         runCurrent()
         tokens.failWrite = true
-        vm.save(COLOR)
+        vm.selectColor(COLOR)
+        vm.save()
         runCurrent()
         assertEquals(SaveState.ERROR, vm.state.value.save)
-        assertEquals(FakeBoardRepository.COLOR, vm.state.value.color)
+        assertEquals(COLOR, vm.state.value.color)
+        assertEquals(FakeBoardRepository.COLOR, tokens.values.value.color)
         tokens.failWrite = false
-        vm.save(COLOR)
+        vm.save()
         runCurrent()
         assertEquals(SaveState.SAVED, vm.state.value.save)
         assertEquals(COLOR, vm.state.value.color)

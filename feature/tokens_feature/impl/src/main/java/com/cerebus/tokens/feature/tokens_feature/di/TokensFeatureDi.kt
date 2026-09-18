@@ -20,5 +20,5 @@ val tokensFeatureModule = module {
     viewModel { TokensViewModel(get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), get()) }
     viewModel { SelectTokensNumberViewModel(get(), get()) }
-    viewModel { SelectColorViewModel(get()) }
+    viewModel { SelectColorViewModel(get(), get()) }
 }

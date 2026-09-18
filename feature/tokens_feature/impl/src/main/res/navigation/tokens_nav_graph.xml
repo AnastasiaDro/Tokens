@@ -46,6 +46,5 @@
     <dialog
         android:id="@+id/selectColorDialogFragment"
         android:name="presentation.settings_screen.SelectColorDialogFragment"
-        android:label="SelectColorDialogFragment"
-        tools:layout="@layout/dialog_select_color"/>
+        android:label="SelectColorDialogFragment" />
 </navigation>

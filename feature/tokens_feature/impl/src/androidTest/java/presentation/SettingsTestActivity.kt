@@ -12,13 +12,17 @@ class SettingsTestActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(FrameLayout(this).apply { id = TestR.id.feature_test_host })
-        if (savedInstanceState == null) {
-            val host = NavHostFragment()
-            supportFragmentManager.beginTransaction().replace(TestR.id.feature_test_host, host)
-                .setPrimaryNavigationFragment(host).commitNow()
-            host.navController.graph = host.navController.navInflater.inflate(R.navigation.tokens_nav_graph).apply {
-                setStartDestination(R.id.settingsFragment)
+        val host = if (savedInstanceState == null) {
+            NavHostFragment().also { host ->
+                supportFragmentManager.beginTransaction().replace(TestR.id.feature_test_host, host)
+                    .setPrimaryNavigationFragment(host).commitNow()
             }
+        } else {
+            supportFragmentManager.findFragmentById(TestR.id.feature_test_host) as NavHostFragment
+        }
+        // Like MainActivity, restore the programmatically assembled graph before applying saved navigation.
+        host.navController.graph = host.navController.navInflater.inflate(R.navigation.tokens_nav_graph).apply {
+            setStartDestination(R.id.settingsFragment)
         }
     }
 }

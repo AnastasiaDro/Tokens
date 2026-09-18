@@ -40,4 +40,7 @@
     <string name="reinforcement_image">Reinforcement image</string>
     <!-- Dialog -->
     <string name="select_color">Select a color</string>
+    <string name="selected_color_preview">Selected color</string>
+    <string name="color_palette">Color palette</string>
+    <string name="color_brightness">Brightness</string>
 </resources>

@@ -11,7 +11,7 @@ lifecycle = "2.6.1"
 activity = "1.8.1"
 fragment = "1.6.2"
 viewbindingDelegate = "1.5.9"
-colorPicker = "2.2.4"
+colorPickerCompose = "1.1.2"
 lottie = "3.4.0"
 koin = "3.5.0"
 junit = "4.13.2"
@@ -43,7 +43,7 @@ koinCore = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koinAndroid = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koinTest = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
-colorPicker = { module = "com.github.skydoves:colorpickerview", version.ref = "colorPicker" }
+colorPickerCompose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorPickerCompose" }
 viewbindingDelegate = { module = "com.github.kirich1409:viewbindingpropertydelegate-full", version.ref = "viewbindingDelegate" }
 junit = { module = "junit:junit", version.ref = "junit" }
 coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }

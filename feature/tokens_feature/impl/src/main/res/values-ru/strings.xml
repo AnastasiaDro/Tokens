@@ -41,4 +41,7 @@
 
     <!-- Dialog -->
     <string name="select_color">Выберите цвет</string>
+    <string name="selected_color_preview">Выбранный цвет</string>
+    <string name="color_palette">Палитра цветов</string>
+    <string name="color_brightness">Яркость</string>
 </resources>
