@@ -56,13 +56,13 @@ internal fun TokensScreen(
 ) {
     val ready = !state.loading && state.board != null && state.error != StorageFailure.READ
     val showPhoto = state.reinforcement?.enabled == true
-    BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding()) {
+    BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding()) {
         val statusMaxHeight = maxHeight / STATUS_HEIGHT_DIVISOR
         Column(Modifier.fillMaxSize()) {
-            BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings, showPhoto, onPhoto)
             if (state.loading || state.error != null) {
                 TextButton(onClick = onRetry, enabled = state.error != null && !state.saving,
-                    modifier = Modifier.heightIn(max = statusMaxHeight).verticalScroll(rememberScrollState())) {
+                    modifier = Modifier.padding(end = TokensDimensions.MinimumTouchTarget + TokensDimensions.SmallSpacing)
+                        .heightIn(max = statusMaxHeight).verticalScroll(rememberScrollState())) {
                     Text(stringResource(when (state.error) {
                         StorageFailure.READ -> CoreR.string.storage_read_error
                         StorageFailure.WRITE -> CoreR.string.storage_write_error
@@ -73,14 +73,23 @@ internal fun TokensScreen(
             BoxWithConstraints(Modifier.fillMaxWidth().weight(CONTENT_WEIGHT)) {
                 val density = LocalDensity.current
                 val preferredDiameter = dimensionResource(R.dimen.token_width)
-                val plan = with(density) {
-                    boardContentGeometry(maxWidth.roundToPx(), maxHeight.roundToPx(), state.board?.count ?: NO_SIZE,
+                fun planForWidth(width: Int) = with(density) {
+                    boardContentGeometry(width, maxHeight.roundToPx(), state.board?.count ?: NO_SIZE,
                         preferredDiameter.roundToPx(), TokensDimensions.SmallSpacing.roundToPx(),
                         TokensDimensions.MinimumTouchTarget.roundToPx(),
                         maxWidth >= WIDE_WINDOW_MIN_WIDTH_DP.dp && maxHeight >= WIDE_WINDOW_MIN_HEIGHT_DP.dp,
                         showPhoto, PHOTO_MAX_SIZE_DP.dp.roundToPx())
                 }
-                Box(Modifier.fillMaxSize()) {
+                val widthPx = with(density) { maxWidth.roundToPx() }
+                val heightPx = with(density) { maxHeight.roundToPx() }
+                val fullPlan = planForWidth(widthPx)
+                val controlSpace = TokensDimensions.MinimumTouchTarget + TokensDimensions.SmallSpacing
+                val menuSizePx = with(density) { TokensDimensions.MinimumTouchTarget.roundToPx() }
+                // Overlay the menu in free space; in a short window reserve a side strip, not a top row.
+                val reserveMenuSide = fullPlan.overlapsTopEndControl(widthPx, heightPx, menuSizePx)
+                val contentWidth = if (reserveMenuSide) (maxWidth - controlSpace).coerceAtLeast(NO_SIZE.dp) else maxWidth
+                val plan = if (reserveMenuSide) planForWidth(with(density) { contentWidth.roundToPx() }) else fullPlan
+                Box(Modifier.width(contentWidth).fillMaxHeight()) {
                     TokenBoard(
                         tokens = state.board?.tokens.orEmpty(),
                         enabled = ready,
@@ -97,6 +106,8 @@ internal fun TokensScreen(
                 }
             }
         }
+        BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings, showPhoto, onPhoto,
+            Modifier.align(Alignment.TopEnd))
     }
 }
 
@@ -104,10 +115,11 @@ internal fun TokensScreen(
 private fun BoardMenu(
     enabled: Boolean, onSelectCount: () -> Unit, onClear: () -> Unit,
     onSettings: () -> Unit, showPhoto: Boolean, onPhoto: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val menuDescription = stringResource(R.string.tokens_menu)
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+    Box(modifier, contentAlignment = Alignment.CenterEnd) {
         Box {
             IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = menuDescription }) {
                 Text("⋮", style = MaterialTheme.typography.headlineMedium)
@@ -166,7 +178,7 @@ internal fun TokenBoard(
                 val column = index % geometry.columns
                 val itemsInRow = minOf(geometry.columns, children.size - row * geometry.columns)
                 val x = (constraints.maxWidth - geometry.rowWidth(itemsInRow)) / CENTER_DIVISOR +
-                    column * (geometry.diameter + geometry.gap)
+                    column * (geometry.diameter + geometry.horizontalGap)
                 val y = (constraints.maxHeight - geometry.height) / CENTER_DIVISOR +
                     row * (geometry.diameter + geometry.gap)
                 child.placeRelative(x, y)

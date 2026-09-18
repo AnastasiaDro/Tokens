@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.Modifier
@@ -168,6 +170,34 @@ class TokensScreenTest {
         assertEquals(TABLET_ROWS, assertTokensFit(MAX_TOKEN_COUNT).map { it.top }.distinct().size)
     }
 
+    @Test fun boardIsVerticallyCenteredAndMenuDoesNotOverlapTokensInBothOrientations() {
+        val window = mutableStateOf(PHONE_WINDOW)
+        val count = mutableStateOf(MAX_TOKEN_COUNT)
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
+                TokensTheme {
+                    Box(Modifier.size(window.value).testTag(WINDOW_TAG)
+                        .consumeWindowInsets(WindowInsets.safeDrawing)) {
+                        TokensScreen(ready().copy(board = BoardState(tokens().take(count.value), COLOR, REVISION)),
+                            {}, {}, {}, {}, {}, {})
+                    }
+                }
+            }
+        }
+        listOf(PHONE_WINDOW, LANDSCAPE_WINDOW, TIGHT_WINDOW).forEach { size ->
+            listOf(PHONE_COLUMNS, MAX_TOKEN_COUNT).forEach { tokenCount ->
+                compose.runOnIdle { window.value = size; count.value = tokenCount }
+                val bounds = assertTokensFit(tokenCount)
+                val viewport = compose.onNodeWithTag(WINDOW_TAG).fetchSemanticsNode().boundsInRoot
+                val tokensCenter = (bounds.minOf { it.top } + bounds.maxOf { it.bottom }) / CENTER_DIVISOR
+                assertEquals(viewport.center.y, tokensCenter, PIXEL_TOLERANCE)
+                val menu = compose.onNodeWithContentDescription(context.getString(R.string.tokens_menu))
+                    .assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+                bounds.forEach { assertFalse("Menu $menu overlaps token $it", it.overlaps(menu)) }
+            }
+        }
+    }
+
     @Test fun tightWindowKeepsTokensVisibleDuringErrorAndPhotoAccessibleFromMenu() {
         val photos = mutableListOf<Unit>()
         compose.setContent {
@@ -223,7 +253,12 @@ class TokensScreenTest {
         const val PHONE_ROWS = 4
         const val TABLET_ROWS = 2
         const val TABLET_HEIGHT = 650
+        const val WINDOW_TAG = "test-window"
+        const val PHONE_COLUMNS = 5
+        const val CENTER_DIVISOR = 2
+        const val PIXEL_TOLERANCE = 1f
         val PHONE_WINDOW = DpSize(BOARD_WIDTH.dp, 600.dp)
+        val LANDSCAPE_WINDOW = DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp)
         val TABLET_WINDOW = DpSize(1000.dp, TABLET_HEIGHT.dp)
         val TIGHT_WINDOW = DpSize(220.dp, 180.dp)
         val WINDOWS = listOf(PHONE_WINDOW, TABLET_WINDOW, TIGHT_WINDOW, DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp))

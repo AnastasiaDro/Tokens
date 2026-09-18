@@ -13,6 +13,7 @@ class TokenBoardGeometryTest {
                     val result = geometry(width, height, count, wide)
                     assertTrue(result.diameter >= EMPTY_SIZE)
                     assertTrue(result.gap >= EMPTY_SIZE)
+                    assertTrue(result.horizontalGap >= result.gap)
                     assertTrue(result.rowWidth(result.columns) <= width)
                     assertTrue(result.height <= height)
                     assertTrue(result.diameter <= PREFERRED_DIAMETER)
@@ -79,6 +80,41 @@ class TokenBoardGeometryTest {
         assertEquals(EMPTY_SIZE, result.diameter)
     }
 
+    @Test fun roomyHorizontalBoardSeparatesTokensByTheirRadius() {
+        val result = geometry(PHONE_LANDSCAPE_WIDTH, PHONE_LANDSCAPE_HEIGHT)
+        assertEquals(PREFERRED_DIAMETER, result.diameter)
+        assertEquals(result.diameter / RADIUS_DIVISOR, result.horizontalGap)
+        assertEquals(PREFERRED_GAP, result.gap)
+    }
+
+    @Test fun narrowBoardReducesHorizontalSpacingWithoutOverflow() {
+        val result = geometry(PHONE_WIDTH, TALL_HEIGHT)
+        assertTrue(result.horizontalGap < result.diameter / RADIUS_DIVISOR)
+        assertTrue(result.horizontalGap >= PREFERRED_GAP)
+        assertTrue(result.rowWidth(result.columns) <= PHONE_WIDTH)
+    }
+
+    @Test fun photoKeepsHorizontalGapsWithinRemainingBoardWidth() {
+        val result = boardContentGeometry(WIDE_SIZE, TALL_HEIGHT, MAX_TOKEN_COUNT, PREFERRED_DIAMETER,
+            PREFERRED_GAP, MINIMUM_DIAMETER, true, true, PHOTO_SIZE)
+        assertEquals(PREFERRED_DIAMETER, result.tokens.diameter)
+        assertTrue(result.tokens.horizontalGap > PREFERRED_GAP)
+        assertTrue(result.tokens.rowWidth(result.tokens.columns) <= result.boardWidth)
+    }
+
+    @Test fun smallPhotoBoardLeavesMenuCornerFreeWithoutReservingAnotherStrip() {
+        val result = boardContentGeometry(PHONE_WIDTH, NARROW_SIZE, MAX_TOKEN_COUNT, PREFERRED_DIAMETER,
+            PREFERRED_GAP, MINIMUM_DIAMETER, false, true, PHOTO_SIZE)
+        assertTrue(result.photoSize >= MINIMUM_DIAMETER)
+        assertFalse(result.overlapsTopEndControl(PHONE_WIDTH, NARROW_SIZE, MINIMUM_DIAMETER))
+    }
+
+    @Test fun denselyFilledBoardNeedsSpaceForMenuAtTheCorner() {
+        val result = boardContentGeometry(NARROW_SIZE, MINIMUM_DIAMETER * FOUR_ROWS, MAX_TOKEN_COUNT,
+            PREFERRED_DIAMETER, PREFERRED_GAP, MINIMUM_DIAMETER, false, false, PHOTO_SIZE)
+        assertTrue(result.overlapsTopEndControl(NARROW_SIZE, MINIMUM_DIAMETER * FOUR_ROWS, MINIMUM_DIAMETER))
+    }
+
     private fun geometry(width: Int, height: Int, count: Int = MAX_TOKEN_COUNT, wide: Boolean = false) =
         tokenBoardGeometry(width, height, count, PREFERRED_DIAMETER, PREFERRED_GAP, MINIMUM_DIAMETER, wide)
 
@@ -98,5 +134,6 @@ class TokenBoardGeometryTest {
         const val PHOTO_SIZE = 150
         const val TWO_ROWS = 2
         const val FOUR_ROWS = 4
+        const val RADIUS_DIVISOR = 2
     }
 }

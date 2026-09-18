@@ -1,7 +1,13 @@
 package presentation.tokens_screen
 
-internal data class TokenBoardGeometry(val columns: Int, val rows: Int, val diameter: Int, val gap: Int) {
-    fun rowWidth(items: Int): Int = items * diameter + (items - SINGLE_ITEM).coerceAtLeast(NO_SIZE) * gap
+internal data class TokenBoardGeometry(
+    val columns: Int,
+    val rows: Int,
+    val diameter: Int,
+    val gap: Int,
+    val horizontalGap: Int = gap,
+) {
+    fun rowWidth(items: Int): Int = items * diameter + (items - SINGLE_ITEM).coerceAtLeast(NO_SIZE) * horizontalGap
     val height: Int get() = rows * diameter + (rows - SINGLE_ITEM).coerceAtLeast(NO_SIZE) * gap
 }
 
@@ -12,6 +18,18 @@ internal data class BoardContentGeometry(
     val photoSize: Int,
     val photoBelow: Boolean,
 )
+
+/** The menu can use the empty corner unless it intersects the actual token or photo bounds. */
+internal fun BoardContentGeometry.overlapsTopEndControl(width: Int, height: Int, controlSize: Int): Boolean {
+    val controlLeft = width - controlSize
+    val tokensTop = (boardHeight - tokens.height) / CENTER_DIVISOR
+    val tokensRight = (boardWidth + tokens.rowWidth(tokens.columns)) / CENTER_DIVISOR
+    val tokensOverlap = tokens.rows > NO_SIZE && tokensTop < controlSize && tokensRight > controlLeft
+    val photoTop = if (photoBelow) height - photoSize else (height - photoSize) / CENTER_DIVISOR
+    val photoRight = if (photoBelow) (width + photoSize) / CENTER_DIVISOR else width
+    val photoOverlaps = photoSize > NO_SIZE && photoTop < controlSize && photoRight > controlLeft
+    return tokensOverlap || photoOverlaps
+}
 
 /** All dimensions are pixels. Prefer the requested grid; use another only when touch targets become too small. */
 internal fun tokenBoardGeometry(
@@ -85,7 +103,12 @@ private fun geometryForColumns(
         (height - (rows - SINGLE_ITEM) * gap) / rows,
         preferredDiameter,
     ).coerceAtLeast(NO_SIZE)
-    return TokenBoardGeometry(columns, rows, diameter, gap)
+    // Use spare width to separate circles by their radius without shrinking them or adding rows.
+    val remainingHorizontalGap = if (columns > SINGLE_ITEM) {
+        (width - columns * diameter) / (columns - SINGLE_ITEM)
+    } else NO_SIZE
+    val expandedHorizontalGap = minOf(diameter / RADIUS_DIVISOR, remainingHorizontalGap).coerceAtLeast(gap)
+    return TokenBoardGeometry(columns, rows, diameter, gap, expandedHorizontalGap)
 }
 
 internal const val PHONE_BOARD_COLUMNS = 5
@@ -94,3 +117,5 @@ private const val SINGLE_ITEM = 1
 private const val NO_SIZE = 0
 private const val PHOTO_MAIN_AXIS_DIVISOR = 4
 private const val PHOTO_CROSS_AXIS_DIVISOR = 2
+private const val RADIUS_DIVISOR = 2
+private const val CENTER_DIVISOR = 2
