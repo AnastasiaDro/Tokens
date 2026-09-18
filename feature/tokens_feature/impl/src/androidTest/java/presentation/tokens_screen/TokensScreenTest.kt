@@ -2,7 +2,14 @@ package presentation.tokens_screen
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.*
@@ -28,7 +35,7 @@ class TokensScreenTest {
     @get:Rule val compose = createComposeRule()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-    @Test fun allTenTokensFitSmallBoardAndClicksUseStableIdsAfterReorder() {
+    @Test fun allTwentyTokensFitSmallBoardAndClicksUseStableIdsAfterReorder() {
         val tokens = mutableStateOf(tokens())
         val clicks = mutableListOf<String>()
         compose.setContent { TokensTheme {
@@ -118,6 +125,75 @@ class TokensScreenTest {
         compose.onNodeWithTag(REINFORCEMENT_TAG).assertDoesNotExist()
     }
 
+    @Test fun adaptiveScreenFitsEveryCountWithPhotoAndLargeFontAcrossWindowSizes() {
+        val window = mutableStateOf(WINDOWS.first())
+        val count = mutableStateOf(MAX_TOKEN_COUNT)
+        val photo = mutableStateOf(false)
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
+                TokensTheme { Box(Modifier.size(window.value).consumeWindowInsets(WindowInsets.systemBars)) {
+                    TokensScreen(ready().copy(board = BoardState(tokens().take(count.value), COLOR, REVISION),
+                        reinforcement = ReinforcementSettings(enabled = photo.value)), true, {}, {}, {}, {}, {}, {})
+                } }
+            }
+        }
+        WINDOWS.forEach { size ->
+            listOf(false, true).forEach { withPhoto ->
+                (SINGLE_SIZE..MAX_TOKEN_COUNT).forEach { tokenCount ->
+                    compose.runOnIdle { window.value = size; count.value = tokenCount; photo.value = withPhoto }
+                    assertTokensFit(tokenCount)
+                }
+            }
+        }
+    }
+
+    @Test fun phoneUsesFourRowsAndWideWindowUsesTwoRows() {
+        val window = mutableStateOf(PHONE_WINDOW)
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
+                TokensTheme { Box(Modifier.size(window.value).consumeWindowInsets(WindowInsets.systemBars)) {
+                    TokensScreen(ready(), true, {}, {}, {}, {}, {}, {})
+                } }
+            }
+        }
+        assertEquals(PHONE_ROWS, assertTokensFit(MAX_TOKEN_COUNT).map { it.top }.distinct().size)
+        compose.runOnIdle { window.value = TABLET_WINDOW }
+        assertEquals(TABLET_ROWS, assertTokensFit(MAX_TOKEN_COUNT).map { it.top }.distinct().size)
+    }
+
+    @Test fun tightWindowKeepsTokensVisibleDuringErrorAndPhotoAccessibleFromMenu() {
+        val photos = mutableListOf<Unit>()
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
+                TokensTheme { Box(Modifier.size(TIGHT_WINDOW).consumeWindowInsets(WindowInsets.systemBars)) {
+                    TokensScreen(ready().copy(writeFailure = true, reinforcement = ReinforcementSettings(enabled = true)),
+                        true, {}, {}, {}, {}, {}, { photos += Unit })
+                } }
+            }
+        }
+        assertTokensFit(MAX_TOKEN_COUNT)
+        compose.onNodeWithTag(REINFORCEMENT_TAG).assertDoesNotExist()
+        openMenu()
+        compose.onNodeWithText(context.getString(R.string.reinforcement_image)).performClick()
+        compose.runOnIdle { assertEquals(listOf(Unit), photos) }
+    }
+
+    private fun assertTokensFit(count: Int): List<androidx.compose.ui.geometry.Rect> {
+        val board = compose.onNodeWithTag(TOKEN_BOARD_TAG).fetchSemanticsNode().boundsInRoot
+        val bounds = tokens().take(count).map { token ->
+            compose.onNodeWithTag(tokenTag(token.id)).assertIsDisplayed().fetchSemanticsNode().boundsInRoot.also {
+                assertTrue("Token must have positive size: $it", it.width > ZERO_SIZE && it.height > ZERO_SIZE)
+                assertTrue("Token $it outside $board", it.left >= board.left && it.right <= board.right &&
+                    it.top >= board.top && it.bottom <= board.bottom)
+            }
+        }
+        assertEquals(SINGLE_SIZE, bounds.map { it.size }.distinct().size)
+        bounds.forEachIndexed { index, item -> bounds.drop(index + SINGLE_SIZE).forEach { other ->
+            assertFalse("Overlapping tokens: $item and $other", item.overlaps(other))
+        } }
+        return bounds
+    }
+
     private fun openMenu() = compose.onNodeWithContentDescription(context.getString(R.string.tokens_menu)).performClick()
     private fun tokens() = List(MAX_TOKEN_COUNT) { TokenState("token-$it", TokenShape.CIRCLE, COLOR, false) }
     private fun ready() = TokensUiState(board = BoardState(tokens(), COLOR, REVISION), loading = false)
@@ -134,5 +210,15 @@ class TokensScreenTest {
         const val CLEAR = "clear"
         const val COUNT = "count"
         const val SETTINGS = "settings"
+        const val TEST_DENSITY = 1f
+        const val LARGE_FONT = 2f
+        const val ZERO_SIZE = 0f
+        const val PHONE_ROWS = 4
+        const val TABLET_ROWS = 2
+        const val TABLET_HEIGHT = 650
+        val PHONE_WINDOW = DpSize(BOARD_WIDTH.dp, 600.dp)
+        val TABLET_WINDOW = DpSize(1000.dp, TABLET_HEIGHT.dp)
+        val TIGHT_WINDOW = DpSize(220.dp, 180.dp)
+        val WINDOWS = listOf(PHONE_WINDOW, TABLET_WINDOW, TIGHT_WINDOW, DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp))
     }
 }

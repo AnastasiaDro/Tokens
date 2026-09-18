@@ -3,10 +3,13 @@ package data.persistence
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Required
 import java.util.UUID
+import domain.repository.MIN_TOKEN_COUNT
+import domain.repository.MAX_TOKEN_COUNT
 
 internal const val FORMAT_VERSION = 1
-internal const val MIN_TOKENS = 1
-internal const val MAX_TOKENS = 10
+internal const val MIN_TOKENS = MIN_TOKEN_COUNT
+internal const val MAX_TOKENS = MAX_TOKEN_COUNT
+internal const val LEGACY_MAX_TOKENS = 10
 internal const val DEFAULT_TOKENS = 5
 internal const val NO_MARKS = 0
 internal const val INITIAL_REVISION = 0L
@@ -35,7 +38,7 @@ internal data class EffectsDocument(
 )
 
 internal fun migrateTokens(current: TokensDocument, legacy: Map<String, *>): TokensDocument {
-    val size = (legacy["TokensNumber"] as? Int ?: DEFAULT_TOKENS).coerceIn(MIN_TOKENS, MAX_TOKENS)
+    val size = (legacy["TokensNumber"] as? Int ?: DEFAULT_TOKENS).coerceIn(MIN_TOKENS, LEGACY_MAX_TOKENS)
     val positions = (legacy["CheckedTokenIndices"] as? Set<*>)?.mapNotNull { (it as? String)?.toIntOrNull() }?.toSet()
         ?: List((legacy["CheckedTokensNumber"] as? Int ?: NO_MARKS).coerceIn(NO_MARKS, size)) { it }.toSet()
     val color = (legacy["CheckedTokensColor"] as? Int ?: DEFAULT_COLOR).let {

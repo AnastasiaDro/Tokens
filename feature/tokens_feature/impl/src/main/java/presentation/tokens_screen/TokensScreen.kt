@@ -2,6 +2,8 @@ package presentation.tokens_screen
 
 import android.widget.ImageView
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -12,6 +14,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -57,31 +60,45 @@ internal fun TokensScreen(
     modifier: Modifier = Modifier,
 ) {
     val ready = !state.loading && state.board != null && state.error != StorageFailure.READ
-    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding()) {
-        BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings)
-        if (state.loading || state.error != null) {
-            TextButton(onClick = onRetry, enabled = state.error != null && !state.saving) {
-                Text(stringResource(when (state.error) {
-                    StorageFailure.READ -> CoreR.string.storage_read_error
-                    StorageFailure.WRITE -> CoreR.string.storage_write_error
-                    null -> CoreR.string.storage_loading
-                }))
+    val showPhoto = state.reinforcement?.enabled == true && hasCamera
+    BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding()) {
+        val statusMaxHeight = maxHeight / STATUS_HEIGHT_DIVISOR
+        Column(Modifier.fillMaxSize()) {
+            BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings, showPhoto, onPhoto)
+            if (state.loading || state.error != null) {
+                TextButton(onClick = onRetry, enabled = state.error != null && !state.saving,
+                    modifier = Modifier.heightIn(max = statusMaxHeight).verticalScroll(rememberScrollState())) {
+                    Text(stringResource(when (state.error) {
+                        StorageFailure.READ -> CoreR.string.storage_read_error
+                        StorageFailure.WRITE -> CoreR.string.storage_write_error
+                        null -> CoreR.string.storage_loading
+                    }))
+                }
             }
-        }
-        BoxWithConstraints(Modifier.fillMaxWidth().weight(CONTENT_WEIGHT)) {
-            // Keep the existing camera gate until the separate photo migration.
-            val showPhoto = state.reinforcement?.enabled == true && hasCamera
-            val photoSize = minOf(PHOTO_MAX_SIZE_DP.dp, maxWidth / PHOTO_WIDTH_DIVISOR, maxHeight / PHOTO_HEIGHT_DIVISOR)
-            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                TokenBoard(
-                    tokens = state.board?.tokens.orEmpty(),
-                    enabled = ready,
-                    onTokenClick = onTokenClick,
-                    onClear = onClear,
-                    modifier = Modifier.weight(CONTENT_WEIGHT).fillMaxHeight(),
-                )
-                if (showPhoto) {
-                    ReinforcementPhoto(state.reinforcement?.photoUri, onPhoto, Modifier.size(photoSize))
+            BoxWithConstraints(Modifier.fillMaxWidth().weight(CONTENT_WEIGHT)) {
+                val density = LocalDensity.current
+                val preferredDiameter = dimensionResource(R.dimen.token_width)
+                val plan = with(density) {
+                    boardContentGeometry(maxWidth.roundToPx(), maxHeight.roundToPx(), state.board?.count ?: NO_SIZE,
+                        preferredDiameter.roundToPx(), TokensDimensions.SmallSpacing.roundToPx(),
+                        TokensDimensions.MinimumTouchTarget.roundToPx(),
+                        maxWidth >= WIDE_WINDOW_MIN_WIDTH_DP.dp && maxHeight >= WIDE_WINDOW_MIN_HEIGHT_DP.dp,
+                        showPhoto, PHOTO_MAX_SIZE_DP.dp.roundToPx())
+                }
+                Box(Modifier.fillMaxSize()) {
+                    TokenBoard(
+                        tokens = state.board?.tokens.orEmpty(),
+                        enabled = ready,
+                        onTokenClick = onTokenClick,
+                        onClear = onClear,
+                        modifier = with(density) { Modifier.size(plan.boardWidth.toDp(), plan.boardHeight.toDp()) },
+                        plannedGeometry = plan.tokens,
+                    )
+                    if (plan.photoSize > NO_SIZE) {
+                        ReinforcementPhoto(state.reinforcement?.photoUri, onPhoto,
+                            Modifier.align(if (plan.photoBelow) Alignment.BottomCenter else Alignment.CenterEnd)
+                                .size(with(density) { plan.photoSize.toDp() }))
+                    }
                 }
             }
         }
@@ -89,7 +106,10 @@ internal fun TokensScreen(
 }
 
 @Composable
-private fun BoardMenu(enabled: Boolean, onSelectCount: () -> Unit, onClear: () -> Unit, onSettings: () -> Unit) {
+private fun BoardMenu(
+    enabled: Boolean, onSelectCount: () -> Unit, onClear: () -> Unit,
+    onSettings: () -> Unit, showPhoto: Boolean, onPhoto: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     val menuDescription = stringResource(R.string.tokens_menu)
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
@@ -104,6 +124,8 @@ private fun BoardMenu(enabled: Boolean, onSelectCount: () -> Unit, onClear: () -
                     onClick = { expanded = false; onClear() })
                 DropdownMenuItem(text = { Text(stringResource(R.string.settings)) },
                     onClick = { expanded = false; onSettings() })
+                if (showPhoto) DropdownMenuItem(text = { Text(stringResource(R.string.reinforcement_image)) },
+                    onClick = { expanded = false; onPhoto() })
             }
         }
     }
@@ -116,6 +138,7 @@ internal fun TokenBoard(
     onTokenClick: (String) -> Unit,
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
+    plannedGeometry: TokenBoardGeometry? = null,
 ) {
     val currentClear by rememberUpdatedState(onClear)
     val preferredDiameter = dimensionResource(R.dimen.token_width)
@@ -138,8 +161,9 @@ internal fun TokenBoard(
             }
         },
     ) { measurables, constraints ->
-        val geometry = tokenBoardGeometry(constraints.maxWidth, constraints.maxHeight, tokens.size,
-            preferredDiameter.roundToPx(), TokensDimensions.SmallSpacing.roundToPx())
+        val geometry = plannedGeometry ?: tokenBoardGeometry(constraints.maxWidth, constraints.maxHeight, tokens.size,
+            preferredDiameter.roundToPx(), TokensDimensions.SmallSpacing.roundToPx(),
+            TokensDimensions.MinimumTouchTarget.roundToPx())
         val children = measurables.map { it.measure(Constraints.fixed(geometry.diameter, geometry.diameter)) }
         layout(constraints.maxWidth, constraints.maxHeight) {
             children.forEachIndexed { index, child ->
@@ -182,8 +206,10 @@ internal const val TOKEN_BOARD_TAG = "token-board"
 internal const val REINFORCEMENT_TAG = "board-reinforcement"
 private const val CONTENT_WEIGHT = 1f
 private const val PHOTO_MAX_SIZE_DP = 150
-private const val PHOTO_WIDTH_DIVISOR = 4
-private const val PHOTO_HEIGHT_DIVISOR = 2
+private const val WIDE_WINDOW_MIN_WIDTH_DP = 840
+private const val WIDE_WINDOW_MIN_HEIGHT_DP = 480
+private const val NO_SIZE = 0
 private const val NO_DRAG = 0f
 private const val CLEAR_SWIPE_DIVISOR = 3f
 private const val CENTER_DIVISOR = 2
+private const val STATUS_HEIGHT_DIVISOR = 4

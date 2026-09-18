@@ -95,9 +95,51 @@ class JsonStoresTest {
         } finally { retryJob.cancelAndJoin() }
     }
 
+    @Test fun legacyNormalizationStillClampsAtHistoricalTen() {
+        for (count in listOf(MAX_TOKENS, CORRUPT_LEGACY_COUNT)) {
+            val migrated = migrateTokens(TokensDocument(), mapOf(
+                "TokensNumber" to count, "CheckedTokensNumber" to count,
+            ))
+            assertEquals(LEGACY_MAX_TOKENS, migrated.tokens.size)
+            assertTrue(migrated.tokens.all { it.checked })
+        }
+    }
+
+    @Test fun oldJsonAndNewTwentyTokenDocumentsKeepIdsMarksColorAndRevision() = runBlocking {
+        for (count in listOf(LEGACY_MAX_TOKENS, MAX_TOKENS)) {
+            val expected = TokensDocument(migrated = true,
+                tokens = List(count) { StoredToken("saved-$it", checked = it == LAST_CHECKED_INDEX) },
+                color = CUSTOM_COLOR, revision = SAVED_REVISION)
+            val file = folder.newFile()
+            file.writeText(Json.encodeToString(TokensDocument.serializer(), expected))
+            val job = SupervisorJob()
+            try {
+                val store = tokensStore(file, { error("Must not reimport legacy") }, CoroutineScope(job + Dispatchers.IO))
+                assertEquals(expected, store.data.first())
+            } finally { job.cancelAndJoin() }
+        }
+    }
+
+    @Test fun documentsAboveTwentyAreRejectedWithoutReplacingSavedFile() = runBlocking {
+        val content = Json.encodeToString(TokensDocument.serializer(), TokensDocument(migrated = true,
+            tokens = List(MAX_TOKENS + SINGLE_TOKEN) { StoredToken() }))
+        val file = folder.newFile()
+        file.writeText(content)
+        val job = SupervisorJob()
+        try {
+            val store = tokensStore(file, { error("Must not migrate corrupt data") }, CoroutineScope(job + Dispatchers.IO))
+            try { store.data.first(); fail("Above-limit data must fail") }
+            catch (_: CorruptionException) { assertEquals(content, file.readText()) }
+        } finally { job.cancelAndJoin() }
+    }
+
     private companion object {
         const val BOARD_SIZE = 3
         const val CORRUPT_COUNT = 9
         const val CUSTOM_COLOR = -65536
+        const val CORRUPT_LEGACY_COUNT = 99
+        const val LAST_CHECKED_INDEX = 9
+        const val SAVED_REVISION = 12L
+        const val SINGLE_TOKEN = 1
     }
 }

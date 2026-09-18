@@ -4,7 +4,7 @@ import domain.models.Token
 import kotlinx.coroutines.flow.Flow
 
 const val MIN_TOKEN_COUNT = 1
-const val MAX_TOKEN_COUNT = 10
+const val MAX_TOKEN_COUNT = 20
 const val INITIAL_BOARD_REVISION = 0L
 
 data class TokenBoard(val tokens: List<Token>, val color: Int, val revision: Long) {
@@ -22,4 +22,3 @@ interface TokenBoardRepository {
     suspend fun setColor(color: Int)
     suspend fun clear()
 }
-

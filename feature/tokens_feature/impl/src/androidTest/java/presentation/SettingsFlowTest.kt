@@ -1,6 +1,8 @@
 package presentation
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -83,6 +85,22 @@ class SettingsFlowTest {
     private fun openCount() {
         compose.onNodeWithText(context.getString(CoreR.string.change)).performScrollTo().performClick()
         compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(INITIAL_COUNT.toString())
+    }
+
+    @Test fun settingsAndColorDraftRemainUsableInBothOrientations() {
+        launch().use { scenario ->
+            scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
+            compose.waitUntil(SCREENSHOT_TIMEOUT_MS) { context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT }
+            compose.onNodeWithTag(SETTINGS_COUNT_TAG).performScrollTo().assertIsDisplayed()
+            openColor()
+            val selected = changeColor()
+            scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
+            compose.waitUntil(SCREENSHOT_TIMEOUT_MS) { context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            assertEquals(selected, previewColor())
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performScrollTo().performClick()
+            assertEquals(selected, settingsColor())
+            assertEquals(SINGLE_WRITE, board.writes.get())
+        }
     }
 
     @Test fun draftSurvivesActivityRecreationAndSavedCountUpdatesSettings() {

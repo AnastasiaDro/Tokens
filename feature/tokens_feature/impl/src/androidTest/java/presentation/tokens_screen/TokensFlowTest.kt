@@ -163,6 +163,37 @@ class TokensFlowTest {
         }
     }
 
+    @Test fun twentyTokenSelectionSurvivesRotationAndRecreationWithoutVictory() {
+        launch().use { scenario ->
+            click(FIRST_ID)
+            openMenu()
+            compose.onNodeWithText(context.getString(R.string.changeChips)).performClick()
+            repeat(MAX_TOKEN_COUNT - board.board.value.count) {
+                compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).performClick()
+            }
+            compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).assertIsNotEnabled()
+            scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
+            compose.waitUntil(ROTATION_TIMEOUT_MS) {
+                context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+            }
+            compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(MAX_TOKEN_COUNT.toString())
+            compose.onNodeWithText(context.getString(CoreR.string.OK)).performClick()
+            listOf(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT).forEach { orientation ->
+                scenario.onActivity { it.requestedOrientation = orientation }
+                val expected = if (orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                    Configuration.ORIENTATION_PORTRAIT else Configuration.ORIENTATION_LANDSCAPE
+                compose.waitUntil(ROTATION_TIMEOUT_MS) { context.resources.configuration.orientation == expected }
+                compose.onAllNodesWithContentDescription(context.getString(R.string.token_description)).assertCountEquals(MAX_TOKEN_COUNT)
+                board.board.value.tokens.forEach { compose.onNodeWithTag(tokenTag(it.id)).assertIsDisplayed() }
+                compose.onNodeWithTag(tokenTag(FIRST_ID)).assertIsOn()
+            }
+            scenario.recreate()
+            compose.onAllNodesWithContentDescription(context.getString(R.string.token_description)).assertCountEquals(MAX_TOKEN_COUNT)
+            compose.onNodeWithTag(tokenTag(FIRST_ID)).assertIsOn()
+            compose.runOnIdle { assertTrue(sound.plays.isEmpty()) }
+        }
+    }
+
     @Test fun androidPlayerCanPrepareStartStopAndReleaseAgain() {
         val messages = mutableListOf<String>()
         val logger = object : Logger {

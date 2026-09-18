@@ -2,6 +2,7 @@ package data.tokens
 
 import data.persistence.tokensStore
 import domain.repository.TokenBoardRepository
+import domain.repository.MAX_TOKEN_COUNT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
@@ -86,8 +87,44 @@ class DataStoreTokenBoardRepositoryTest {
 
     @Test fun invalidResizeLeavesBoardIntact() = testBoard {
         val original = it.board.first()
-        try { it.resize(11); fail("Invalid size must fail") } catch (_: IllegalArgumentException) { }
+        try { it.resize(MAX_TOKEN_COUNT + SINGLE_TOKEN); fail("Invalid size must fail") } catch (_: IllegalArgumentException) { }
         assertEquals(original, it.board.first())
+    }
+
+    @Test fun twentyTokensSurviveReopeningWithColorAndProgress() = runBlocking {
+        val file = folder.newFolder().resolve("tokens.json")
+        val firstJob = SupervisorJob()
+        val expected = try {
+            val repository = DataStoreTokenBoardRepository(tokensStore(file, { emptyMap<String, Any>() },
+                CoroutineScope(firstJob + Dispatchers.IO)))
+            repository.resize(MAX_TOKEN_COUNT)
+            repository.setColor(COLOR)
+            repository.setChecked(repository.board.first().tokens.last().id, true)
+            repository.board.first()
+        } finally { firstJob.cancelAndJoin() }
+        val secondJob = SupervisorJob()
+        try {
+            val reopened = DataStoreTokenBoardRepository(tokensStore(file, { error("Must not migrate again") },
+                CoroutineScope(secondJob + Dispatchers.IO)))
+            assertEquals(MAX_TOKEN_COUNT, reopened.board.first().count)
+            assertEquals(expected, reopened.board.first())
+        } finally { secondJob.cancelAndJoin() }
+    }
+
+    @Test fun shrinkingTwentyAndExpandingDoesNotRestoreRemovedMarksOrIds() = testBoard {
+        it.resize(MAX_TOKEN_COUNT)
+        val large = it.board.first()
+        large.tokens.takeLast(SHRUNK_SIZE).forEach { token -> it.setChecked(token.id, true) }
+        it.resize(SHRUNK_SIZE)
+        val small = it.board.first()
+        assertFalse(small.completed)
+        assertEquals(SHRUNK_SIZE - SINGLE_TOKEN, small.tokens.count { token -> token.isChecked })
+        it.resize(MAX_TOKEN_COUNT)
+        val expanded = it.board.first()
+        assertEquals(small.tokens, expanded.tokens.take(SHRUNK_SIZE))
+        assertTrue(expanded.tokens.drop(SHRUNK_SIZE).none { token -> token.isChecked })
+        val removedIds = large.tokens.drop(SHRUNK_SIZE).map { token -> token.id }
+        assertTrue(expanded.tokens.none { token -> token.id in removedIds })
     }
 
     private companion object {
