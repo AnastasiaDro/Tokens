@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.cerebus.tokens.presentation", appContext.packageName)
+        assertEquals("com.cerebus.tokens.feature.tokens_feature.test", appContext.packageName)
     }
 }
