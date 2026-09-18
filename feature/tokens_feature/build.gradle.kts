@@ -35,6 +35,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":feature:reinforcement_photo:api"))
     implementation(libs.datastore)
     implementation(libs.serializationJson)
     testImplementation(libs.coroutinesTest)

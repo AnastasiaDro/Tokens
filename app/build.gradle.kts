@@ -80,7 +80,8 @@ dependencies {
 
     // Clean layers
     implementation(project(":feature:tokens_feature"))
-    implementation(project(":feature:reinforcement_photo"))
+    implementation(project(":feature:reinforcement_photo:impl"))
+    implementation(project(":feature:reinforcement_photo:api"))
     implementation(project(":core:logger"))
     implementation(project(":data:reinforcement"))
 

@@ -31,6 +31,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":feature:reinforcement_photo:api"))
     testImplementation(libs.coroutinesTest)
     implementation(project(":core:logger"))
     implementation(project(":core:ui"))

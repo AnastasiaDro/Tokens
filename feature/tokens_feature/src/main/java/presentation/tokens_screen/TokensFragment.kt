@@ -12,7 +12,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavDeepLinkRequest
+import com.cerebus.tokens.reinforcement_photo.api.ReinforcementPhotoMediator
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.SwipeParser
@@ -47,6 +47,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class TokensFragment : Fragment(R.layout.fragment_tokens) {
 
     private val viewModel: TokensViewModel by viewModel<TokensViewModel>()
+    private val photoMediator: ReinforcementPhotoMediator by inject()
     private val viewBinding: FragmentTokensBinding by viewBinding()
     private var viewArray: List<TokenView> = listOf()
 
@@ -92,10 +93,7 @@ class TokensFragment : Fragment(R.layout.fragment_tokens) {
     }
 
     private fun goToImageSelecting() {
-        val request = NavDeepLinkRequest.Builder
-            .fromUri("android-app://com.cerebus.tokens.reinforcement_photo.presentation.dialog".toUri())
-            .build()
-        findNavController().navigate(request)
+        photoMediator.open(findNavController())
     }
 
     private fun getTokenViewsList(): List<TokenView> = with(viewBinding) {

@@ -57,7 +57,8 @@
 
 - [app](app/AGENTS.md) — запуск приложения, DI и корневая навигация.
 - [tokens_feature](feature/tokens_feature/AGENTS.md) — жетоны, настройки, победа и сохранение прогресса.
-- [reinforcement_photo](feature/reinforcement_photo/AGENTS.md) — выбор и съёмка фото.
+- [reinforcement_photo api](feature/reinforcement_photo/api/AGENTS.md) — контракт входа в фото.
+- [reinforcement_photo impl](feature/reinforcement_photo/impl/AGENTS.md) — выбор и съёмка фото.
 - [reinforcement data](data/reinforcement/AGENTS.md) — хранение выбранного фото и настройки подкрепления.
 - [core UI](core/ui/AGENTS.md) — общие UI-утилиты.
 - [logger](core/logger/AGENTS.md) — контракт и реализация логирования.
