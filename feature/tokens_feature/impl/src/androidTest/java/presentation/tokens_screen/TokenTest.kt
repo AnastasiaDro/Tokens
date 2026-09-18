@@ -108,6 +108,41 @@ class TokenTest {
     }
 
     @Test
+    fun pressScalesTokenWithoutRippleAndReturnsAfterRelease() {
+        val clicks = mutableListOf<Unit>()
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            TokensTheme {
+                Box(Modifier.background(Color.White)) {
+                    Token(
+                        token(checked = true),
+                        onClick = { clicks += Unit },
+                        modifier = Modifier.size(TOKEN_SIZE).testTag(TOKEN_TAG),
+                    )
+                }
+            }
+        }
+        compose.waitForIdle()
+        val node = compose.onNodeWithTag(TOKEN_TAG)
+        val initialPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+
+        node.performTouchInput { down(center) }
+        assertTrue(clicks.isEmpty())
+        compose.mainClock.advanceTimeBy(PRESS_ANIMATION_DURATION_MILLIS + ANIMATION_SETTLE_MILLIS)
+        val pressedPixelCount = node.coloredPixelCount(INITIAL_COLOR)
+        assertTrue(pressedPixelCount > initialPixelCount)
+        assertCornersStayBackground(node)
+
+        compose.mainClock.advanceTimeBy(HOLD_DURATION_MILLIS)
+        assertEquals(pressedPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+
+        node.performTouchInput { up() }
+        assertEquals(listOf(Unit), clicks)
+        compose.mainClock.advanceTimeBy(PRESS_ANIMATION_DURATION_MILLIS + ANIMATION_SETTLE_MILLIS)
+        assertEquals(initialPixelCount, node.coloredPixelCount(INITIAL_COLOR))
+    }
+
+    @Test
     fun keyedReorderKeepsStateAndClickBoundToTokenId() {
         val first = token()
         val second = token(checked = true).copy(id = OTHER_TOKEN_ID, color = UPDATED_COLOR)
@@ -187,6 +222,30 @@ class TokenTest {
         assertEquals(expected, pixels[pixels.width / CENTER_DIVISOR, pixels.height / CENTER_DIVISOR].toArgb())
     }
 
+    private fun SemanticsNodeInteraction.coloredPixelCount(expected: Int): Int {
+        val pixels = captureToImage().toPixelMap()
+        var count = FIRST_PIXEL
+        for (x in FIRST_PIXEL until pixels.width) {
+            for (y in FIRST_PIXEL until pixels.height) {
+                if (pixels[x, y].toArgb() == expected) {
+                    count += PIXEL_STEP
+                }
+            }
+        }
+        assertTrue(count > FIRST_PIXEL)
+        return count
+    }
+
+    private fun assertCornersStayBackground(node: SemanticsNodeInteraction) {
+        val pixels = node.captureToImage().toPixelMap()
+        val background = Color.White.toArgb()
+        val lastPixel = pixels.width - PIXEL_STEP
+        assertEquals(background, pixels[FIRST_PIXEL, FIRST_PIXEL].toArgb())
+        assertEquals(background, pixels[lastPixel, FIRST_PIXEL].toArgb())
+        assertEquals(background, pixels[FIRST_PIXEL, lastPixel].toArgb())
+        assertEquals(background, pixels[lastPixel, lastPixel].toArgb())
+    }
+
     private fun token(checked: Boolean = false) = TokenState(
         id = TOKEN_ID,
         shape = TokenShape.CIRCLE,
@@ -201,9 +260,15 @@ class TokenTest {
         const val CENTER_DIVISOR = 2
         const val NEAR_EDGE_DIVISOR = 10
         const val CORNER_OFFSET = 1
+        const val FIRST_PIXEL = 0
+        const val PIXEL_STEP = 1
+        const val PRESS_ANIMATION_DURATION_MILLIS = 300L
+        const val ANIMATION_SETTLE_MILLIS = 100L
+        const val HOLD_DURATION_MILLIS = 100L
         val INITIAL_COLOR = Color.Red.toArgb()
         val UPDATED_COLOR = Color.Blue.toArgb()
         val LARGE_SIZE = 96.dp
         val SMALL_SIZE = 32.dp
+        val TOKEN_SIZE = 68.dp
     }
 }
