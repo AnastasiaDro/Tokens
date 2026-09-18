@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinCompose)
 }
 
 android {
@@ -25,9 +26,22 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    buildFeatures {
+        compose = true
+    }
 }
 
 dependencies {
+    implementation(platform(libs.composeBom))
+    implementation(libs.composeUi)
+    implementation(libs.composeFoundation)
+    implementation(libs.composeMaterial3)
+    implementation(libs.composeUiToolingPreview)
+    debugImplementation(libs.composeUiTooling)
+    debugImplementation(libs.composeUiTestManifest)
+    androidTestImplementation(platform(libs.composeBom))
+    androidTestImplementation(libs.composeUiTestJunit4)
+
     implementation(libs.androidxCoreKtx)
     implementation(libs.androidxAppcompat)
     implementation(libs.material)

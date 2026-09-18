@@ -48,7 +48,12 @@ dependencies {
     androidTestImplementation(platform(libs.composeBom))
     implementation(libs.composeUi)
     implementation(libs.composeFoundation)
+    implementation(libs.composeMaterial3)
+    implementation(libs.androidxLifecycleRuntimeCompose)
     implementation(libs.composeUiToolingPreview)
+    debugImplementation(libs.composeUiTooling)
+    debugImplementation(libs.composeUiTestManifest)
+    androidTestImplementation(libs.composeUiTestJunit4)
 
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation(libs.androidxAppcompat)

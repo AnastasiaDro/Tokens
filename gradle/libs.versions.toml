@@ -31,6 +31,7 @@ androidxAppcompat = { module = "androidx.appcompat:appcompat", version.ref = "ap
 material = { module = "com.google.android.material:material", version.ref = "material" }
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidxLifecycleRuntimeKtx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidxLifecycleRuntimeCompose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidxLifecycleViewmodelKtx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidxActivityKtx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
 androidxFragmentKtx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment" }
@@ -51,7 +52,11 @@ androidxTestEspresso = { module = "androidx.test.espresso:espresso-core", versio
 composeBom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 composeUi = { module = "androidx.compose.ui:ui" }
 composeFoundation = { module = "androidx.compose.foundation:foundation" }
+composeMaterial3 = { module = "androidx.compose.material3:material3" }
 composeUiToolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" }
+composeUiTooling = { module = "androidx.compose.ui:ui-tooling" }
+composeUiTestJunit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+composeUiTestManifest = { module = "androidx.compose.ui:ui-test-manifest" }
 kotlinParcelizeRuntime = { module = "org.jetbrains.kotlin:kotlin-parcelize-runtime", version.ref = "kotlin" }
 kotlinParcelizeCompiler = { module = "org.jetbrains.kotlin:kotlin-parcelize-compiler", version.ref = "kotlin" }
 
