@@ -113,12 +113,19 @@ class TokensScreenTest {
     @Test fun photoLeavesRoomForAllTokensAndFollowsOnlySavedSetting() {
         val enabled = mutableStateOf(true)
         val photos = mutableListOf<Unit>()
-        compose.setContent { TokensTheme {
-            Box(Modifier.size(BOARD_WIDTH.dp, SCREEN_HEIGHT.dp)) {
-                TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = enabled.value)),
-                    {}, {}, {}, {}, {}, { photos += Unit })
+        compose.setContent {
+            // Keep the intended content size independent of the host's density and system bars.
+            // The tight-window test separately verifies hiding the photo when space is insufficient.
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
+                TokensTheme {
+                    Box(Modifier.size(BOARD_WIDTH.dp, SCREEN_HEIGHT.dp)
+                        .consumeWindowInsets(WindowInsets.systemBars)) {
+                        TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = enabled.value)),
+                            {}, {}, {}, {}, {}, { photos += Unit })
+                    }
+                }
             }
-        } }
+        }
         compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed().performClick()
         tokens().forEach { compose.onNodeWithTag(tokenTag(it.id)).assertIsDisplayed() }
         compose.runOnIdle { assertEquals(listOf(Unit), photos); enabled.value = false }
