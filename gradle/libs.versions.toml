@@ -4,8 +4,6 @@ kotlin = "2.2.10"
 navigation = "2.9.6"
 androidxCore = "1.17.0"
 appcompat = "1.7.1"
-material = "1.12.0"
-constraintlayout = "2.1.4"
 cardview = "1.0.0"
 lifecycle = "2.6.1"
 activity = "1.8.1"
@@ -28,17 +26,12 @@ serializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json
 androidxCardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
 androidxCoreKtx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
 androidxAppcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
-material = { module = "com.google.android.material:material", version.ref = "material" }
-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidxLifecycleRuntimeKtx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidxLifecycleRuntimeCompose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidxLifecycleViewmodelKtx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidxActivityKtx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
 androidxFragmentKtx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment" }
 navigationFragmentKtx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
-navigationUiKtx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigation" }
-navigationDynamicFeaturesFragment = { module = "androidx.navigation:navigation-dynamic-features-fragment", version.ref = "navigation" }
-navigationTesting = { module = "androidx.navigation:navigation-testing", version.ref = "navigation" }
 koinCore = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koinAndroid = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koinTest = { module = "io.insert-koin:koin-test", version.ref = "koin" }

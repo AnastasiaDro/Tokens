@@ -44,12 +44,10 @@ dependencies {
 
     implementation(libs.androidxCoreKtx)
     implementation(libs.androidxAppcompat)
-    implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxTestJunit)
     androidTestImplementation(libs.androidxTestEspresso)
 
     // navigation
     implementation(libs.navigationFragmentKtx)
-    implementation(libs.navigationUiKtx)
 }

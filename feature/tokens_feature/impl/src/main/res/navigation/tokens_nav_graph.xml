@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/tokens_nav_graph"
     app:startDestination="@id/tokensFragment">
 
     <fragment
         android:id="@+id/tokensFragment"
         android:name="presentation.tokens_screen.TokensFragment"
-        android:label="TokensFragment"
-        tools:layout="@layout/fragment_tokens">
+        android:label="TokensFragment">
         <action
             android:id="@+id/action_tokensFragment_to_settingsFragment"
             app:destination="@id/settingsFragment" />
@@ -21,8 +19,7 @@
     <fragment
         android:id="@+id/settingsFragment"
         android:name="presentation.settings_screen.SettingsFragment"
-        android:label="SettingsFragment"
-        tools:layout="@layout/fragment_settings">
+        android:label="SettingsFragment">
         <deepLink app:uri="android-app://com.cerebus.tokens.tokens/settings" />
         <action
             android:id="@+id/action_settingsFragment_to_tokensFragment"
@@ -37,8 +34,7 @@
     <dialog
         android:id="@+id/selectTokenNumberAlert"
         android:name="presentation.tokens_screen.SelectTokenNumberAlert"
-        android:label="SelectTokenNumberAlert"
-        tools:layout="@layout/alert_select_tokens_number">
+        android:label="SelectTokenNumberAlert">
         <argument
             android:name="tokensNumberData"
             app:argType="presentation.SelectTokensNumberAlertData" />

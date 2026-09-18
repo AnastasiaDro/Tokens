@@ -39,9 +39,8 @@ dependencies {
 
     implementation(libs.androidxCoreKtx)
     implementation(libs.androidxAppcompat)
-    implementation(libs.material)
+    implementation(libs.androidxCardview)
     implementation(libs.navigationFragmentKtx)
-    implementation(libs.navigationUiKtx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxTestJunit)
     androidTestImplementation(libs.androidxTestEspresso)

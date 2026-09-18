@@ -140,9 +140,29 @@
 - Первый UI-прогон: 44/45. Тест целевой сетки накладывал реальные системные отступы эмулятора на искусственно уменьшенную область, поэтому проверял тесную сетку вместо обычной. В тестовом контейнере эти отступы отмечены уже учтёнными; полный повторный прогон 45/45. Реальные повороты проверяются отдельно без этой подмены.
 - Проверки выполнены на эмуляторе телефона API 36. Физический планшет, настоящий split-screen, TalkBack и уничтожение процесса не проверялись; крупные/тесные области проверены ограничениями Compose, восстановление — recreation и повторным открытием DataStore. IDE Sync отдельно не выполнялся. Существующие предупреждения native access JVM и strip debug symbols остались вне задачи.
 
-## Следующая итерация — пока не реализована
+## 4.7. Очистка — выполнено
 
-**4.7. Очистка.** Удалить заменённый UI и зависимости без потребителей, обновить правила, провести финальные JVM/instrumentation/debug-проверки.
+- Проверены ссылки из Kotlin, XML, nav graph и тестов. Удалены 25 файлов старого UI: TokenView, CustomStyledSwitch, интерфейс/реализация SwipeParser, девять layout XML жетонов/настроек/количества, старое меню, два selector цвета, семь drawable XML, attrs.xml и неиспользуемая View Material3-тема themes.xml. Файлы отслеживались Git и могут быть восстановлены из предыдущего коммита.
+- В tokens_nav_graph.xml удалены только tools:layout и неиспользуемый tools namespace. Destination ID, actions, deep link, Safe Args и имена Fragment остались прежними.
+- В styles.xml сохранён используемый приложением AppTheme без изменения значений. В dimen.xml остался token_width; в colors.xml — цвета, используемые Compose и AppTheme. Портрет, значки приложения, MP3 и JSON анимаций сохранены. Действующие строки и ComposeView-ID не менялись.
+- ViewBinding и viewbindingDelegate убраны из app и tokens impl. Фото-диалог остаётся View-based: его ViewBinding и делегат сохранены, CardView подключён прямо в photo impl, вместо получения через чужие модули/Material Views.
+- Удалены декларации Material Views, ConstraintLayout, Navigation UI и Navigation Dynamic Features без потребителей. Также убраны неиспользуемый navigation-testing, прямые CardView/Lottie из app, CardView из tokens impl и дубли зависимостей JUnit/Espresso/lifecycle в app/tokens impl. Material Views и AppCompat удалены из data/reinforcement и core/logger, где нет UI.
+- В version catalog удалены только осиротевшие aliases/version entries. Значения оставшихся версий не обновлялись. Compose Material3 не затронут; AppCompat, Fragment/Safe Args, Lottie/Compose, colorpicker, фото и permission-утилиты сохранены у действующих потребителей.
+- Сравнение debugRuntimeClasspath до/после подтвердило отсутствие Material Views, ConstraintLayout, Navigation UI/Dynamic Features и Google Play Feature Delivery. Сохранились Kotlin 2.2.10, Compose UI 1.9.0, Compose Material3 1.3.2, Lifecycle 2.9.0, AppCompat 1.7.1, Lottie 6.6.7, colorpicker 1.1.2 и CardView 1.0.0. После удаления Material Views транзитивные DrawerLayout/Transition разрешаются в штатные версии оставшихся потребителей (1.0.0/1.4.1 вместо 1.1.1/1.5.0); новые прямые зависимости ради их удержания не вводились.
+- Изменены шесть build.gradle.kts (app, tokens impl, photo impl, core/ui, core/logger, data/reinforcement), gradle/libs.versions.toml, ресурсы tokens impl, модульные AGENTS.md и этот документ. Код состояний, хранения, эффектов и расчёта сетки не менялся.
+
+### Проверки 4.7
+
+- `testDebugUnitTest :app:compileDebugKotlin` — успешно: 75 JVM-тестов, все затронутые модули и app скомпилированы в debug.
+- `:feature:tokens_feature:impl:connectedDebugAndroidTest` с фильтрами SettingsFlowTest, ColorPickerTest, SettingsScreenTest, TokenTest, TokensScreenTest, WinCelebrationTest, TokensFlowTest и DataStoreMigrationTest — 48/48 на API 36. Это весь набор UI-проверок 4.6 плюс три проверки настоящих SharedPreferences/DataStore на Android.
+- `:core:ui:connectedDebugAndroidTest` с фильтром ComposeInfrastructureTest — 2/2; `:feature:reinforcement_photo:impl:connectedDebugAndroidTest` с PhotoLayoutTest — 2/2; `:app:connectedDebugAndroidTest` с FeatureNavigationTest — 4/4. Все выполнены последовательно на работающем эмуляторе API 36, итого 56 instrumentation-проверок без ошибок/пропусков.
+- В рамках проверки app debug APK заново упакован, установлен и запущен. Проверка содержимого APK подтвердила отсутствие TokenView, CustomStyledSwitch, SwipeParser и старых экранных layout/menu XML; activity_main.xml и dialog_ask_for_reinforcement_image.xml сохранены.
+- Поиск в исходниках Kotlin/XML/ProGuard не нашёл ссылок на удалённые UI-классы и экранные layout/menu. `git diff --check` — успешно.
+- Существующие предупреждения native access JVM и strip debug symbols остались вне задачи. Проверки выполнялись на эмуляторе API 36, а не на физическом устройстве.
+
+## Далее — отдельный этап
+
+Этап 4 завершает перенос жетонов, настроек, выбора количества/цвета и эффектов на Compose. Фото, разрешения и Compose Navigation остаются отдельной работой; в 4.7 их реализация не начинается.
 
 ### Обязательное уточнение раскладки от пользователя
 
