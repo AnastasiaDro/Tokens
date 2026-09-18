@@ -1,5 +1,9 @@
 package com.cerebus.tokens.reinforcement_photo
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.*
@@ -15,6 +19,15 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class PhotoScreenTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
+
+    @Test fun shortPhotoWindowScrollsToEveryAction() {
+        compose.setContent { TokensTheme {
+            Box(Modifier.size(320.dp, 200.dp)) { PhotoScreen(PhotoUiState(loading = false), {}, {}, {}, {}) }
+        } }
+        listOf(PHOTO_CANCEL_TAG, PHOTO_CAMERA_TAG, PHOTO_GALLERY_TAG).forEach {
+            compose.onNodeWithTag(it).performScrollTo().assertIsDisplayed().assertIsEnabled()
+        }
+    }
 
     @Test fun readFailureAllowsRetryAndCancellationButNotSourceSelection() {
         val state = mutableStateOf(PhotoUiState())

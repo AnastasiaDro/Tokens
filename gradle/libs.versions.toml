@@ -6,7 +6,6 @@ androidxCore = "1.17.0"
 appcompat = "1.7.1"
 lifecycle = "2.6.1"
 activity = "1.8.1"
-fragment = "1.6.2"
 colorPickerCompose = "1.1.2"
 lottie = "6.6.7"
 koin = "3.5.0"
@@ -27,8 +26,8 @@ androidxLifecycleRuntimeKtx = { module = "androidx.lifecycle:lifecycle-runtime-k
 androidxLifecycleRuntimeCompose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidxLifecycleViewmodelKtx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidxActivityKtx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
-androidxFragmentKtx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment" }
-navigationFragmentKtx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
+navigationCompose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
+activityCompose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
 koinCore = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koinAndroid = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koinTest = { module = "io.insert-koin:koin-test", version.ref = "koin" }
@@ -47,8 +46,6 @@ composeUiToolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" }
 composeUiTooling = { module = "androidx.compose.ui:ui-tooling" }
 composeUiTestJunit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 composeUiTestManifest = { module = "androidx.compose.ui:ui-test-manifest" }
-kotlinParcelizeRuntime = { module = "org.jetbrains.kotlin:kotlin-parcelize-runtime", version.ref = "kotlin" }
-kotlinParcelizeCompiler = { module = "org.jetbrains.kotlin:kotlin-parcelize-compiler", version.ref = "kotlin" }
 
 [plugins]
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
@@ -56,5 +53,3 @@ androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-kotlinParcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
-navigationSafeArgs = { id = "androidx.navigation.safeargs.kotlin", version.ref = "navigation" }

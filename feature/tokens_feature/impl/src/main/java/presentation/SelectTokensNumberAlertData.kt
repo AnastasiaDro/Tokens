@@ -1,22 +1,8 @@
 package presentation
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-import presentation.tokens_screen.SelectTokenNumberAlert
-
-/**
- * [SelectTokensNumberAlertData] - a class with data for
- * setting initial values for [SelectTokenNumberAlert] by
- * navComponent action args
- *
- * @see SelectTokenNumberAlert
- *
- * @author Anastasia Drogunova
- * @since 29.11.2023
- */
-@Parcelize
+/** Initial count bounds; navigation passes only the selected count, not Parcelable storage models. */
 data class SelectTokensNumberAlertData(
     val minTokensNum: Int,
     val maxTokensNum: Int,
-    val currentTokensNum: Int
-): Parcelable
+    val currentTokensNum: Int,
+)

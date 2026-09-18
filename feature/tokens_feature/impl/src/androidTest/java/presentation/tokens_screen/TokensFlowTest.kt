@@ -7,9 +7,8 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph
-import androidx.navigation.NavInflater
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -38,7 +37,6 @@ import org.koin.dsl.module
 import presentation.SettingsTestActivity
 import java.io.IOException
 import com.cerebus.tokens.core.ui.R as CoreR
-import com.cerebus.tokens.feature.tokens_feature.test.R as TestR
 
 @RunWith(AndroidJUnit4::class)
 class TokensFlowTest {
@@ -99,8 +97,7 @@ class TokensFlowTest {
             compose.onNodeWithText(context.getString(R.string.settings)).performClick()
             compose.runOnIdle { gate.complete(Unit) }
             scenario.onActivity {
-                val host = it.supportFragmentManager.findFragmentById(TestR.id.feature_test_host) as NavHostFragment
-                assertTrue(host.navController.popBackStack())
+                assertTrue(it.navController.popBackStack())
             }
             compose.onNodeWithTag(tokenTag(LAST_ID)).assertIsOn()
             compose.runOnIdle { assertTrue(sound.plays.isEmpty()) }
@@ -245,7 +242,7 @@ class TokensFlowTest {
         override fun stop() { playing = false }
     }
     private class PhotoMediator : ReinforcementPhotoMediator {
-        override fun createGraph(inflater: NavInflater): NavGraph = error("No photo graph in isolated board tests")
+        override fun registerGraph(builder: NavGraphBuilder, navController: NavHostController) = Unit
         override fun open(navController: NavController) = Unit
     }
     private class EffectsRepository : WinEffectsRepository {

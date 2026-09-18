@@ -1,9 +1,10 @@
 plugins {
+    alias(libs.plugins.kotlinCompose)
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.navigationSafeArgs)
 }
 
 android {
+    buildFeatures { compose = true }
     namespace = "com.cerebus.tokens"
 
     defaultConfig {
@@ -36,6 +37,12 @@ android {
 }
 
 dependencies {
+    implementation(libs.activityCompose)
+    implementation(platform(libs.composeBom))
+    implementation(libs.composeUi)
+    implementation(project(":core:ui"))
+    androidTestImplementation(platform(libs.composeBom))
+    androidTestImplementation(libs.composeUiTestJunit4)
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation(libs.androidxAppcompat)
     testImplementation(libs.junit)
@@ -48,10 +55,9 @@ dependencies {
     implementation(libs.androidxLifecycleViewmodelKtx)
 
     implementation(libs.androidxActivityKtx)
-    implementation(libs.androidxFragmentKtx)
 
     // navigation
-    implementation(libs.navigationFragmentKtx)
+    implementation(libs.navigationCompose)
 
     // Clean layers
     implementation(project(":feature:tokens_feature:api"))

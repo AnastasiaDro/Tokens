@@ -11,7 +11,21 @@ import android.provider.MediaStore
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.core.net.toUri
-import androidx.fragment.app.FragmentActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavHostController
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.*
+import androidx.lifecycle.ViewModelProvider
+import com.cerebus.tokens.core.ui.theme.TokensTheme
+import com.cerebus.tokens.core.ui.NAVIGATION_DIALOG_TAG
+import androidx.compose.ui.geometry.Offset
+import com.cerebus.tokens.reinforcement_photo.api.*
+import kotlinx.serialization.Serializable
+import org.koin.core.context.GlobalContext
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.pressBack
@@ -35,8 +49,12 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import java.io.IOException
 
-/** Real Fragment + ActivityResultRegistry, but external apps are intercepted, not opened. */
-class PhotoTestActivity : FragmentActivity() {
+@Serializable private data object PhotoTestHome
+
+/** Real Compose Navigation + ActivityResultRegistry; external apps are intercepted. */
+class PhotoTestActivity : ComponentActivity() {
+    lateinit var navController: NavHostController
+        private set
     var launches = NO_LAUNCHES
     var lastIntent: Intent? = null
     var failCamera = false
@@ -50,7 +68,19 @@ class PhotoTestActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestCode = savedInstanceState?.getInt(REQUEST_KEY) ?: NO_REQUEST
-        if (savedInstanceState == null) AskForReinforcementImageDialog().showNow(supportFragmentManager, PHOTO_TAG)
+        val mediator = GlobalContext.get().get<ReinforcementPhotoMediator>()
+        setContent {
+            TokensTheme {
+                val controller = rememberNavController()
+                navController = controller
+                NavHost(controller, startDestination = PhotoTestHome,
+                    enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    composable<PhotoTestHome> { }
+                    mediator.registerGraph(this, controller)
+                }
+                LaunchedEffect(controller) { if (savedInstanceState == null) mediator.open(controller) }
+            }
+        }
     }
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putInt(REQUEST_KEY, requestCode)
@@ -66,7 +96,6 @@ class PhotoTestActivity : FragmentActivity() {
     @Suppress("DEPRECATION")
     fun completeResult(result: Int, data: Intent? = null) { onActivityResult(requestCode, result, data) }
     companion object {
-        const val PHOTO_TAG = "test-photo"
         const val LARGE_FONT = 2f
         const val NO_LAUNCHES = 0
         private const val NO_REQUEST = -1
@@ -113,16 +142,6 @@ class PhotoLayoutTest {
         }
     }
 
-    @Test fun shortPhotoWindowScrollsToEveryAction() {
-        launch().use { scenario ->
-            scenario.onActivity {
-                val density = it.resources.displayMetrics.density
-                dialog(it).requireDialog().window!!.setLayout((NARROW_WIDTH * density).toInt(), (SHORT_HEIGHT * density).toInt())
-            }
-            assertActions()
-        }
-    }
-
     @Test fun galleryCancellationKeepsPhotoAndDialogOpen() {
         repository.settings.value = ReinforcementSettings(photoUri = OLD_URI)
         launch().use { scenario ->
@@ -137,6 +156,19 @@ class PhotoLayoutTest {
         }
     }
 
+    @Test fun earlyResultAfterRecreationWaitsForComposeLauncherAndSavesOnce() {
+        launch().use { scenario ->
+            click(PHOTO_GALLERY_TAG)
+            scenario.recreate()
+            // Delivery may precede the new composition registering its remembered launcher.
+            scenario.onActivity { it.completeResult(Activity.RESULT_OK, Intent().setData(SELECTED_URI.toUri())) }
+            assertClosed(scenario)
+            assertEquals(IMPORTED_URI, repository.settings.value.photoUri)
+            assertEquals(SINGLE_OPERATION, repository.writes)
+            assertEquals(SINGLE_OPERATION, files.imports)
+        }
+    }
+
     @Test fun cameraResultAfterRecreationBlocksDismissalUntilSavedWithoutRelaunch() {
         repository.gate = CompletableDeferred()
         launch().use { scenario ->
@@ -148,15 +180,16 @@ class PhotoLayoutTest {
                 assertEquals(CAPTURE_URI.toUri(), it.lastIntent!!.getParcelableExtra(MediaStore.EXTRA_OUTPUT))
             }
             scenario.recreate()
+            compose.waitForIdle()
             scenario.onActivity {
                 assertEquals(PhotoTestActivity.NO_LAUNCHES, it.launches)
                 it.completeResult(Activity.RESULT_OK)
                 // Native cancellation must be blocked synchronously, not just after recomposition.
-                assertFalse(dialog(it).isCancelable)
+                assertFalse(ViewModelProvider.create(it.navController.currentBackStackEntry!!)[ChangePhotoViewModel::class].state.value.cancellable)
             }
             compose.onNodeWithTag(PHOTO_CANCEL_TAG).performScrollTo().assertIsNotEnabled()
             onView(isRoot()).inRoot(isDialog()).perform(pressBack())
-            scenario.onActivity { assertTrue(dialog(it).isAdded) }
+            scenario.onActivity { assertTrue(it.navController.currentDestination!!.hasRoute<PhotoDestination>()) }
             repository.gate!!.complete(Unit)
             assertClosed(scenario)
             assertEquals(CAPTURE_URI, repository.settings.value.photoUri)
@@ -175,6 +208,38 @@ class PhotoLayoutTest {
             assertClosed(scenario)
             assertEquals(IMPORTED_URI, repository.settings.value.photoUri)
         }
+    }
+
+    @Test fun idleDialogCanBeDismissedWithBack() {
+        launch().use { scenario ->
+            assertActions()
+            onView(isRoot()).inRoot(isDialog()).perform(pressBack())
+            assertClosed(scenario)
+            assertEquals(NO_WRITES, repository.writes)
+        }
+    }
+
+    @Test fun outsideTapCancelsIdleDialogButCannotInterruptSave() {
+        repository.gate = CompletableDeferred()
+        launch().use { scenario ->
+            click(PHOTO_GALLERY_TAG)
+            scenario.onActivity { it.completeResult(Activity.RESULT_OK, Intent().setData(SELECTED_URI.toUri())) }
+            compose.onNodeWithTag(PHOTO_CANCEL_TAG).performScrollTo().assertIsNotEnabled()
+            outsideTap()
+            scenario.onActivity { assertTrue(it.navController.currentDestination!!.hasRoute<PhotoDestination>()) }
+            repository.gate!!.complete(Unit)
+            assertClosed(scenario)
+            scenario.onActivity { GlobalContext.get().get<ReinforcementPhotoMediator>().open(it.navController) }
+            assertActions()
+            outsideTap()
+            assertClosed(scenario)
+            assertEquals(SINGLE_OPERATION, repository.writes)
+        }
+    }
+
+    private fun outsideTap() {
+        compose.onNodeWithTag(NAVIGATION_DIALOG_TAG).performTouchInput { click(Offset(OUTSIDE_OFFSET, OUTSIDE_OFFSET)) }
+        compose.waitForIdle()
     }
 
     @Test fun failedSaveCanRetryWithoutRepeatingGalleryImport() {
@@ -199,12 +264,10 @@ class PhotoLayoutTest {
             compose.onNodeWithTag(tag).performScrollTo().assertIsDisplayed().assertIsEnabled()
         }
     }
-    private fun dialog(activity: PhotoTestActivity) =
-        activity.supportFragmentManager.findFragmentByTag(PhotoTestActivity.PHOTO_TAG) as AskForReinforcementImageDialog
     private fun assertClosed(scenario: ActivityScenario<PhotoTestActivity>) {
         compose.waitUntil(TIMEOUT_MS) {
             var closed = false
-            scenario.onActivity { closed = it.supportFragmentManager.fragments.isEmpty() }
+            scenario.onActivity { closed = it.navController.currentDestination?.hasRoute<PhotoTestHome>() == true }
             closed
         }
     }
@@ -232,8 +295,7 @@ class PhotoLayoutTest {
     }
     private companion object {
         const val TIMEOUT_MS = 5_000L
-        const val NARROW_WIDTH = 320
-        const val SHORT_HEIGHT = 200
+        const val OUTSIDE_OFFSET = 4f
         const val NO_WRITES = 0
         const val SINGLE_OPERATION = 1
         const val CAPTURE_URI = "content://test/capture.jpg"

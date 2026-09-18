@@ -69,4 +69,36 @@
 - В debug APK отсутствуют старый layout фото, его binding-класс, CardView и viewbinding delegate; activity_main.xml сохранён. В исходниках нет оставшихся вызовов setPhotoImage, AndroidView или использования удалённых зависимостей. Merged manifest не возвращает разрешения камеры/хранилища. `git diff --check` — успешно; новые числовые значения production-кода вынесены в константы.
 - IDE Sync отдельно не проверялся. Внешние камера/Photo Picker, уничтожение процесса ОС, физическое устройство и Android 9 требуют отдельных проверок. Предупреждения JDK native access и strip debug symbols остаются прежними.
 
-Следующая итерация — 5.3: Compose Navigation; текущий шаг её не реализует.
+После 5.2 запланирована итерация 5.3: Compose Navigation.
+
+## 5.3 — выполнено: Compose Navigation
+
+- MainActivity переведена на ComponentActivity/setContent, TokensTheme и rememberNavController. App собирает NavHost через registerGraph двух mediators, не импортируя ViewModel или внутренние маршруты impl. Повторный стартовый переход при recreation не выполняется. Автоматические анимации переходов отключены, как в прежнем графе без transition-анимаций.
+- В api жетонов опубликованы @Serializable TokensGraph, TokensBoard и TokensSettings; в api фото — PhotoDestination. TokensEntry/open остаются типизированным входом. Внутренние CountDestination(count) и ColorDestination принадлежат impl; передаётся число, а не Parcelable-модель хранения. Прежние URI внутренних ссылок настроек/фото зарегистрированы в новом графе.
+- Mediator теперь регистрирует destinations через NavGraphBuilder, вместо возврата NavInflater/NavGraph. ViewModel создаются существующими Koin-определениями через общую navigationViewModel: AndroidX ViewModelProvider использует store и CreationExtras конкретного NavBackStackEntry; SavedStateHandle создаётся для этого entry и передаётся параметром Koin. Koin не обновлялся, внутренние Koin API не используются.
+- Для трёх диалогов используется NavigationDialog. Автоматическое закрытие DialogNavigator выключено; полноэкранная прозрачная область обрабатывает нажатия снаружи, BackHandler — Back. Callback проверяет текущее состояние ViewModel, поэтому запись нельзя прервать в промежутке до следующего кадра. Позднее/повторное завершение закрывает только своё текущее entry через popEntryIfCurrent, а не произвольный следующий экран.
+- PhotoDestinationContent использует стабильные rememberLauncherForActivityResult и STARTED-подписку. Подготовленные URI, ожидающий источник и успешная запись по-прежнему принадлежат SavedStateHandle/ViewModel. Результат, пришедший до регистрации нового launcher после recreation, доставляется через ActivityResultRegistry.
+- TokensLifecycle переносит ON_START/ON_STOP, обработку нового celebrationId и остановку звука из Fragment в lifecycle back-stack entry. При уходе с поля/уничтожении композиции эффекты прекращаются; переход в настройки сразу помечает посещение завершённым, не позволяя отложенной записи запустить победу. Эффекты не запускаются из render.
+- В SettingsLinks перенесено прежнее открытие ссылок. DataStore, редьюсеры, бизнес-правила, версии приложения и состояние жетонов не менялись.
+- Удалены пять Fragment-адаптеров, три XML-графа, activity_main.xml, FragmentExtensions и неиспользуемые View ID. Safe Args, Parcelize compiler/runtime и прямые зависимости Navigation Fragment/Fragment KTX больше не нужны и убраны вместе с catalog entries. Файлы восстановимы из истории Git. AppCompat сохранён для существующих тем; наличие транзитивного Fragment через AppCompat/Koin не означает использование Fragment-навигации.
+- В version catalog добавлены navigation-compose с прежней версией Navigation 2.9.6 и activity-compose с прежним version.ref activity. В api включена serialization, в app — Compose. Gradle/AGP/Kotlin/Koin/Compose BOM не обновлялись. Изменены build.gradle.kts app, core/ui, обеих api/impl фич и root; правила соответствующих модулей актуализированы.
+- FeatureNavigationTest, SettingsTestActivity/SettingsFlowTest, TokensFlowTest и PhotoLayoutTest переведены на настоящие Compose-host. Проверки отмены, черновика, ошибок, поворота и повторной победы сохранены. Проверка тесного окна фото перенесена в PhotoScreenTest. Добавлены проверки раннего результата фото, обычного Back, внешнего нажатия при сохранении и повторного закрытия устаревшего entry.
+
+### Основания и границы
+
+- Типизированные маршруты построены на официальных [type-safe Navigation API](https://developer.android.com/guide/navigation/design/type-safety), имеющихся в используемой версии Navigation.
+- Новый стек восстанавливается при recreation. Реальное уничтожение процесса ОС, переход между старой APK с Fragment-графом и новой с Compose-графом, внешние приложения камеры/Photo Picker и Android 9 требуют отдельных проверок. Сохранения DataStore не переписывались.
+
+### Проверки 5.3
+
+- `testDebugUnitTest :app:compileDebugKotlin` — успешно, 84 JVM-теста. Скомпилированы все затронутые production-модули и Android-тесты app/tokens/photo.
+- `:app:connectedDebugAndroidTest` — 6/6: публичные входы между фичами, обе ориентации, recreation/back stack, отсутствие дублирующего входа в фото и защита от закрытия чужого entry.
+- `:feature:reinforcement_photo:impl:connectedDebugAndroidTest` — 16/16: сохранены файловые/UI-проверки, добавлены ранний результат после recreation, Back в обычном состоянии и внешнее нажатие с защитой записи.
+- `:core:ui:connectedDebugAndroidTest` — 7/7, включая предпросмотр и тему.
+- `:feature:tokens_feature:impl:connectedDebugAndroidTest` с фильтрами SettingsFlowTest, ColorPickerTest, SettingsScreenTest, TokenTest, TokensScreenTest, WinCelebrationTest, TokensFlowTest и DataStoreMigrationTest — 49/49. Набор повторён после последней правки защиты закрытия; проверены отмена/новый черновик, восстановление при сохранении, повтор ошибки, количество/цвет через Flow и звук без повтора.
+- Итого 78 Android-проверок на API 36 без ошибок и пропусков в перечисленных наборах. Debug APK приложения собран, установлен и запущен на эмуляторе.
+- В ходе адаптации один тест проверял результат камеры раньше повторной регистрации Compose launcher. Синхронная проверка блокировки перенесена после готовности композиции; отдельно добавлен и прошёл сценарий действительно ранней доставки без ожидания регистрации. Проверка потери результата не удалена и не заменена ожиданием без результата.
+- Поиск исходников не находит NavInflater/NavHostFragment/Safe Args/Parcelize и Fragment-переходов. В APK отсутствуют удалённые Fragment-экраны, activity_main.xml и три старых XML-графа. `git diff --check` — успешно.
+- Разрешённый Lifecycle остаётся 2.9.0, Compose UI — 1.9.0, Material3 — 1.3.2; явных обновлений версий не делалось. IDE Sync отдельно не проверялся; физическое устройство не использовалось. Прежние предупреждения native access JVM и strip debug symbols остались вне задачи.
+
+Этап 5 завершён в пределах реализованных сценариев. Дальше — отдельная финальная проверка приложения и перечисленных выше реальных системных сценариев, а не дополнительная архитектурная миграция.

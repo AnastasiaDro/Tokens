@@ -2,49 +2,48 @@ package com.cerebus.tokens
 
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.os.SystemClock
-import androidx.navigation.fragment.NavHostFragment
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.cerebus.tokens.data.reinforcement.ReinforcementRepository
-import com.cerebus.tokens.feature.tokens_feature.api.TokensEntry
-import com.cerebus.tokens.feature.tokens_feature.api.TokensMediator
-import com.cerebus.tokens.reinforcement_photo.api.ReinforcementPhotoMediator
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
+import com.cerebus.tokens.core.ui.popEntryIfCurrent
+import com.cerebus.tokens.feature.tokens_feature.api.*
+import com.cerebus.tokens.reinforcement_photo.api.*
+import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
 
 @RunWith(AndroidJUnit4::class)
 class FeatureNavigationTest {
+    @get:Rule val compose = createEmptyComposeRule()
+    private val koin get() = GlobalContext.get()
+
     @Test fun boardSettingsAndPhotoKeepTheirDestinationInBothOrientations() {
-        val koin = GlobalContext.get()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            listOf(TOKENS_SCREEN, SETTINGS_SCREEN, PHOTO_SCREEN).forEach { screen ->
+            compose.waitForIdle()
+            listOf(TokensBoard, TokensSettings, PhotoDestination).forEach { screen ->
                 scenario.onActivity { activity ->
-                    val host = activity.supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
                     when (screen) {
-                        SETTINGS_SCREEN -> koin.get<TokensMediator>().open(host.navController, TokensEntry.SETTINGS)
-                        PHOTO_SCREEN -> koin.get<ReinforcementPhotoMediator>().open(host.navController)
+                        TokensSettings -> koin.get<TokensMediator>().open(activity.navController, TokensEntry.SETTINGS)
+                        PhotoDestination -> koin.get<ReinforcementPhotoMediator>().open(activity.navController)
                     }
                 }
+                compose.waitForIdle()
                 listOf(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE).forEach { orientation ->
                     scenario.onActivity { it.requestedOrientation = orientation }
                     val expected = if (orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
                         Configuration.ORIENTATION_PORTRAIT else Configuration.ORIENTATION_LANDSCAPE
-                    val deadline = SystemClock.uptimeMillis() + ROTATION_TIMEOUT_MS
-                    var actual = Configuration.ORIENTATION_UNDEFINED
-                    while (actual != expected && SystemClock.uptimeMillis() < deadline) {
-                        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+                    compose.waitUntil(TIMEOUT_MS) {
+                        var actual = Configuration.ORIENTATION_UNDEFINED
                         scenario.onActivity { actual = it.resources.configuration.orientation }
+                        actual == expected
                     }
-                    assertEquals(expected, actual)
-                    scenario.onActivity { activity ->
-                        val host = activity.supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
-                        assertEquals(screen, host.navController.currentDestination?.label)
+                    compose.waitForIdle()
+                    scenario.onActivity {
+                        assertTrue(it.navController.currentDestination!!.hasRoute(screen::class))
                     }
                 }
             }
@@ -52,63 +51,69 @@ class FeatureNavigationTest {
     }
 
     @Test fun settingsEntryRestoresAndReturnsToBoard() {
-        val mediator = GlobalContext.get().get<TokensMediator>()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                val host = activity.supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
-                mediator.open(host.navController, TokensEntry.SETTINGS)
-                assertEquals(SETTINGS_SCREEN, host.navController.currentDestination?.label)
-            }
+            compose.waitForIdle()
+            scenario.onActivity { koin.get<TokensMediator>().open(it.navController, TokensEntry.SETTINGS) }
+            compose.waitForIdle()
             scenario.recreate()
-            scenario.onActivity { activity ->
-                val host = activity.supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
-                assertEquals(SETTINGS_SCREEN, host.navController.currentDestination?.label)
-                assertTrue(host.navController.popBackStack())
-                assertEquals(TOKENS_SCREEN, host.navController.currentDestination?.label)
+            compose.waitForIdle()
+            scenario.onActivity {
+                assertTrue(it.navController.currentDestination!!.hasRoute<TokensSettings>())
+                assertTrue(it.navController.popBackStack())
+                assertTrue(it.navController.currentDestination!!.hasRoute<TokensBoard>())
             }
         }
     }
 
-    @Test fun tokensEntriesCanBeOpenedFromPhotoGraph() {
-        val koin = GlobalContext.get()
+    @Test fun tokensEntriesCanBeOpenedFromPhotoDestination() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                val host = activity.supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
-                koin.get<ReinforcementPhotoMediator>().open(host.navController)
-                koin.get<TokensMediator>().open(host.navController, TokensEntry.SETTINGS)
-                assertEquals(SETTINGS_SCREEN, host.navController.currentDestination?.label)
-                koin.get<TokensMediator>().open(host.navController, TokensEntry.BOARD)
-                assertEquals(TOKENS_SCREEN, host.navController.currentDestination?.label)
+            compose.waitForIdle()
+            scenario.onActivity {
+                koin.get<ReinforcementPhotoMediator>().open(it.navController)
+                koin.get<TokensMediator>().open(it.navController, TokensEntry.SETTINGS)
+                assertTrue(it.navController.currentDestination!!.hasRoute<TokensSettings>())
+                koin.get<TokensMediator>().open(it.navController, TokensEntry.BOARD)
+                assertTrue(it.navController.currentDestination!!.hasRoute<TokensBoard>())
             }
         }
     }
 
-    @Test fun photoMediatorOpensDialogAndRestoresBackStackAfterRecreation() {
-        val koin = GlobalContext.get()
+    @Test fun photoMediatorRestoresBackStackAndDoesNotDuplicateItsEntry() {
         val mediator = koin.get<ReinforcementPhotoMediator>()
         assertSame(mediator, koin.get<ReinforcementPhotoMediator>())
         assertSame(koin.get<ReinforcementRepository>(), koin.get<ReinforcementRepository>())
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                val host = activity.supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
-                assertEquals(TOKENS_SCREEN, host.navController.currentDestination?.label)
-                mediator.open(host.navController)
-                assertEquals(PHOTO_SCREEN, host.navController.currentDestination?.label)
+            compose.waitForIdle()
+            scenario.onActivity {
+                mediator.open(it.navController)
+                val entry = it.navController.currentBackStackEntry
+                mediator.open(it.navController)
+                assertEquals(entry?.id, it.navController.currentBackStackEntry?.id)
             }
+            compose.waitForIdle()
             scenario.recreate()
-            scenario.onActivity { activity ->
-                val host = activity.supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
-                assertEquals(PHOTO_SCREEN, host.navController.currentDestination?.label)
-                assertTrue(host.navController.popBackStack())
-                assertEquals(TOKENS_SCREEN, host.navController.currentDestination?.label)
+            compose.waitForIdle()
+            scenario.onActivity {
+                assertTrue(it.navController.currentDestination!!.hasRoute<PhotoDestination>())
+                assertTrue(it.navController.popBackStack())
+                assertTrue(it.navController.currentDestination!!.hasRoute<TokensBoard>())
             }
         }
     }
 
-    private companion object {
-        const val TOKENS_SCREEN = "TokensFragment"
-        const val PHOTO_SCREEN = "AskForReinforcementImageDialog"
-        const val SETTINGS_SCREEN = "SettingsFragment"
-        const val ROTATION_TIMEOUT_MS = 5_000L
+    @Test fun repeatedCompletionCannotPopAnotherDestination() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            compose.waitForIdle()
+            scenario.onActivity {
+                val controller = it.navController
+                koin.get<ReinforcementPhotoMediator>().open(controller)
+                val photoEntry = controller.currentBackStackEntry!!
+                assertTrue(controller.popEntryIfCurrent(photoEntry))
+                koin.get<TokensMediator>().open(controller, TokensEntry.SETTINGS)
+                assertFalse(controller.popEntryIfCurrent(photoEntry))
+                assertTrue(controller.currentDestination!!.hasRoute<TokensSettings>())
+            }
+        }
     }
+    private companion object { const val TIMEOUT_MS = 5_000L }
 }

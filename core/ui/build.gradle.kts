@@ -32,6 +32,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.activityCompose)
+    implementation(libs.koinAndroid)
     implementation(platform(libs.composeBom))
     implementation(libs.composeUi)
     implementation(libs.composeFoundation)
@@ -49,5 +51,5 @@ dependencies {
     androidTestImplementation(libs.androidxTestEspresso)
 
     // navigation
-    implementation(libs.navigationFragmentKtx)
+    implementation(libs.navigationCompose)
 }

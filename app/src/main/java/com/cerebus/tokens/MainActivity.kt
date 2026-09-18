@@ -1,27 +1,37 @@
 package com.cerebus.tokens
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.navigation.fragment.NavHostFragment
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import com.cerebus.tokens.core.ui.theme.TokensTheme
+import com.cerebus.tokens.feature.tokens_feature.api.TokensGraph
 import com.cerebus.tokens.feature.tokens_feature.api.TokensMediator
 import com.cerebus.tokens.reinforcement_photo.api.ReinforcementPhotoMediator
 import org.koin.android.ext.android.inject
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
     private val tokensMediator: TokensMediator by inject()
     private val photoMediator: ReinforcementPhotoMediator by inject()
+    internal lateinit var navController: NavHostController
+        private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        val host = supportFragmentManager.findFragmentById(R.id.nav_container) as NavHostFragment
-        val controller = host.navController
-        val root = controller.navInflater.inflate(R.navigation.root_nav_graph)
-        val tokensGraph = tokensMediator.createGraph(controller.navInflater)
-        root.addDestination(tokensGraph)
-        root.addDestination(photoMediator.createGraph(controller.navInflater))
-        root.setStartDestination(tokensGraph.id)
-        // NavController applies the saved back stack when the composed graph is assigned.
-        controller.graph = root
+        setContent {
+            TokensTheme {
+                val controller = rememberNavController()
+                navController = controller
+                NavHost(controller, startDestination = TokensGraph,
+                    enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    tokensMediator.registerGraph(this, controller)
+                    photoMediator.registerGraph(this, controller)
+                }
+            }
+        }
     }
 }

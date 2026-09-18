@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinCompose)
-    alias(libs.plugins.navigationSafeArgs)
-    alias(libs.plugins.kotlinParcelize)
 }
 
 android {
@@ -34,12 +32,12 @@ android {
 }
 
 dependencies {
+    implementation(libs.activityCompose)
     implementation(project(":feature:tokens_feature:api"))
     implementation(project(":feature:reinforcement_photo:api"))
     implementation(libs.datastore)
     implementation(libs.serializationJson)
     testImplementation(libs.coroutinesTest)
-    implementation(libs.kotlinParcelizeRuntime)
 
     implementation(platform(libs.composeBom))
     androidTestImplementation(platform(libs.composeBom))
@@ -64,7 +62,6 @@ dependencies {
     implementation(libs.androidxLifecycleViewmodelKtx)
 
     implementation(libs.androidxActivityKtx)
-    implementation(libs.androidxFragmentKtx)
 
     // color picker
     implementation(libs.colorPickerCompose)
@@ -74,7 +71,7 @@ dependencies {
     implementation(libs.lottieCompose)
 
     // navigation
-    implementation(libs.navigationFragmentKtx)
+    implementation(libs.navigationCompose)
 
     // domain
     implementation(project(":core:ui"))
@@ -85,10 +82,4 @@ dependencies {
     implementation(libs.koinCore)
     implementation(libs.koinAndroid)
     implementation(libs.koinTest)
-}
-
-configurations.configureEach {
-    if (name.startsWith("kotlinCompilerPluginClasspath")) {
-        dependencies.add(project.dependencies.create(libs.kotlinParcelizeCompiler.get()))
-    }
 }

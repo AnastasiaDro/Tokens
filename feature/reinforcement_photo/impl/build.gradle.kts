@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinCompose)
 }
@@ -32,6 +33,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.activityCompose)
+    implementation(libs.serializationJson)
     implementation(platform(libs.composeBom))
     implementation(libs.composeUi)
     implementation(libs.composeFoundation)
@@ -49,7 +52,7 @@ dependencies {
 
     implementation(libs.androidxCoreKtx)
     implementation(libs.androidxAppcompat)
-    implementation(libs.navigationFragmentKtx)
+    implementation(libs.navigationCompose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxTestJunit)
     androidTestImplementation(libs.androidxTestEspresso)

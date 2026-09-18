@@ -1,30 +1,35 @@
 package presentation
 
 import android.os.Bundle
-import android.widget.FrameLayout
-import androidx.fragment.app.FragmentActivity
-import androidx.navigation.fragment.NavHostFragment
-import com.cerebus.tokens.feature.tokens_feature.R
-import com.cerebus.tokens.feature.tokens_feature.test.R as TestR
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import com.cerebus.tokens.core.ui.theme.TokensTheme
+import com.cerebus.tokens.feature.tokens_feature.api.*
+import org.koin.core.context.GlobalContext
 
-/** Test-only host: exercises the real feature graph without the application's saved data. */
-class SettingsTestActivity : FragmentActivity() {
+/** Real feature graph with isolated test repositories. */
+class SettingsTestActivity : ComponentActivity() {
+    lateinit var navController: NavHostController
+        private set
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(FrameLayout(this).apply { id = TestR.id.feature_test_host })
-        val host = if (savedInstanceState == null) {
-            NavHostFragment().also { host ->
-                supportFragmentManager.beginTransaction().replace(TestR.id.feature_test_host, host)
-                    .setPrimaryNavigationFragment(host).commitNow()
+        val mediator = GlobalContext.get().get<TokensMediator>()
+        val start = if (intent.getBooleanExtra(EXTRA_START_BOARD, false)) TokensEntry.BOARD else TokensEntry.SETTINGS
+        setContent {
+            TokensTheme {
+                val controller = rememberNavController()
+                navController = controller
+                NavHost(controller, startDestination = TokensGraph,
+                    enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    mediator.registerGraph(this, controller, start)
+                }
             }
-        } else {
-            supportFragmentManager.findFragmentById(TestR.id.feature_test_host) as NavHostFragment
-        }
-        // Like MainActivity, restore the programmatically assembled graph before applying saved navigation.
-        host.navController.graph = host.navController.navInflater.inflate(R.navigation.tokens_nav_graph).apply {
-            setStartDestination(if (intent.getBooleanExtra(EXTRA_START_BOARD, false)) R.id.tokensFragment else R.id.settingsFragment)
         }
     }
-
     companion object { const val EXTRA_START_BOARD = "test-start-board" }
 }

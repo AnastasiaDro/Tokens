@@ -1,11 +1,14 @@
 package com.cerebus.tokens.reinforcement_photo.api
 
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph
-import androidx.navigation.NavInflater
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
+import kotlinx.serialization.Serializable
+
+@Serializable data object PhotoDestination
 
 /** Photo selection entry. Saved selections are observed through ReinforcementRepository. */
 interface ReinforcementPhotoMediator {
-    fun createGraph(inflater: NavInflater): NavGraph
+    fun registerGraph(builder: NavGraphBuilder, navController: NavHostController)
     fun open(navController: NavController)
 }

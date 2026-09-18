@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
 }
 
@@ -14,5 +15,6 @@ android {
 }
 
 dependencies {
-    api(libs.navigationFragmentKtx)
+    api(libs.navigationCompose)
+    implementation(libs.serializationJson)
 }

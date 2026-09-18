@@ -12,7 +12,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.NavDestination.Companion.hasRoute
+import com.cerebus.tokens.feature.tokens_feature.ColorDestination
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.pressBack
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
@@ -45,7 +47,6 @@ import presentation.settings_screen.SETTINGS_COLOR_TAG
 import presentation.settings_screen.COLOR_CONFIRM_TAG
 import presentation.settings_screen.COLOR_PICKER_TAG
 import presentation.settings_screen.COLOR_PREVIEW_TAG
-import presentation.settings_screen.SelectColorDialogFragment
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performTouchInput
@@ -54,11 +55,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.geometry.Offset
 import org.junit.Assert.assertNotEquals
 import presentation.tokens_screen.COUNT_VALUE_TAG
-import presentation.tokens_screen.SelectTokenNumberAlert
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import com.cerebus.tokens.core.ui.R as CoreR
-import com.cerebus.tokens.feature.tokens_feature.test.R as TestR
 
 @RunWith(AndroidJUnit4::class)
 class SettingsFlowTest {
@@ -133,8 +132,7 @@ class SettingsFlowTest {
         launch().use { scenario ->
             compose.onNodeWithText(context.getString(R.string.select_button_text)).performScrollTo().performClick()
             scenario.onActivity { activity ->
-                val host = activity.supportFragmentManager.findFragmentById(TestR.id.feature_test_host) as NavHostFragment
-                assertEquals(R.id.selectColorDialogFragment, host.navController.currentDestination?.id)
+                assertTrue(activity.navController.currentDestination!!.hasRoute<ColorDestination>())
             }
             changeColor()
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).performScrollTo().performClick()
@@ -214,8 +212,7 @@ class SettingsFlowTest {
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).assertIsNotEnabled()
             scenario.recreate()
             scenario.onActivity { activity ->
-                val host = activity.supportFragmentManager.findFragmentById(TestR.id.feature_test_host) as NavHostFragment
-                assertFalse(host.childFragmentManager.fragments.filterIsInstance<SelectColorDialogFragment>().single().isCancelable)
+                assertTrue(activity.navController.currentDestination!!.hasRoute<ColorDestination>())
             }
             onView(isRoot()).inRoot(isDialog()).perform(pressBack())
             assertEquals(selected, previewColor())
@@ -256,9 +253,7 @@ class SettingsFlowTest {
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).assertIsNotEnabled()
             scenario.recreate()
             scenario.onActivity { activity ->
-                val host = activity.supportFragmentManager.findFragmentById(TestR.id.feature_test_host) as NavHostFragment
-                val dialog = host.childFragmentManager.fragments.filterIsInstance<SelectTokenNumberAlert>().single()
-                assertFalse(dialog.isCancelable)
+                assertTrue(activity.navController.currentDestination!!.hasRoute<com.cerebus.tokens.feature.tokens_feature.CountDestination>())
             }
             onView(isRoot()).inRoot(isDialog()).perform(pressBack())
             compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(CHANGED_COUNT.toString())

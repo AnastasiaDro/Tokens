@@ -3,12 +3,12 @@
 - Читать корневой `AGENTS.md`. Модуль отвечает за запуск, сборку DI, manifest и корневую навигацию.
 - Не размещать здесь правила подсчёта жетонов и хранения прогресса.
 - При переходе на api/impl подключать реализации для DI, а экраны — через контракты mediators. Не обращаться к внутренним ViewModel чужих фич.
-- MainActivity собирает корневой граф через TokensMediator и ReinforcementPhotoMediator. Не возвращать include графов impl в XML или прямые ссылки на их destination ID из app.
-- При пересоздании Activity присваивать собранный граф, чтобы NavController применил сохранённый back stack; не выполнять дополнительный переход на стартовый экран.
+- MainActivity содержит Compose NavHost и регистрирует маршруты через TokensMediator.registerGraph и ReinforcementPhotoMediator.registerGraph. Старт — публичный TokensGraph. Не импортировать внутренние destinations/ViewModel из impl.
+- rememberNavController восстанавливает back stack при пересоздании Activity. Не создавать новый контроллер вручную и не выполнять дополнительный переход на стартовый экран.
 - Контракты доступны через прямые зависимости app на api; зависимости app на impl нужны для подключения Koin-модулей.
 - Не менять applicationId, versionCode, versionName и совместимость SDK без требования задачи.
 - MainActivity не фиксирует ориентацию. При изменениях навигации проверять сохранение destination/back stack в portrait и landscape, включая диалоги.
-- ViewBinding в app выключен: MainActivity использует только XML-контейнер NavHostFragment. Не возвращать зависимости старого UI жетонов в app; Lottie и Compose-компоненты принадлежат фиче.
+- MainActivity — ComponentActivity с setContent и TokensTheme. XML-контейнер, Fragment-навигация и Safe Args удалены. Не возвращать зависимости старого UI жетонов в app; Lottie и экранные Compose-компоненты принадлежат фиче.
 - Удалять permissions только после проверки использующих их сценариев и merged manifest; учитывать minSdk 28.
 - Для межмодульных изменений проверять `:app:compileDebugKotlin`; `:app:assembleDebug` запускать, когда нужно проверить упаковку и ресурсы.
 - IDE Sync, командная компиляция и запуск приложения — разные проверки. Не подменять одну другой в отчёте.
