@@ -56,7 +56,8 @@
 Корневые правила действуют во всём проекте; перед изменением модуля читать его `AGENTS.md`. Локальные правила дополняют общие. Текущие указания пользователя имеют приоритет; повторное согласование уже одобренных действий не требуется.
 
 - [app](app/AGENTS.md) — запуск приложения, DI и корневая навигация.
-- [tokens_feature](feature/tokens_feature/AGENTS.md) — жетоны, настройки, победа и сохранение прогресса.
+- [tokens_feature api](feature/tokens_feature/api/AGENTS.md) — контракт входа в жетоны и настройки.
+- [tokens_feature impl](feature/tokens_feature/impl/AGENTS.md) — жетоны, настройки, победа и сохранение прогресса.
 - [reinforcement_photo api](feature/reinforcement_photo/api/AGENTS.md) — контракт входа в фото.
 - [reinforcement_photo impl](feature/reinforcement_photo/impl/AGENTS.md) — выбор и съёмка фото.
 - [reinforcement data](data/reinforcement/AGENTS.md) — хранение выбранного фото и настройки подкрепления.

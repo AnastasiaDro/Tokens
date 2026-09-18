@@ -1,5 +1,7 @@
-package com.cerebus.tokens.di.feature
+package com.cerebus.tokens.feature.tokens_feature.di
 
+import com.cerebus.tokens.feature.tokens_feature.TokensMediatorImpl
+import com.cerebus.tokens.feature.tokens_feature.api.TokensMediator
 import data.effects.DataStoreWinEffectsRepository
 import data.tokens.DataStoreTokenBoardRepository
 import domain.repository.TokenBoardRepository
@@ -12,6 +14,7 @@ import presentation.tokens_screen.SelectTokensNumberViewModel
 import presentation.tokens_screen.TokensViewModel
 
 val tokensFeatureModule = module {
+    single<TokensMediator> { TokensMediatorImpl() }
     single<TokenBoardRepository> { DataStoreTokenBoardRepository(get<android.content.Context>()) }
     single<WinEffectsRepository> { DataStoreWinEffectsRepository(get<android.content.Context>()) }
     viewModel { TokensViewModel(get(), get(), get()) }

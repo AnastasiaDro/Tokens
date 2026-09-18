@@ -5,7 +5,7 @@ plugins {
 val minimumAndroidSdk = 28
 
 android {
-    namespace = "com.cerebus.tokens.reinforcement_photo.api"
+    namespace = "com.cerebus.tokens.feature.tokens_feature.api"
     defaultConfig { minSdk = minimumAndroidSdk }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

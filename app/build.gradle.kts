@@ -79,7 +79,8 @@ dependencies {
     androidTestImplementation(libs.navigationTesting)
 
     // Clean layers
-    implementation(project(":feature:tokens_feature"))
+    implementation(project(":feature:tokens_feature:api"))
+    implementation(project(":feature:tokens_feature:impl"))
     implementation(project(":feature:reinforcement_photo:impl"))
     implementation(project(":feature:reinforcement_photo:api"))
     implementation(project(":core:logger"))

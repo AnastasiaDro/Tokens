@@ -35,6 +35,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":feature:tokens_feature:api"))
     implementation(project(":feature:reinforcement_photo:api"))
     implementation(libs.datastore)
     implementation(libs.serializationJson)

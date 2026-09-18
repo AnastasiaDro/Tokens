@@ -4,7 +4,7 @@ import android.app.Application
 import com.cerebus.tokens.di.core.loggerModule
 import com.cerebus.tokens.di.data.reinforcementDataModule
 import com.cerebus.tokens.reinforcement_photo.di.reinforcementModule
-import com.cerebus.tokens.di.feature.tokensFeatureModule
+import com.cerebus.tokens.feature.tokens_feature.di.tokensFeatureModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin

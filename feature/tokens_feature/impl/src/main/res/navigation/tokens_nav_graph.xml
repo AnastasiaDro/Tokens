@@ -23,6 +23,7 @@
         android:name="presentation.settings_screen.SettingsFragment"
         android:label="SettingsFragment"
         tools:layout="@layout/fragment_settings">
+        <deepLink app:uri="android-app://com.cerebus.tokens.tokens/settings" />
         <action
             android:id="@+id/action_settingsFragment_to_tokensFragment"
             app:destination="@id/tokensFragment" />

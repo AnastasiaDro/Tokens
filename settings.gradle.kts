@@ -29,7 +29,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "Tokens"
 include(":app")
-include(":feature:tokens_feature")
+include(":feature:tokens_feature:api")
+include(":feature:tokens_feature:impl")
 include(":feature:reinforcement_photo:api")
 include(":feature:reinforcement_photo:impl")
 
