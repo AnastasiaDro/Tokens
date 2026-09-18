@@ -22,7 +22,9 @@ class SettingsTestActivity : FragmentActivity() {
         }
         // Like MainActivity, restore the programmatically assembled graph before applying saved navigation.
         host.navController.graph = host.navController.navInflater.inflate(R.navigation.tokens_nav_graph).apply {
-            setStartDestination(R.id.settingsFragment)
+            setStartDestination(if (intent.getBooleanExtra(EXTRA_START_BOARD, false)) R.id.tokensFragment else R.id.settingsFragment)
         }
     }
+
+    companion object { const val EXTRA_START_BOARD = "test-start-board" }
 }

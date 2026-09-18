@@ -82,6 +82,7 @@ dependencies {
 
     // Lottie
     implementation(libs.lottie)
+    implementation(libs.lottieCompose)
 
     // navigation
     implementation(libs.navigationFragmentKtx)

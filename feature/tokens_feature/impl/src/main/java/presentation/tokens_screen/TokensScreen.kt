@@ -1,0 +1,189 @@
+package presentation.tokens_screen
+
+import android.widget.ImageView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cerebus.tokens.core.ui.setPhotoImage
+import com.cerebus.tokens.core.ui.theme.TokensDimensions
+import com.cerebus.tokens.feature.tokens_feature.R
+import presentation.state.StorageFailure
+import presentation.state.TokenState
+import com.cerebus.tokens.core.ui.R as CoreR
+
+@Composable
+internal fun TokensRoute(
+    viewModel: TokensViewModel,
+    hasCamera: Boolean,
+    onSelectCount: (Int) -> Unit,
+    onSettings: () -> Unit,
+    onPhoto: () -> Unit,
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    Box(Modifier.fillMaxSize()) {
+        TokensScreen(state, hasCamera, viewModel::onTokenClicked, viewModel::clearTokens,
+            viewModel::retry, onSelectCount, onSettings, onPhoto)
+        WinCelebration(state.effects, Modifier.matchParentSize())
+    }
+}
+
+@Composable
+internal fun TokensScreen(
+    state: TokensUiState,
+    hasCamera: Boolean,
+    onTokenClick: (String) -> Unit,
+    onClear: () -> Unit,
+    onRetry: () -> Unit,
+    onSelectCount: (Int) -> Unit,
+    onSettings: () -> Unit,
+    onPhoto: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val ready = !state.loading && state.board != null && state.error != StorageFailure.READ
+    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding()) {
+        BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings)
+        if (state.loading || state.error != null) {
+            TextButton(onClick = onRetry, enabled = state.error != null && !state.saving) {
+                Text(stringResource(when (state.error) {
+                    StorageFailure.READ -> CoreR.string.storage_read_error
+                    StorageFailure.WRITE -> CoreR.string.storage_write_error
+                    null -> CoreR.string.storage_loading
+                }))
+            }
+        }
+        BoxWithConstraints(Modifier.fillMaxWidth().weight(CONTENT_WEIGHT)) {
+            // Keep the existing camera gate until the separate photo migration.
+            val showPhoto = state.reinforcement?.enabled == true && hasCamera
+            val photoSize = minOf(PHOTO_MAX_SIZE_DP.dp, maxWidth / PHOTO_WIDTH_DIVISOR, maxHeight / PHOTO_HEIGHT_DIVISOR)
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                TokenBoard(
+                    tokens = state.board?.tokens.orEmpty(),
+                    enabled = ready,
+                    onTokenClick = onTokenClick,
+                    onClear = onClear,
+                    modifier = Modifier.weight(CONTENT_WEIGHT).fillMaxHeight(),
+                )
+                if (showPhoto) {
+                    ReinforcementPhoto(state.reinforcement?.photoUri, onPhoto, Modifier.size(photoSize))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoardMenu(enabled: Boolean, onSelectCount: () -> Unit, onClear: () -> Unit, onSettings: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val menuDescription = stringResource(R.string.tokens_menu)
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+        Box {
+            IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = menuDescription }) {
+                Text("⋮", style = MaterialTheme.typography.headlineMedium)
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.changeChips)) }, enabled = enabled,
+                    onClick = { expanded = false; onSelectCount() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.clearChecked)) }, enabled = enabled,
+                    onClick = { expanded = false; onClear() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.settings)) },
+                    onClick = { expanded = false; onSettings() })
+            }
+        }
+    }
+}
+
+@Composable
+internal fun TokenBoard(
+    tokens: List<TokenState>,
+    enabled: Boolean,
+    onTokenClick: (String) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val currentClear by rememberUpdatedState(onClear)
+    val preferredDiameter = dimensionResource(R.dimen.token_width)
+    Layout(
+        modifier = modifier.clipToBounds().testTag(TOKEN_BOARD_TAG).pointerInput(enabled) {
+            if (!enabled) return@pointerInput
+            var drag = NO_DRAG
+            detectHorizontalDragGestures(
+                onDragStart = { drag = NO_DRAG },
+                onHorizontalDrag = { _, amount -> drag += amount },
+                onDragEnd = { if (drag < -size.width / CLEAR_SWIPE_DIVISOR) currentClear() },
+                onDragCancel = { drag = NO_DRAG },
+            )
+        },
+        content = {
+            tokens.forEach { token ->
+                key(token.id) {
+                    Token(token, { onTokenClick(token.id) }, Modifier.testTag(tokenTag(token.id)), enabled)
+                }
+            }
+        },
+    ) { measurables, constraints ->
+        val geometry = tokenBoardGeometry(constraints.maxWidth, constraints.maxHeight, tokens.size,
+            preferredDiameter.roundToPx(), TokensDimensions.SmallSpacing.roundToPx())
+        val children = measurables.map { it.measure(Constraints.fixed(geometry.diameter, geometry.diameter)) }
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            children.forEachIndexed { index, child ->
+                val row = index / geometry.columns
+                val column = index % geometry.columns
+                val itemsInRow = minOf(geometry.columns, children.size - row * geometry.columns)
+                val x = (constraints.maxWidth - geometry.rowWidth(itemsInRow)) / CENTER_DIVISOR +
+                    column * (geometry.diameter + geometry.gap)
+                val y = (constraints.maxHeight - geometry.height) / CENTER_DIVISOR +
+                    row * (geometry.diameter + geometry.gap)
+                child.placeRelative(x, y)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReinforcementPhoto(uri: String?, onClick: () -> Unit, modifier: Modifier) {
+    val description = stringResource(R.string.reinforcement_image)
+    Card(onClick = onClick, modifier = modifier.testTag(REINFORCEMENT_TAG).semantics { contentDescription = description }) {
+        // Temporary interoperability: photo loading/picking will be migrated in the photo stage.
+        key(uri) {
+            AndroidView(
+                factory = { context ->
+                    ImageView(context).apply {
+                        scaleType = ImageView.ScaleType.CENTER_CROP
+                        importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                        try { setPhotoImage(uri?.toUri(), CoreR.drawable.baseline_add_a_photo_24) }
+                        catch (_: SecurityException) { setImageResource(CoreR.drawable.baseline_add_a_photo_24) }
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
+internal fun tokenTag(id: String) = "board-token-$id"
+internal const val TOKEN_BOARD_TAG = "token-board"
+internal const val REINFORCEMENT_TAG = "board-reinforcement"
+private const val CONTENT_WEIGHT = 1f
+private const val PHOTO_MAX_SIZE_DP = 150
+private const val PHOTO_WIDTH_DIVISOR = 4
+private const val PHOTO_HEIGHT_DIVISOR = 2
+private const val NO_DRAG = 0f
+private const val CLEAR_SWIPE_DIVISOR = 3f
+private const val CENTER_DIVISOR = 2

@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">TokensApp</string>
     <string name="settings">Settings</string>
+    <string name="tokens_menu">Board menu</string>
     <string name="changeChips">Tokens number</string>
     <string name="clearChecked">Unmark</string>
     <string name="aboutAppTV">""</string>

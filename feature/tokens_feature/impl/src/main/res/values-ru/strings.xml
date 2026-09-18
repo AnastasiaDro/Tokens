@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Жетоны</string>
     <string name="settings">Настройки</string>
+    <string name="tokens_menu">Меню жетонов</string>
     <string name="settings_saving">Сохранение…</string>
     <string name="decrease_tokens_count">Уменьшить количество жетонов</string>
     <string name="increase_tokens_count">Увеличить количество жетонов</string>

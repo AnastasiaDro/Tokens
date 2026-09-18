@@ -11,7 +11,12 @@ import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.logger.api.Logger
 
 /** Owns one short fanfare; all calls are made on the main thread. */
-internal class WinSoundPlayer(context: Context, private val logger: Logger) {
+internal interface WinSoundOutput {
+    fun play()
+    fun stop()
+}
+
+internal class WinSoundPlayer(context: Context, private val logger: Logger) : WinSoundOutput {
     private val appContext = context.applicationContext
     private val audioManager = appContext.getSystemService(AudioManager::class.java)
     private val attributes = AudioAttributes.Builder()
@@ -27,7 +32,7 @@ internal class WinSoundPlayer(context: Context, private val logger: Logger) {
     private var player: MediaPlayer? = null
     private var hasFocus = false
 
-    fun play() {
+    override fun play() {
         stop()
         try {
             hasFocus = audioManager.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
@@ -59,7 +64,7 @@ internal class WinSoundPlayer(context: Context, private val logger: Logger) {
         }
     }
 
-    fun stop() {
+    override fun stop() {
         player?.release()
         player = null
         if (hasFocus) {

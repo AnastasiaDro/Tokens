@@ -12,8 +12,12 @@ import presentation.settings_screen.SettingsViewModel
 import presentation.settings_screen.SelectColorViewModel
 import presentation.tokens_screen.SelectTokensNumberViewModel
 import presentation.tokens_screen.TokensViewModel
+import presentation.tokens_screen.WinSoundOutput
+import presentation.tokens_screen.WinSoundPlayer
+import com.cerebus.tokens.logger.api.LoggerFactory
 
 val tokensFeatureModule = module {
+    factory<WinSoundOutput> { WinSoundPlayer(get(), get<LoggerFactory>().createLogger("WinSoundPlayer")) }
     single<TokensMediator> { TokensMediatorImpl() }
     single<TokenBoardRepository> { DataStoreTokenBoardRepository(get<android.content.Context>()) }
     single<WinEffectsRepository> { DataStoreWinEffectsRepository(get<android.content.Context>()) }
