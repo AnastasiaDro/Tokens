@@ -41,7 +41,7 @@ class SettingsScreenTest {
         val changes = mutableListOf<Boolean>()
         compose.setContent {
             TokensTheme {
-                SettingsScreen(state.value, hasCamera = true, onSelectCount = {}, onSelectColor = {},
+                SettingsScreen(state.value, onSelectCount = {}, onSelectColor = {},
                     onAnimationChanged = {}, onSoundChanged = { changes += it }, onReinforcementChanged = {},
                     onRetry = {}, onYoutube = {}, onDonate = {})
             }
@@ -61,7 +61,7 @@ class SettingsScreenTest {
         val retries = mutableListOf<Unit>()
         compose.setContent {
             TokensTheme {
-                SettingsScreen(state.value, hasCamera = true, onSelectCount = {}, onSelectColor = {},
+                SettingsScreen(state.value, onSelectCount = {}, onSelectColor = {},
                     onAnimationChanged = {}, onSoundChanged = {}, onReinforcementChanged = {},
                     onRetry = { retries += Unit }, onYoutube = {}, onDonate = {})
             }
@@ -81,6 +81,18 @@ class SettingsScreenTest {
         change.assertIsEnabled()
     }
 
+    @Test fun reinforcementSwitchUsesStoredSettingWithoutCameraCapability() {
+        val changes = mutableListOf<Boolean>()
+        compose.setContent { TokensTheme {
+            SettingsScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = true)),
+                onSelectCount = {}, onSelectColor = {}, onAnimationChanged = {}, onSoundChanged = {},
+                onReinforcementChanged = { changes += it }, onRetry = {}, onYoutube = {}, onDonate = {})
+        } }
+        compose.onNodeWithText(context.getString(R.string.reinforcement_image)).performScrollTo()
+            .assertIsOn().assertIsEnabled().performClick().assertIsOn()
+        compose.runOnIdle { assertEquals(listOf(false), changes) }
+    }
+
     @Test fun narrowLayoutWithLargeFontKeepsAboutLinksReachable() {
         val clicks = mutableListOf<String>()
         compose.setContent {
@@ -88,7 +100,7 @@ class SettingsScreenTest {
             CompositionLocalProvider(LocalDensity provides Density(density.density, LARGE_FONT_SCALE)) {
                 TokensTheme {
                     Box(Modifier.width(NARROW_WIDTH_DP.dp)) {
-                        SettingsScreen(ready(), hasCamera = true, onSelectCount = {}, onSelectColor = {},
+                        SettingsScreen(ready(), onSelectCount = {}, onSelectColor = {},
                             onAnimationChanged = {}, onSoundChanged = {}, onReinforcementChanged = {}, onRetry = {},
                             onYoutube = { clicks += YOUTUBE }, onDonate = { clicks += DONATE })
                     }

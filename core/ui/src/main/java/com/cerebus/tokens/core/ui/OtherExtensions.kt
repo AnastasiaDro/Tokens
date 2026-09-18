@@ -14,10 +14,15 @@ import java.io.IOException
 fun ImageView.setPhotoImage(imageUri: Uri?, @DrawableRes defaultImage: Int) {
     this.setImageURI(null)
 
-    if (imageUri != null && isFileExists(imageUri, this.context))
-        this.setImageURI(imageUri)
-    else
+    try {
+        if (imageUri != null && isFileExists(imageUri, this.context))
+            this.setImageURI(imageUri)
+        else
+            setImageResource(defaultImage)
+    } catch (_: SecurityException) {
+        // Access can be revoked between the existence check and decoding.
         setImageResource(defaultImage)
+    }
 }
 
 private fun isFileExists(uri: Uri, context: Context): Boolean {
@@ -28,6 +33,8 @@ private fun isFileExists(uri: Uri, context: Context): Boolean {
         }
     } catch (e: FileNotFoundException) {
         Log.e("OtherExtensions", "File not found: ${e.message}")
+    } catch (_: SecurityException) {
+        return false
     } catch (e: IOException) {
         Log.e("OtherUtils", "Error reading file: ${e.message}")
     }

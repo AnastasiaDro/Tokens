@@ -82,7 +82,7 @@ class TokensScreenTest {
         val settings = mutableListOf<Unit>()
         val retries = mutableListOf<Unit>()
         compose.setContent { TokensTheme {
-            TokensScreen(state.value, true, {}, {}, { retries += Unit }, {}, { settings += Unit }, {})
+            TokensScreen(state.value, {}, {}, { retries += Unit }, {}, { settings += Unit }, {})
         } }
         compose.onNodeWithText(context.getString(CoreR.string.storage_loading)).assertIsDisplayed()
         openMenu()
@@ -98,7 +98,7 @@ class TokensScreenTest {
     @Test fun menuDelegatesCountClearAndSettingsWithoutLocalMutation() {
         val actions = mutableListOf<String>()
         compose.setContent { TokensTheme {
-            TokensScreen(ready(), true, {}, { actions += CLEAR }, {}, { assertEquals(MAX_TOKEN_COUNT, it); actions += COUNT },
+            TokensScreen(ready(), {}, { actions += CLEAR }, {}, { assertEquals(MAX_TOKEN_COUNT, it); actions += COUNT },
                 { actions += SETTINGS }, {})
         } }
         openMenu()
@@ -110,18 +110,18 @@ class TokensScreenTest {
         compose.runOnIdle { assertEquals(listOf(COUNT, CLEAR, SETTINGS), actions) }
     }
 
-    @Test fun photoLeavesRoomForAllTokensAndUsesExistingCameraGate() {
-        val hasCamera = mutableStateOf(true)
+    @Test fun photoLeavesRoomForAllTokensAndFollowsOnlySavedSetting() {
+        val enabled = mutableStateOf(true)
         val photos = mutableListOf<Unit>()
         compose.setContent { TokensTheme {
             Box(Modifier.size(BOARD_WIDTH.dp, SCREEN_HEIGHT.dp)) {
-                TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = true)), hasCamera.value,
+                TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = enabled.value)),
                     {}, {}, {}, {}, {}, { photos += Unit })
             }
         } }
         compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed().performClick()
         tokens().forEach { compose.onNodeWithTag(tokenTag(it.id)).assertIsDisplayed() }
-        compose.runOnIdle { assertEquals(listOf(Unit), photos); hasCamera.value = false }
+        compose.runOnIdle { assertEquals(listOf(Unit), photos); enabled.value = false }
         compose.onNodeWithTag(REINFORCEMENT_TAG).assertDoesNotExist()
     }
 
@@ -133,7 +133,7 @@ class TokensScreenTest {
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
                 TokensTheme { Box(Modifier.size(window.value).consumeWindowInsets(WindowInsets.systemBars)) {
                     TokensScreen(ready().copy(board = BoardState(tokens().take(count.value), COLOR, REVISION),
-                        reinforcement = ReinforcementSettings(enabled = photo.value)), true, {}, {}, {}, {}, {}, {})
+                        reinforcement = ReinforcementSettings(enabled = photo.value)), {}, {}, {}, {}, {}, {})
                 } }
             }
         }
@@ -152,7 +152,7 @@ class TokensScreenTest {
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
                 TokensTheme { Box(Modifier.size(window.value).consumeWindowInsets(WindowInsets.systemBars)) {
-                    TokensScreen(ready(), true, {}, {}, {}, {}, {}, {})
+                    TokensScreen(ready(), {}, {}, {}, {}, {}, {})
                 } }
             }
         }
@@ -167,7 +167,7 @@ class TokensScreenTest {
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
                 TokensTheme { Box(Modifier.size(TIGHT_WINDOW).consumeWindowInsets(WindowInsets.systemBars)) {
                     TokensScreen(ready().copy(writeFailure = true, reinforcement = ReinforcementSettings(enabled = true)),
-                        true, {}, {}, {}, {}, {}, { photos += Unit })
+                        {}, {}, {}, {}, {}, { photos += Unit })
                 } }
             }
         }

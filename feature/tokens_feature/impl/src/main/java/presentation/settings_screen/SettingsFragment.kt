@@ -2,7 +2,6 @@ package presentation.settings_screen
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.text.Spanned
@@ -31,7 +30,6 @@ class SettingsFragment : Fragment() {
             setTokensContent {
                 SettingsRoute(
                     viewModel = viewModel,
-                    hasCamera = requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY),
                     onSelectCount = { count ->
                         findNavController().navigate(SettingsFragmentDirections.actionSettingsFragmentToSelectTokenNumberAlert(
                             SelectTokensNumberAlertData(MIN_TOKEN_COUNT, MAX_TOKEN_COUNT, count)))

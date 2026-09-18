@@ -47,7 +47,6 @@ import com.cerebus.tokens.core.ui.R as CoreR
 @Composable
 internal fun SettingsRoute(
     viewModel: SettingsViewModel,
-    hasCamera: Boolean,
     onSelectCount: (Int) -> Unit,
     onSelectColor: () -> Unit,
     onYoutube: () -> Unit,
@@ -56,7 +55,6 @@ internal fun SettingsRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     SettingsScreen(
         state = state,
-        hasCamera = hasCamera,
         onSelectCount = { state.tokens?.let { onSelectCount(it.count) } },
         onSelectColor = onSelectColor,
         onAnimationChanged = viewModel::changeAnimation,
@@ -71,7 +69,6 @@ internal fun SettingsRoute(
 @Composable
 internal fun SettingsScreen(
     state: SettingsUiState,
-    hasCamera: Boolean,
     onSelectCount: () -> Unit,
     onSelectColor: () -> Unit,
     onAnimationChanged: (Boolean) -> Unit,
@@ -83,7 +80,7 @@ internal fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val controls: @Composable () -> Unit = {
-        SettingsControls(state, hasCamera, onSelectCount, onSelectColor,
+        SettingsControls(state, onSelectCount, onSelectColor,
             onAnimationChanged, onSoundChanged, onReinforcementChanged, onRetry)
     }
     BoxWithConstraints(
@@ -112,7 +109,6 @@ internal fun SettingsScreen(
 @Composable
 private fun SettingsControls(
     state: SettingsUiState,
-    hasCamera: Boolean,
     onSelectCount: () -> Unit,
     onSelectColor: () -> Unit,
     onAnimationChanged: (Boolean) -> Unit,
@@ -149,8 +145,7 @@ private fun SettingsControls(
         HorizontalDivider()
         SettingsSwitch(stringResource(R.string.settings_animation), state.effects?.animation == true, enabled, onAnimationChanged)
         SettingsSwitch(stringResource(R.string.settings_sound), state.effects?.sound == true, enabled, onSoundChanged)
-        // Preserve the existing gate until the separate photo/permissions migration.
-        SettingsSwitch(stringResource(R.string.reinforcement_image), state.reinforcement?.enabled == true && hasCamera,
+        SettingsSwitch(stringResource(R.string.reinforcement_image), state.reinforcement?.enabled == true,
             enabled, onReinforcementChanged)
     }
 }

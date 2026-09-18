@@ -1,5 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
+        <provider android:name="androidx.core.content.FileProvider"
+            android:authorities="com.cerebus.tokens.reinforcement_photo.test.photos"
+            android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/test_photo_paths" />
+        </provider>
         <activity android:name="com.cerebus.tokens.reinforcement_photo.PhotoTestActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:exported="false" />

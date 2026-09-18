@@ -1,6 +1,5 @@
 package presentation.tokens_screen
 
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -31,7 +30,6 @@ class TokensFragment : Fragment() {
             setTokensContent {
                 TokensRoute(
                     viewModel = viewModel,
-                    hasCamera = requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY),
                     onSelectCount = { count ->
                         findNavController().navigate(TokensFragmentDirections.actionTokensFragmentToSelectTokenNumberAlert(
                             SelectTokensNumberAlertData(MIN_TOKEN_COUNT, MAX_TOKEN_COUNT, count)))

@@ -2,4 +2,5 @@
 <resources>
     <string name="make_a_photo">Make photo</string>
     <string name="from_gallery">From gallery</string>
+    <string name="photo_source_unavailable">Could not open camera or photo picker. Try another source.</string>
 </resources>

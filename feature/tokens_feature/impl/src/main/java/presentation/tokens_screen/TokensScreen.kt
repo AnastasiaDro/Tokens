@@ -34,14 +34,13 @@ import com.cerebus.tokens.core.ui.R as CoreR
 @Composable
 internal fun TokensRoute(
     viewModel: TokensViewModel,
-    hasCamera: Boolean,
     onSelectCount: (Int) -> Unit,
     onSettings: () -> Unit,
     onPhoto: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     Box(Modifier.fillMaxSize()) {
-        TokensScreen(state, hasCamera, viewModel::onTokenClicked, viewModel::clearTokens,
+        TokensScreen(state, viewModel::onTokenClicked, viewModel::clearTokens,
             viewModel::retry, onSelectCount, onSettings, onPhoto)
         WinCelebration(state.effects, Modifier.matchParentSize())
     }
@@ -50,7 +49,6 @@ internal fun TokensRoute(
 @Composable
 internal fun TokensScreen(
     state: TokensUiState,
-    hasCamera: Boolean,
     onTokenClick: (String) -> Unit,
     onClear: () -> Unit,
     onRetry: () -> Unit,
@@ -60,7 +58,7 @@ internal fun TokensScreen(
     modifier: Modifier = Modifier,
 ) {
     val ready = !state.loading && state.board != null && state.error != StorageFailure.READ
-    val showPhoto = state.reinforcement?.enabled == true && hasCamera
+    val showPhoto = state.reinforcement?.enabled == true
     BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding()) {
         val statusMaxHeight = maxHeight / STATUS_HEIGHT_DIVISOR
         Column(Modifier.fillMaxSize()) {
