@@ -42,8 +42,31 @@
 - Merged manifest не содержит четырёх удалённых разрешений или requestLegacyExternalStorage. `git diff --check` — успешно. Предупреждение JDK native access остаётся вне задачи.
 - Реальная внешняя камера/Photo Picker, уничтожение процесса ОС, Android 9 и физическое устройство пока не проверены. Файловые тесты и восстановление новой ViewModel из SavedStateHandle не подменяют эти сценарии.
 
-Следующая итерация — 5.2: Compose-фото и общий асинхронный preview. Compose Navigation (5.3) пока не реализована.
+После 5.1 запланированы 5.2 (Compose-фото и общий асинхронный preview) и 5.3 (Compose Navigation).
 
 ### Исправление шаблонного теста перед 5.2
 
 По запросу пользователя исправлен app/ExampleInstrumentedTest: ожидаемый package name приведён к действующему applicationId `com.cerebus.tokens_new`. Конфигурация приложения не менялась. `:app:connectedDebugAndroidTest :app:compileDebugKotlin` — успешно, полный набор app 5/5 на API 36; прежняя ошибка теста устранена.
+
+## 5.2 — выполнено: Compose-фото
+
+- Добавлен `PhotoScreen.kt`: PhotoRoute собирает состояние lifecycle-aware, экран получает PhotoUiState и callbacks, без отдельной копии данных. Вертикальные действия и прокрутка сохраняют доступность при крупном шрифте и низком окне. Загрузка, запись, ошибки чтения/записи/источника отображаются отдельно.
+- `AskForReinforcementImageDialog.kt` теперь адаптер ComposeView со стабильным ID из `res/values/ids.xml`. Пока сохраняет Activity Result contracts и Fragment-навигацию. PhotoUiState.cancellable используется для кнопки отмены и нативного диалога; после пользовательского действия/результата isCancelable обновляется синхронно, до следующего кадра. Закрытие после успешной записи осталось состоянием, а не одноразовым событием.
+- Добавлен `core/ui/PhotoPreview.kt`, подключён в фото-диалоге и `TokensScreen.kt`. ImageDecoder работает на Dispatchers.IO, длинная сторона bitmap ограничена 1024px с сохранением пропорций. Поддерживаются локальные URI; сетевые не загружаются. Смена URI создаёт новое состояние загрузки без показа прежнего фото. Ошибка чтения/отозванное разрешение показывают предложение повторного выбора, не меняя сохранение. Используется встроенный Android API, новая библиотека не понадобилась. Основание: [ImageDecoder](https://developer.android.com/reference/android/graphics/ImageDecoder).
+- В photo impl включён Compose compiler и зависимости из существующего BOM/catalog. Удалены ViewBinding, CardView и viewbindingDelegate, а также их неиспользуемые catalog entries; версии оставшихся зависимостей не обновлялись.
+- Удалены `dialog_ask_for_reinforcement_image.xml` и `core/ui/OtherExtensions.kt` с ImageView.setPhotoImage; восстановимы из Git. В навигационном XML удалена только ссылка tools:layout, destination/action/deep link сохранены. У поля жетонов больше нет AndroidView; геометрия и бизнес-правила не менялись.
+- Обновлены строки EN/RU в core/ui и photo impl, правила трёх затронутых UI-модулей. Изменён `PhotoLayoutTest.kt`, добавлены `PhotoScreenTest.kt`, `PhotoPreviewTest.kt`, тестовый `DeniedPhotoProvider.kt` и его AndroidManifest.xml.
+- PhotoLayoutTest использует настоящие Fragment, SavedStateHandle/DI и ActivityResultRegistry, но перехватывает запуск внешних Intent. Проверяет отмену с прежним URI, результат камеры после recreation без повторного запуска, запрет Back при записи, недоступную камеру с работающей галереей и повтор записи без повторного импорта. Это не тест реального приложения камеры/Photo Picker и не уничтожение процесса ОС.
+
+### Проверки 5.2
+
+- `testDebugUnitTest :app:compileDebugKotlin` — успешно: 84 JVM-теста и debug-компиляция приложения с зависимыми модулями.
+- Полный `:feature:reinforcement_photo:impl:connectedDebugAndroidTest` — 13/13: шесть PhotoLayoutTest, две PhotoScreenTest, четыре PhotoFilesTest, один шаблонный тест. После усиления проверки отмены с существующим фото весь набор повторён успешно.
+- Полный `:core:ui:connectedDebugAndroidTest` — 7/7: четыре PhotoPreviewTest, две ComposeInfrastructureTest, один шаблонный тест. Проверены уменьшение изображения с сохранением пропорций, отсутствующий/повреждённый/сетевой URI, смена URI и сообщение об ошибке. Тестовый provider имитирует SecurityException при отозванном доступе и подтверждает, что чтение выполняется не на main thread.
+- Полный `:app:connectedDebugAndroidTest` — 5/5, включая исправленный шаблонный тест. Debug APK собран, установлен и запущен на эмуляторе.
+- `:feature:tokens_feature:impl:connectedDebugAndroidTest` с фильтрами SettingsFlowTest, ColorPickerTest, SettingsScreenTest, TokenTest, TokensScreenTest, WinCelebrationTest, TokensFlowTest и DataStoreMigrationTest — 49/49. Проверена регрессия настроек, эффектов и адаптивного размещения жетонов с фото.
+- Итого 74 Android-теста на эмуляторе API 36, без ошибок и пропусков. Это перечисленные наборы, а не полный instrumentation-прогон всех модулей проекта.
+- В debug APK отсутствуют старый layout фото, его binding-класс, CardView и viewbinding delegate; activity_main.xml сохранён. В исходниках нет оставшихся вызовов setPhotoImage, AndroidView или использования удалённых зависимостей. Merged manifest не возвращает разрешения камеры/хранилища. `git diff --check` — успешно; новые числовые значения production-кода вынесены в константы.
+- IDE Sync отдельно не проверялся. Внешние камера/Photo Picker, уничтожение процесса ОС, физическое устройство и Android 9 требуют отдельных проверок. Предупреждения JDK native access и strip debug symbols остаются прежними.
+
+Следующая итерация — 5.3: Compose Navigation; текущий шаг её не реализует.

@@ -14,6 +14,7 @@ data class PhotoUiState(
     val launch: ImageSource? = null,
     val captureUri: String? = null,
 ) {
+    val cancellable get() = !loading && !saving
     val canSelect get() = !loading && !saving && !saved && !readFailure && !writeFailure && awaiting == null
     val error: PhotoError?
         get() = when {

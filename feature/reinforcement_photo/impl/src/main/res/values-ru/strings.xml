@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="photo_title">Фото подкрепления</string>
+    <string name="photo_saving">Сохранение фото…</string>
     <string name="make_a_photo">Сфотографировать</string>
     <string name="from_gallery">Из галереи</string>
     <string name="photo_source_unavailable">Не удалось открыть камеру или выбор фото. Попробуйте другой источник.</string>

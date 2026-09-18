@@ -1,6 +1,5 @@
 package presentation.tokens_screen
 
-import android.widget.ImageView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,10 +20,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.cerebus.tokens.core.ui.setPhotoImage
+import com.cerebus.tokens.core.ui.PhotoPreview
 import com.cerebus.tokens.core.ui.theme.TokensDimensions
 import com.cerebus.tokens.feature.tokens_feature.R
 import presentation.state.StorageFailure
@@ -182,20 +179,7 @@ internal fun TokenBoard(
 private fun ReinforcementPhoto(uri: String?, onClick: () -> Unit, modifier: Modifier) {
     val description = stringResource(R.string.reinforcement_image)
     Card(onClick = onClick, modifier = modifier.testTag(REINFORCEMENT_TAG).semantics { contentDescription = description }) {
-        // Temporary interoperability: photo loading/picking will be migrated in the photo stage.
-        key(uri) {
-            AndroidView(
-                factory = { context ->
-                    ImageView(context).apply {
-                        scaleType = ImageView.ScaleType.CENTER_CROP
-                        importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO
-                        try { setPhotoImage(uri?.toUri(), CoreR.drawable.baseline_add_a_photo_24) }
-                        catch (_: SecurityException) { setImageResource(CoreR.drawable.baseline_add_a_photo_24) }
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+        PhotoPreview(uri, description, Modifier.fillMaxSize())
     }
 }
 

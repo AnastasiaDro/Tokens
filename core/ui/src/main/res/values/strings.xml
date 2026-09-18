@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="photo_loading">Loading photo…</string>
+    <string name="photo_unavailable">Photo unavailable. Please select it again.</string>
     <string name="storage_loading">Loading saved data…</string>
     <string name="storage_read_error">Could not read saved data. Tap to retry.</string>
     <string name="storage_write_error">Could not save. Tap to retry.</string>

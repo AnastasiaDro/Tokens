@@ -4,11 +4,9 @@ kotlin = "2.2.10"
 navigation = "2.9.6"
 androidxCore = "1.17.0"
 appcompat = "1.7.1"
-cardview = "1.0.0"
 lifecycle = "2.6.1"
 activity = "1.8.1"
 fragment = "1.6.2"
-viewbindingDelegate = "1.5.9"
 colorPickerCompose = "1.1.2"
 lottie = "6.6.7"
 koin = "3.5.0"
@@ -23,7 +21,6 @@ serialization = "1.9.0"
 [libraries]
 datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 serializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
-androidxCardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
 androidxCoreKtx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
 androidxAppcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidxLifecycleRuntimeKtx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
@@ -38,7 +35,6 @@ koinTest = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
 lottieCompose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
 colorPickerCompose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorPickerCompose" }
-viewbindingDelegate = { module = "com.github.kirich1409:viewbindingpropertydelegate-full", version.ref = "viewbindingDelegate" }
 junit = { module = "junit:junit", version.ref = "junit" }
 coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 androidxTestJunit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }

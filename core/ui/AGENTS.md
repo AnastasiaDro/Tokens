@@ -8,5 +8,6 @@
 - Для ComposeView внутри Fragment использовать `setTokensContent`: композиция освобождается вместе с View lifecycle. Задавать стабильный resource ID для восстановления rememberSaveable. Адаптер не создаёт ViewModel и не управляет навигацией.
 - Compose UI-тесты находятся в `ComposeInfrastructureTest`; запускать их при изменении темы или адаптера жизненного цикла.
 - Старые Fragment/navigation/permission-утилиты удалять после миграции всех их вызовов.
-- View-based SwipeParser и устаревший PermissionsManager удалены. Не возвращать их в core; работающие фото/Fragment-утилиты удалять только после переноса потребителей.
+- PhotoPreview используется диалогом фото и полем жетонов: локальный URI, ImageDecoder на Dispatchers.IO, ограничение длинной стороны 1024px, состояние загрузки/недоступности без изменения сохранений. Новый URI сразу сбрасывает прежнее изображение, отменённая загрузка не должна публиковать результат. Не добавлять сетевую загрузку или синхронное декодирование в Compose render. Проверять PhotoPreviewTest при изменениях.
+- View-based SwipeParser, PermissionsManager и ImageView/setPhotoImage удалены. Не возвращать параллельную View-реализацию; работающие Fragment-утилиты удалять только после переноса потребителей.
 - Проверять затронутые потребители; минимальная компиляция самого модуля — `:core:ui:compileDebugKotlin`.

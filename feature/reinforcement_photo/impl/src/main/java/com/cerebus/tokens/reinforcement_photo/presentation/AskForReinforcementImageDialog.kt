@@ -3,59 +3,55 @@ package com.cerebus.tokens.reinforcement_photo.presentation
 import android.content.ActivityNotFoundException
 import android.content.DialogInterface
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
-import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.core.ui.setPhotoImage
+import com.cerebus.tokens.core.ui.setTokensContent
 import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.reinforcement_photo.R
-import com.cerebus.tokens.reinforcement_photo.databinding.DialogAskForReinforcementImageBinding
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_reinforcement_image) {
-    private val binding: DialogAskForReinforcementImageBinding by viewBinding()
+/** Transitional host: external activity contracts and native dismissal stay here until Navigation Compose. */
+class AskForReinforcementImageDialog : DialogFragment() {
     private val viewModel: ChangePhotoViewModel by viewModel()
-
     private val gallery = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) {
-        viewModel.onGalleryResult(it?.toString())
+        updateOperation { viewModel.onGalleryResult(it?.toString()) }
     }
     private val camera = registerForActivityResult(ActivityResultContracts.TakePicture()) {
-        viewModel.onCameraResult(it)
+        updateOperation { viewModel.onCameraResult(it) }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(STYLE_NO_TITLE, DEFAULT_DIALOG_THEME)
+        isCancelable = viewModel.state.value.cancellable
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        ComposeView(requireContext()).apply {
+            id = R.id.photo_compose_view
+            setTokensContent {
+                PhotoRoute(viewModel,
+                    onCamera = { updateOperation(viewModel::takePhoto) },
+                    onGallery = { updateOperation(viewModel::chooseGallery) },
+                    onRetry = { updateOperation(viewModel::retry) },
+                    onCancel = { if (viewModel.cancel()) dismiss() },
+                )
+            }
+        }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.cancelButton.setOnClickListener { if (viewModel.cancel()) dismiss() }
-        binding.makePhotoButton.setOnClickListener { viewModel.takePhoto() }
-        binding.getFromGalleryButton.setOnClickListener { viewModel.chooseGallery() }
-        binding.storageStatus.setOnClickListener { viewModel.retry() }
-        var renderedUri: String? = null
-        var initialized = false
         subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.state) { state ->
+            isCancelable = state.cancellable
             if (state.saved) {
                 dismiss()
             } else {
-                isCancelable = !state.loading && !state.saving
-                binding.cancelButton.isEnabled = isCancelable
-                binding.makePhotoButton.isEnabled = state.canSelect
-                binding.getFromGalleryButton.isEnabled = state.canSelect
-                binding.storageStatus.visibility = if (state.loading || state.error != null) View.VISIBLE else View.GONE
-                binding.storageStatus.isEnabled = state.error != null && !state.saving
-                binding.storageStatus.setText(when (state.error) {
-                    PhotoError.READ -> com.cerebus.tokens.core.ui.R.string.storage_read_error
-                    PhotoError.WRITE -> com.cerebus.tokens.core.ui.R.string.storage_write_error
-                    PhotoError.SOURCE -> R.string.photo_source_unavailable
-                    null -> com.cerebus.tokens.core.ui.R.string.storage_loading
-                })
-                if (!initialized || renderedUri != state.photoUri) {
-                    initialized = true
-                    renderedUri = state.photoUri
-                    binding.reinforcementImage.setPhotoImage(state.photoUri?.toUri(),
-                        com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
-                }
                 when (viewModel.consumeLaunch()) {
                     ImageSource.GALLERY -> launchSource {
                         gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -65,6 +61,12 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
                 }
             }
         }
+    }
+
+    private fun updateOperation(action: () -> Unit) {
+        action()
+        // Block native Back/outside cancellation before the next Compose frame.
+        isCancelable = viewModel.state.value.cancellable
     }
 
     private fun launchSource(action: () -> Unit) {
@@ -77,4 +79,6 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
         viewModel.cancel()
         super.onCancel(dialog)
     }
+
+    private companion object { const val DEFAULT_DIALOG_THEME = 0 }
 }

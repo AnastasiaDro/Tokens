@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinCompose)
 }
 
 android {
@@ -26,11 +27,20 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
-        viewBinding = true
+        compose = true
     }
 }
 
 dependencies {
+    implementation(platform(libs.composeBom))
+    implementation(libs.composeUi)
+    implementation(libs.composeFoundation)
+    implementation(libs.composeMaterial3)
+    implementation(libs.androidxLifecycleRuntimeCompose)
+    debugImplementation(libs.composeUiTooling)
+    debugImplementation(libs.composeUiTestManifest)
+    androidTestImplementation(platform(libs.composeBom))
+    androidTestImplementation(libs.composeUiTestJunit4)
     implementation(project(":feature:reinforcement_photo:api"))
     testImplementation(libs.coroutinesTest)
     implementation(project(":core:logger"))
@@ -39,12 +49,10 @@ dependencies {
 
     implementation(libs.androidxCoreKtx)
     implementation(libs.androidxAppcompat)
-    implementation(libs.androidxCardview)
     implementation(libs.navigationFragmentKtx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxTestJunit)
     androidTestImplementation(libs.androidxTestEspresso)
-    implementation(libs.viewbindingDelegate)
 
     implementation(libs.koinAndroid)
     implementation(libs.koinTest)
