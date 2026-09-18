@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="storage_loading">Загрузка сохранённых данных…</string>
+    <string name="storage_read_error">Не удалось прочитать данные. Нажмите, чтобы повторить.</string>
+    <string name="storage_write_error">Не удалось сохранить. Нажмите, чтобы повторить.</string>
+    <string name="storage_save_error">Не удалось сохранить. Попробуйте ещё раз.</string>
     <string name="OK">OK</string>
     <string name="cancel">Отмена</string>
     <string name="change">Изменить</string>

@@ -5,6 +5,13 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <TextView
+        android:id="@+id/storage_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="@string/storage_save_error" />
+
     <NumberPicker
         android:id="@+id/tokensNumPicker"
         android:layout_width="match_parent"

@@ -1,201 +1,114 @@
 package presentation.tokens_screen
 
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import domain.models.Token
-import domain.usecases.effects.GetEffectsDurationUseCase
-import domain.usecases.effects.IsWinAnimationOnUseCase
-import domain.usecases.effects.IsWinSoundOnUseCase
-import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
-import domain.usecases.reinforcement.GetReinforcementUriStringUseCase
-import domain.usecases.tokens.CheckTokenUseCase
-import domain.usecases.tokens.CheckTokensAreGrappedUseCase
-import domain.usecases.tokens.ClearAllTokensUseCase
-import domain.usecases.tokens.GetAllTokensUseCase
-import domain.usecases.tokens.GetMaxTokensNumberUseCase
-import domain.usecases.tokens.GetMinTokensNumberUseCase
-import domain.usecases.tokens.GetTokensNumberUseCase
-import domain.usecases.tokens.UncheckTokenUseCase
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import presentation.tokens_screen.mvi_contracts.CommonEvent
-import presentation.tokens_screen.mvi_contracts.Event
-import presentation.tokens_screen.mvi_contracts.InitEvent
-import presentation.tokens_screen.mvi_contracts.reinforcement_image_mvi_contract.GetReinforcementStateEvent
-import presentation.tokens_screen.mvi_contracts.reinforcement_image_mvi_contract.ReinforcementEvent
-import presentation.tokens_screen.mvi_contracts.reinforcement_image_mvi_contract.ReinforcementState
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.CheckTokenEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.ClearTokensEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.GetTokensStateEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.TokensEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.TokensState
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.UncheckTokenEvent
+import com.cerebus.tokens.data.reinforcement.ReinforcementRepository
+import domain.repository.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import presentation.state.*
 import presentation.tokens_screen.mvi_contracts.win_effects_mvi_contract.WinEffectsState
 
-/**
- * [TokensViewModel] - a view model for
- * [TokensFragment] screen
- * It communicates with domain layer and helps to set
- * tokens views displaying
- *
- * Uses custom MVI-like communication with a [TokensFragment]
- *
- * @see TokensFragment
- * @see Event
- *
- * @author Anastasia Drogunova
- * @since 28.04.2023
- */
 class TokensViewModel(
-    /** Tokens **/
-    private val clearAllTokensUseCase: ClearAllTokensUseCase,
-    private val checkTokenUseCase: CheckTokenUseCase,
-    private val uncheckTokenUseCase: UncheckTokenUseCase,
-    private val getTokensNumberUseCase: GetTokensNumberUseCase,
-    private val checkTokensAreGrappedUseCase: CheckTokensAreGrappedUseCase,
-    private val getAllTokensUseCase: GetAllTokensUseCase,
-    private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
-    private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
-
-    /** Animation and sound **/
-    private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
-    private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
-    private val getEffectsDurationUseCase: GetEffectsDurationUseCase,
-
-    /** Reinforcement **/
-    private val getIsReinforcementShowUseCase: GetIsReinforcementShowUseCase,
-    private val getReinforcementUriStringUseCase: GetReinforcementUriStringUseCase
-    ) : ViewModel() {
-
-    /** Tokens **/
-    private val tokensState = MutableStateFlow(TokensState(getTokensList()))
-    val tokensStateFlow: StateFlow<TokensState> = tokensState.asStateFlow()
-
-    /** Animation and sound **/
-    private var winEffectsJob: Job? = null
+    private val tokens: TokenBoardRepository,
+    private val effects: WinEffectsRepository,
+    private val reinforcement: ReinforcementRepository,
+) : ViewModel() {
+    private val mutableState = MutableStateFlow(TokensUiState())
+    val state = mutableState.asStateFlow()
+    private var observation: Job? = null
+    private var timer: Job? = null
+    private var foreground = false
+    private var visit = INITIAL_GENERATION
     private var celebrationId = WinEffectsState.NO_CELEBRATION_ID
-    private val winEffectsState = MutableStateFlow(WinEffectsState(false, false))
-    val winEffectsFlow: StateFlow<WinEffectsState> = winEffectsState.asStateFlow()
+    private var celebrationRevision: Long? = null
+    private var snapshot: SettingsSnapshot? = null
+    private val writes = Mutex()
+    private var retryWrite: (() -> Unit)? = null
 
-    /** Navigation **/
-    private val navigateToSettingsMutableFlow: MutableSharedFlow<Boolean> = MutableSharedFlow()
-    val navigateToSettingsFlow = navigateToSettingsMutableFlow.asSharedFlow()
+    init { observe() }
 
-    /** Reinforcement **/
-    private val reinforcementMutableStateFlow: MutableStateFlow<ReinforcementState> = MutableStateFlow(
-        ReinforcementState(
-            isReinforcementShow = getIsReinforcementShowUseCase.execute(),
-            reinforcementImageUri = getReinforcementUriStringUseCase.execute()?.toUri()
-        )
-    )
-    val reinforcementStateFlow: StateFlow<ReinforcementState> = reinforcementMutableStateFlow
+    private fun dispatch(action: TokensAction) { mutableState.update { reduceTokens(it, action) } }
 
-    fun getTokensNum() = getTokensNumberUseCase.execute()
-
-    private fun getTokensList(): List<Token> = getAllTokensUseCase.execute()
-
-    private fun sendTokensState() {
-        tokensState.value = TokensState(getTokensList())
-    }
-    private fun sendReinforcementState() {
-        viewModelScope.launch {
-            reinforcementMutableStateFlow.emit(
-                ReinforcementState(
-                    isReinforcementShow = getIsReinforcementShowUseCase.execute(),
-                    reinforcementImageUri = getReinforcementUriStringUseCase.execute()?.toUri()
-                )
-            )
+    private fun observe() {
+        observation?.cancel()
+        dispatch(TokensAction.Loading)
+        observation = viewModelScope.launch {
+            try {
+                observeSettings(tokens, effects, reinforcement).collect {
+                    if (celebrationRevision != null && celebrationRevision != it.board.revision) stopWinEffects()
+                    snapshot = it
+                    dispatch(TokensAction.Loaded(it))
+                }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                stopWinEffects()
+                dispatch(TokensAction.Failed(StorageFailure.READ))
+            }
         }
     }
 
-    fun updateTokensNum() {
-        stopWinEffects()
-        sendTokensState()
+    fun retry() {
+        if (state.value.error == StorageFailure.WRITE) retryWrite?.invoke() else observe()
+    }
+
+    fun onStart() { foreground = true }
+    fun onStop() { foreground = false; visit += GENERATION_STEP; stopWinEffects() }
+
+    fun onTokenClicked(id: String) {
+        if (state.value.loading || state.value.board == null || state.value.error == StorageFailure.READ) return
+        val clickVisit = visit
+        mutate({ onTokenClicked(id) }) {
+            val result = tokens.toggle(id)
+            if (result.changed && !result.board.completed) stopWinEffects()
+            if (result.completedByUser && foreground && clickVisit == visit &&
+                tokens.board.first().revision == result.board.revision) {
+                val flags = snapshot?.effects ?: return@mutate
+                timer?.cancel()
+                celebrationRevision = result.board.revision
+                celebrationId += GENERATION_STEP
+                dispatch(TokensAction.Effects(WinEffectsState(flags.animation, flags.sound, celebrationId)))
+                timer = viewModelScope.launch {
+                    delay(WIN_EFFECTS_DURATION_MS)
+                    stopWinEffects()
+                }
+            }
+        }
     }
 
     fun clearTokens() {
+        if (state.value.loading || state.value.board == null || state.value.error == StorageFailure.READ) return
+        visit += GENERATION_STEP
         stopWinEffects()
-        clearAllTokensUseCase.execute()
-        sendTokensState()
+        mutate(::clearTokens) { tokens.clear() }
     }
 
-    fun getMinTokensNum() = getMinTokensNumberUseCase.execute()
-    fun getMaxTokensNum() = getMaxTokensNumberUseCase.execute()
-
-    fun onSettingsPressed() {
+    private fun mutate(retry: () -> Unit, action: suspend () -> Unit) {
         viewModelScope.launch {
-            navigateToSettingsMutableFlow.emit(true)
-        }
-    }
-
-    fun sendEvent(event: Event) {
-        when(event) {
-            is TokensEvent -> parseTokensEvent(event)
-            is ReinforcementEvent -> parseReinforcementEvent(event)
-            is CommonEvent -> parseCommonEvent(event)
-        }
-    }
-    private fun parseTokensEvent(event: TokensEvent) {
-        when(event) {
-            is CheckTokenEvent -> onTokenSelected(event.index)
-            is UncheckTokenEvent -> onTokenUnselected(event.index)
-            is GetTokensStateEvent -> sendTokensState()
-            is ClearTokensEvent -> clearTokens()
-        }
-    }
-    private fun parseReinforcementEvent(event: ReinforcementEvent) {
-        when(event) {
-            is GetReinforcementStateEvent -> sendReinforcementState()
-        }
-    }
-
-    private fun parseCommonEvent(event: CommonEvent) {
-        when(event) {
-            is InitEvent -> {
-                sendTokensState()
-                sendReinforcementState()
+            writes.withLock {
+                retryWrite = retry
+                dispatch(TokensAction.Saving(true))
+                try {
+                    action()
+                    retryWrite = null
+                    dispatch(TokensAction.Saving(false))
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { dispatch(TokensAction.Failed(StorageFailure.WRITE)) }
             }
         }
-    }
-
-    private fun onTokenSelected(tokenIndex: Int) {
-        if (!checkTokenUseCase.execute(tokenIndex)) return
-        sendTokensState()
-        if (checkTokensAreGrappedUseCase.execute()) {
-            winEffectsJob?.cancel()
-            winEffectsState.value = WinEffectsState(
-                isAnimationRunning = isWinAnimationOnUseCase.execute(),
-                isSoundPlaying = isWinSoundOnUseCase.execute(),
-                celebrationId = ++celebrationId,
-            )
-            winEffectsJob = viewModelScope.launch {
-                delay(getEffectsDurationUseCase.execute())
-                winEffectsState.value = WinEffectsState(false, false)
-            }
-        }
-    }
-    private fun onTokenUnselected(tokenIndex: Int) {
-        if (uncheckTokenUseCase.execute(tokenIndex)) {
-            stopWinEffects()
-            sendTokensState()
-        }
-    }
-
-    fun onTokenClicked(index: Int) {
-        val token = getTokensList().getOrNull(index) ?: return
-        if (token.isChecked) onTokenUnselected(index) else onTokenSelected(index)
     }
 
     fun stopWinEffects() {
-        winEffectsJob?.cancel()
-        winEffectsJob = null
-        winEffectsState.value = WinEffectsState(false, false)
+        timer?.cancel()
+        timer = null
+        celebrationRevision = null
+        dispatch(TokensAction.Effects(WinEffectsState(false, false)))
+    }
+
+    private companion object {
+        const val INITIAL_GENERATION = 0L
+        const val GENERATION_STEP = 1L
     }
 }

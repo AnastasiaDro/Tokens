@@ -1,155 +1,143 @@
 package presentation.tokens_screen
 
-import data.tokens.FakeTokensStorage
-import data.tokens.TokensRepositoryImpl
-import domain.models.WinEffects
-import domain.repository.EffectsRepository
-import domain.repository.ReinforcementSettingsRepository
-import domain.usecases.effects.*
-import domain.usecases.reinforcement.*
-import domain.usecases.tokens.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import androidx.lifecycle.ViewModelStore
+import domain.repository.WIN_EFFECTS_DURATION_MS
+import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import presentation.tokens_screen.mvi_contracts.InitEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.CheckTokenEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.UncheckTokenEvent
+import presentation.*
+import presentation.state.StorageFailure
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TokensViewModelTest {
     private val dispatcher = StandardTestDispatcher()
-    private val storage = FakeTokensStorage(BOARD_SIZE)
-    private val repository = TokensRepositoryImpl(storage)
+    private val store = ViewModelStore()
+    private val tokens = FakeBoardRepository()
     private val effects = FakeEffectsRepository()
-    private lateinit var viewModel: TokensViewModel
-
+    private lateinit var vm: TokensViewModel
     @Before fun setUp() {
         Dispatchers.setMain(dispatcher)
-        val reinforcement = object : ReinforcementSettingsRepository {
-            override fun getIsReinforcementShown() = false
-            override fun setIsReinforcementShown(isShow: Boolean) = Unit
-            override fun getReinforcementPhotoPathString(): String? = null
-        }
-        viewModel = TokensViewModel(
-            ClearAllTokensUseCase(repository), CheckTokenUseCase(repository), UncheckTokenUseCase(repository),
-            GetTokensNumberUseCase(repository), CheckTokensAreGrappedUseCase(repository), GetAllTokensUseCase(repository),
-            GetMinTokensNumberUseCase(repository), GetMaxTokensNumberUseCase(repository),
-            IsWinAnimationOnUseCase(effects), IsWinSoundOnUseCase(effects), GetEffectsDurationUseCase(effects),
-            GetIsReinforcementShowUseCase(reinforcement), GetReinforcementUriStringUseCase(reinforcement),
-        )
+        vm = TokensViewModel(tokens, effects, FakeReinforcementRepository())
+        store.put("tokens", vm)
+        vm.onStart()
     }
+    @After fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
-    @After fun tearDown() {
-        viewModel.stopWinEffects()
-        Dispatchers.resetMain()
-    }
+    private fun win() { tokens.values.value.tokens.forEach { vm.onTokenClicked(it.id) } }
 
-    private fun win() {
-        viewModel.sendEvent(CheckTokenEvent(FIRST_TOKEN_INDEX))
-        viewModel.sendEvent(CheckTokenEvent(LAST_TOKEN_INDEX))
-    }
-
-    @Test fun `first victory is available even before UI subscribes`() = runTest(dispatcher) {
-        win()
-        assertTrue(viewModel.winEffectsFlow.value.isSoundPlaying)
-        assertTrue(viewModel.winEffectsFlow.value.isAnimationRunning)
-        assertTrue(viewModel.tokensStateFlow.value.tokens.all { it.isChecked })
+    @Test fun victorySurvivesAbsentSubscriberAndExpires() = runTest(dispatcher) {
         runCurrent()
-        advanceTimeBy(EFFECTS_DURATION_MS)
-        runCurrent()
-        assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
-        assertFalse(viewModel.winEffectsFlow.value.isAnimationRunning)
-    }
-
-    @Test fun `duplicate check never restarts a victory`() = runTest(dispatcher) {
-        win()
-        val first = viewModel.winEffectsFlow.value
-        viewModel.sendEvent(CheckTokenEvent(LAST_TOKEN_INDEX))
-        assertEquals(first, viewModel.winEffectsFlow.value)
-        assertEquals(BOARD_SIZE, repository.getCheckedTokensNumber())
-    }
-
-    @Test fun `next victory has its own full duration and cancels previous timer`() = runTest(dispatcher) {
         win()
         runCurrent()
-        val firstId = viewModel.winEffectsFlow.value.celebrationId
-        advanceTimeBy(RESTART_DELAY_MS)
-        viewModel.sendEvent(UncheckTokenEvent(LAST_TOKEN_INDEX))
-        assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
-        viewModel.sendEvent(CheckTokenEvent(LAST_TOKEN_INDEX))
+        assertTrue(vm.state.value.effects.isSoundPlaying)
+        assertTrue(vm.state.value.effects.isAnimationRunning)
+        advanceTimeBy(WIN_EFFECTS_DURATION_MS)
         runCurrent()
-        assertTrue(viewModel.winEffectsFlow.value.celebrationId > firstId)
-        advanceTimeBy(EFFECTS_DURATION_MS - RESTART_DELAY_MS)
-        runCurrent()
-        assertTrue(viewModel.winEffectsFlow.value.isSoundPlaying)
-        advanceTimeBy(RESTART_DELAY_MS)
-        runCurrent()
-        assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
     }
 
-    @Test fun `animation and sound respect independent settings`() = runTest(dispatcher) {
+    @Test fun independentSoundAndAnimationSettings() = runTest(dispatcher) {
+        runCurrent()
         for (animation in listOf(false, true)) for (sound in listOf(false, true)) {
-            viewModel.clearTokens()
-            effects.animation = animation
-            effects.sound = sound
+            vm.clearTokens()
+            effects.setAnimation(animation)
+            effects.setSound(sound)
+            runCurrent()
             win()
-            assertEquals(animation, viewModel.winEffectsFlow.value.isAnimationRunning)
-            assertEquals(sound, viewModel.winEffectsFlow.value.isSoundPlaying)
+            runCurrent()
+            assertEquals(animation, vm.state.value.effects.isAnimationRunning)
+            assertEquals(sound, vm.state.value.effects.isSoundPlaying)
         }
     }
 
-    @Test fun `leaving screen stops effects and init does not replay victory`() = runTest(dispatcher) {
+    @Test fun newVictoryCancelsOldTimerAndGetsFullDuration() = runTest(dispatcher) {
+        runCurrent()
         win()
-        viewModel.stopWinEffects()
-        viewModel.sendEvent(InitEvent())
-        advanceUntilIdle()
-        assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
-        assertFalse(viewModel.winEffectsFlow.value.isAnimationRunning)
-        assertTrue(viewModel.tokensStateFlow.value.tokens.all { it.isChecked })
+        runCurrent()
+        val first = vm.state.value.effects.celebrationId
+        advanceTimeBy(RESTART_DELAY_MS)
+        val id = tokens.values.value.tokens.last().id
+        vm.onTokenClicked(id)
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+        vm.onTokenClicked(id)
+        runCurrent()
+        assertTrue(vm.state.value.effects.celebrationId > first)
+        advanceTimeBy(WIN_EFFECTS_DURATION_MS - RESTART_DELAY_MS)
+        runCurrent()
+        assertTrue(vm.state.value.effects.isSoundPlaying)
+        advanceTimeBy(RESTART_DELAY_MS)
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
     }
 
-    @Test fun `clear and resize stop effects without triggering a new victory`() = runTest(dispatcher) {
+    @Test fun leavingScreenPreventsPendingSaveFromStartingEffects() = runTest(dispatcher) {
+        runCurrent()
+        val gate = CompletableDeferred<Unit>()
+        tokens.beforeWrite = { gate.await() }
         win()
-        repository.resizeTokens(SHRUNK_BOARD_SIZE)
-        viewModel.updateTokensNum()
-        assertEquals(SHRUNK_BOARD_SIZE, viewModel.tokensStateFlow.value.tokens.size)
-        assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
-        viewModel.clearTokens()
-        assertFalse(viewModel.tokensStateFlow.value.tokens.single().isChecked)
-        advanceUntilIdle()
-        assertFalse(viewModel.winEffectsFlow.value.isAnimationRunning)
+        runCurrent()
+        vm.onStop()
+        gate.complete(Unit)
+        runCurrent()
+        vm.onStart()
+        runCurrent()
+        assertTrue(tokens.values.value.completed)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
     }
 
-    @Test fun `rapid clicks use current model rather than stale rendered state`() = runTest(dispatcher) {
-        viewModel.onTokenClicked(FIRST_TOKEN_INDEX)
-        viewModel.onTokenClicked(FIRST_TOKEN_INDEX)
-        viewModel.onTokenClicked(OUT_OF_RANGE_TOKEN_INDEX)
-        assertEquals(FakeTokensStorage.NO_CHECKED_TOKENS, repository.getCheckedTokensNumber())
-        assertFalse(viewModel.winEffectsFlow.value.isSoundPlaying)
+    @Test fun restoringFullBoardAndResizingNeverStartsVictory() = runTest(dispatcher) {
+        tokens.values.value.tokens.forEach { tokens.setChecked(it.id, true) }
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        assertTrue(tokens.values.value.completed)
+        assertFalse(vm.state.value.effects.isAnimationRunning)
     }
 
-    private class FakeEffectsRepository : EffectsRepository {
-        var animation = true
-        var sound = true
-        override fun plugWinAnimationOn() { animation = true }
-        override fun plugWinAnimationOff() { animation = false }
-        override fun plugWinSoundOn() { sound = true }
-        override fun plugWinSoundOff() { sound = false }
-        override fun getWinEffects() = WinEffects(animation, sound, EFFECTS_DURATION_MS, ANIMATION_SPEED)
+    @Test fun rapidClicksToggleLatestValueAndIgnoreStaleId() = runTest(dispatcher) {
+        runCurrent()
+        val id = tokens.values.value.tokens.first().id
+        vm.onTokenClicked(id)
+        vm.onTokenClicked(id)
+        vm.onTokenClicked("removed")
+        runCurrent()
+        assertTrue(tokens.values.value.tokens.none { it.isChecked })
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+    }
+
+    @Test fun failedWriteNeverWinsAndCanRetry() = runTest(dispatcher) {
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        tokens.failWrite = true
+        vm.onTokenClicked(tokens.values.value.tokens.single().id)
+        runCurrent()
+        assertEquals(StorageFailure.WRITE, vm.state.value.error)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+        tokens.failWrite = false
+        vm.retry()
+        runCurrent()
+        assertTrue(vm.state.value.effects.isSoundPlaying)
+    }
+
+    @Test fun clearAndExternalResizeStopEffects() = runTest(dispatcher) {
+        runCurrent()
+        win()
+        runCurrent()
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+        vm.clearTokens()
+        runCurrent()
+        assertFalse(tokens.values.value.completed)
     }
 
     private companion object {
-        const val BOARD_SIZE = 2
-        const val FIRST_TOKEN_INDEX = 0
-        const val LAST_TOKEN_INDEX = 1
-        const val SHRUNK_BOARD_SIZE = 1
-        const val EFFECTS_DURATION_MS = 5000L
         const val RESTART_DELAY_MS = 1000L
-        const val ANIMATION_SPEED = 1
-        const val OUT_OF_RANGE_TOKEN_INDEX = 99
+        const val SINGLE_TOKEN = 1
     }
 }

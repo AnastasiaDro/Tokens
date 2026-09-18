@@ -1,13 +1,9 @@
 package com.cerebus.tokens.di.data
 
-import com.cerebus.tokens.data.reinforcement.storage.ReinforcementStorage
-import com.cerebus.tokens.data.reinforcement.storage.ReinforcementStorageImpl
+import com.cerebus.tokens.data.reinforcement.DataStoreReinforcementRepository
+import com.cerebus.tokens.data.reinforcement.ReinforcementRepository
 import org.koin.dsl.module
 
 val reinforcementDataModule = module {
-
-    /** storage **/
-    single<ReinforcementStorage> {
-        ReinforcementStorageImpl(context = get(), loggerFactory = get())
-    }
+    single<ReinforcementRepository> { DataStoreReinforcementRepository(get()) }
 }

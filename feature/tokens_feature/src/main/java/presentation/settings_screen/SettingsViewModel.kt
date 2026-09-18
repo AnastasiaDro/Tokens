@@ -1,108 +1,61 @@
 package presentation.settings_screen
 
-import androidx.annotation.ColorInt
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import domain.usecases.effects.IsWinAnimationOnUseCase
-import domain.usecases.effects.IsWinSoundOnUseCase
-import domain.usecases.effects.PlugOnOffWinAnimationUseCase
-import domain.usecases.effects.PlugOnOffWinSoundUseCase
-import domain.usecases.reinforcement.GetIsReinforcementShowUseCase
-import domain.usecases.reinforcement.SetIsReinforcementShowUseCase
-import domain.usecases.tokens.ChangeCheckedColorUseCase
-import domain.usecases.tokens.ChangeTokensNumberUseCase
-import domain.usecases.tokens.GetCheckedColorUseCase
-import domain.usecases.tokens.GetMaxTokensNumberUseCase
-import domain.usecases.tokens.GetMinTokensNumberUseCase
-import domain.usecases.tokens.GetTokensNumberUseCase
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import com.cerebus.tokens.data.reinforcement.ReinforcementRepository
+import domain.repository.TokenBoardRepository
+import domain.repository.WinEffectsRepository
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import presentation.state.*
 
-/**
- * [SettingsViewModel] - a view model for
- * [SettingsFragment] screen
- * It communicates with domain layer and helps to set
- * app preferences and displaying of app preferences
- *
- * @see SettingsFragment
- *
- * @author Anastasia Drogunova
- * @since 28.04.2023
- */
 class SettingsViewModel(
-    private val changeTokensNumberUseCase: ChangeTokensNumberUseCase,
-    private val getTokensNumberUseCase: GetTokensNumberUseCase,
-    private val getMinTokensNumberUseCase: GetMinTokensNumberUseCase,
-    private val getMaxTokensNumberUseCase: GetMaxTokensNumberUseCase,
-    private val getChangeCheckedColorUseCase: ChangeCheckedColorUseCase,
-    private val getCheckedColorUseCase: GetCheckedColorUseCase,
-
-    private val isWinAnimationOnUseCase: IsWinAnimationOnUseCase,
-    private val isWinSoundOnUseCase: IsWinSoundOnUseCase,
-    private val plugOnOffWinAnimationUseCase: PlugOnOffWinAnimationUseCase,
-    private val plugOnOffWinSoundUseCase: PlugOnOffWinSoundUseCase,
-
-    private val getIsReinforcementShowUseCase: GetIsReinforcementShowUseCase,
-    private val setIsReinforcementShowUseCase: SetIsReinforcementShowUseCase
+    private val tokens: TokenBoardRepository,
+    private val effects: WinEffectsRepository,
+    private val reinforcement: ReinforcementRepository,
 ) : ViewModel() {
+    private val mutableState = MutableStateFlow(SettingsUiState())
+    val state = mutableState.asStateFlow()
+    private var observation: Job? = null
+    private val writes = Mutex()
+    private var retryWrite: (suspend () -> Unit)? = null
 
-    private val mutableColorLiveData = MutableLiveData(getTokensColor())
-    val colorLiveData: LiveData<Int> = mutableColorLiveData
+    init { observe() }
+    private fun dispatch(action: SettingsAction) { mutableState.update { reduceSettings(it, action) } }
 
-    private val changeColorSharedFlow = MutableSharedFlow<Boolean>()
-    val changeColorFlow = changeColorSharedFlow.asSharedFlow()
-
-    private val selectTokensNumberSharedFlow = MutableSharedFlow<Boolean>()
-    val selectTokensNumberFlow = selectTokensNumberSharedFlow.asSharedFlow()
-
-    private val changedTokensNumMutableLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
-    val changedTokensNumLiveData: LiveData<Boolean> = changedTokensNumMutableLiveData
-
-    fun getIsAnimation() = isWinAnimationOnUseCase.execute()
-    fun getIsSound() = isWinSoundOnUseCase.execute()
-
-    fun getIsReinforcement() = getIsReinforcementShowUseCase.execute()
-
-    fun changeAnimation(isAnimate: Boolean) {
-        plugOnOffWinAnimationUseCase.execute(isAnimate)
-    }
-
-    fun changeSound(isSound: Boolean) {
-        plugOnOffWinSoundUseCase.execute(isSound)
-    }
-
-    fun changeReinforcement(checked: Boolean) {
-        setIsReinforcementShowUseCase.execute(checked)
-    }
-
-    fun askForChangeTokensColor() {
-        viewModelScope.launch {
-            changeColorSharedFlow.emit(true)
+    private fun observe() {
+        observation?.cancel()
+        dispatch(SettingsAction.Loading)
+        observation = viewModelScope.launch {
+            try { observeSettings(tokens, effects, reinforcement).collect { dispatch(SettingsAction.Loaded(it)) } }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { dispatch(SettingsAction.Failed(StorageFailure.READ)) }
         }
     }
 
-    fun askChangeTokensNumber() {
+    fun retry() {
+        if (state.value.error == StorageFailure.WRITE) retryWrite?.let { save(it) } else observe()
+    }
+
+    fun changeAnimation(enabled: Boolean) = save { effects.setAnimation(enabled) }
+    fun changeSound(enabled: Boolean) = save { effects.setSound(enabled) }
+    fun changeReinforcement(enabled: Boolean) = save { reinforcement.setEnabled(enabled) }
+
+    private fun save(action: suspend () -> Unit) {
+        if (state.value.loading || state.value.tokens == null || state.value.error == StorageFailure.READ) return
         viewModelScope.launch {
-            selectTokensNumberSharedFlow.emit(true)
+            writes.withLock {
+                retryWrite = action
+                dispatch(SettingsAction.Saving(true))
+                try {
+                    action()
+                    retryWrite = null
+                    dispatch(SettingsAction.Saving(false))
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { dispatch(SettingsAction.Failed(StorageFailure.WRITE)) }
+            }
         }
     }
-
-    fun updateTokensNum() {
-        changedTokensNumMutableLiveData.postValue(true)
-    }
-
-    fun getTokensNum() = getTokensNumberUseCase.execute()
-    fun getMaxTokensNum() = getMaxTokensNumberUseCase.execute()
-    fun getMinTokensNum() = getMinTokensNumberUseCase.execute()
-
-    fun changeTokensColor(@ColorInt color: Int) {
-        getChangeCheckedColorUseCase.execute(color)
-        mutableColorLiveData.postValue(color)
-    }
-
-    @ColorInt
-    fun getTokensColor() = getCheckedColorUseCase.execute()
 }

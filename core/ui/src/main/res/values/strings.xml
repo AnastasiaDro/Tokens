@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="storage_loading">Loading saved data…</string>
+    <string name="storage_read_error">Could not read saved data. Tap to retry.</string>
+    <string name="storage_write_error">Could not save. Tap to retry.</string>
+    <string name="storage_save_error">Could not save. Please try again.</string>
     <string name="OK">OK</string>
     <string name="cancel">Cancel</string>
     <string name="change">Change</string>

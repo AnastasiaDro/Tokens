@@ -11,7 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.core.ui.setNavigationResult
+import androidx.core.net.toUri
 import com.cerebus.tokens.core.ui.setPhotoImage
 import com.cerebus.tokens.core.ui.showToast
 import com.cerebus.tokens.core.ui.subscribeToHotFlow
@@ -107,9 +107,25 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
             }
         }
 
-        /** Image Uri callback **/
-        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.photoUriStateFlow) { imageUri ->
-                viewBinding.reinforcementImage.setPhotoImage(imageUri, com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+        viewBinding.storageStatus.setOnClickListener { viewModel.retry() }
+        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.state) { state ->
+            if (state.saved) dismiss()
+            with(viewBinding) {
+                reinforcementImage.setPhotoImage(state.photoUri?.toUri(),
+                    com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+                val enabled = !state.loading && !state.saving && state.error != PhotoError.READ
+                makePhotoButton.isEnabled = enabled
+                getFromGalleryButton.isEnabled = enabled
+                cancelButton.isEnabled = !state.saving
+                isCancelable = !state.saving
+                storageStatus.visibility = if (state.loading || state.error != null) View.VISIBLE else View.GONE
+                storageStatus.isEnabled = state.error != null
+                storageStatus.setText(when (state.error) {
+                    PhotoError.READ -> com.cerebus.tokens.core.ui.R.string.storage_read_error
+                    PhotoError.WRITE -> com.cerebus.tokens.core.ui.R.string.storage_write_error
+                    null -> com.cerebus.tokens.core.ui.R.string.storage_loading
+                })
+            }
         }
 
         /** Asking permissions **/
@@ -127,14 +143,5 @@ class AskForReinforcementImageDialog : DialogFragment(R.layout.dialog_ask_for_re
             showToast(message)
         }
 
-        /** set Navigation results **/
-        subscribeToHotFlow(Lifecycle.State.CREATED, viewModel.navResultSharedFlow) { navResult ->
-            setNavigationResult(navResult, IS_IMAGE_SET_RESULT)
-            if (navResult) dismiss()
-        }
-    }
-
-    companion object {
-        const val IS_IMAGE_SET_RESULT = "ImageUri"
     }
 }

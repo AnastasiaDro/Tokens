@@ -1,7 +1,6 @@
 package presentation.tokens_screen
 
 import presentation.SelectTokensNumberAlertData
-import presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -14,26 +13,25 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDeepLinkRequest
-import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.cerebus.tokens.core.ui.SwipeParser
 import com.cerebus.tokens.core.ui.SwipeParserImpl
-import com.cerebus.tokens.core.ui.getNavigationResultLiveData
 import com.cerebus.tokens.core.ui.setPhotoImage
 import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentTokensBinding
 import com.cerebus.tokens.logger.api.LoggerFactory
-import domain.models.Token
+import presentation.state.TokenState
+import presentation.state.StorageFailure
+import domain.repository.MIN_TOKEN_COUNT
+import domain.repository.MAX_TOKEN_COUNT
+import android.content.pm.PackageManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import presentation.tokens_screen.mvi_contracts.InitEvent
-import presentation.tokens_screen.mvi_contracts.reinforcement_image_mvi_contract.GetReinforcementStateEvent
-import presentation.tokens_screen.mvi_contracts.tokens_mvi_contract.ClearTokensEvent
 import presentation.tokens_screen.mvi_contracts.win_effects_mvi_contract.WinEffectsState
 
 /**
@@ -46,7 +44,7 @@ import presentation.tokens_screen.mvi_contracts.win_effects_mvi_contract.WinEffe
  * @author Anastasia Drogunova
  * @since 23.05.2023
  */
-class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener {
+class TokensFragment : Fragment(R.layout.fragment_tokens) {
 
     private val viewModel: TokensViewModel by viewModel<TokensViewModel>()
     private val viewBinding: FragmentTokensBinding by viewBinding()
@@ -71,17 +69,15 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         soundPlayer = WinSoundPlayer(requireContext(), logger)
         initOptionsMenu()
 
-        subscribeToNavigationResultLiveData()
 
         viewBinding.reinforcementImageCardView.setOnClickListener {
             goToImageSelecting()
         }
         viewArray = getTokenViewsList()
         subscribeToViewModel(viewArray)
-        viewModel.sendEvent(InitEvent())
 
         view.setOnTouchListener { v, event ->
-            if (swipeParser.onSwipeHorizontal(v, event)) viewModel.sendEvent(ClearTokensEvent())
+            if (swipeParser.onSwipeHorizontal(v, event)) viewModel.clearTokens()
             if (event.action == MotionEvent.ACTION_UP) v.performClick()
             return@setOnTouchListener true
         }
@@ -117,17 +113,17 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         )
     }
 
-    private fun showTokens(viewList: List<TokenView>, tokensList: List<Token>) {
+    private fun showTokens(viewList: List<TokenView>, tokensList: List<TokenState>) {
         var i = FIRST_TOKEN_INDEX
         for (index in tokensList.indices) {
             viewList[index].visibility = View.VISIBLE
-            if (viewList[index].getCheckedColor() != tokensList[index].checkedColor)
-                viewList[index].setCheckedColor(tokensList[index].checkedColor)
-            if (tokensList[index].isChecked)
+            if (viewList[index].getCheckedColor() != tokensList[index].color)
+                viewList[index].setCheckedColor(tokensList[index].color)
+            if (tokensList[index].checked)
                 viewList[index].setChecked()
             else
                 viewList[index].setUnchecked()
-            viewList[index].setOnClickListener { onTokenClick(index) }
+            viewList[index].setOnClickListener { viewModel.onTokenClicked(tokensList[index].id) }
             i = index + NEXT_TOKEN_OFFSET
         }
         for (t in i until viewList.size)
@@ -135,44 +131,36 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         logger.d("All tokens were initialized")
     }
 
-    override fun subscribeToNavigationResultLiveData() {
-        val result = getNavigationResultLiveData<Int>(CURRENT_TOKENS_NUMBER_RESULT_KEY)
-        result?.observe(viewLifecycleOwner) { newNum ->
-            viewModel.updateTokensNum()
-            logger.d("$CURRENT_TOKENS_NUMBER_RESULT_KEY navigation result is taken NEW NUMBER = $newNum")
-        }
-        val imageResult = getNavigationResultLiveData<Boolean>(IS_IMAGE_SET_RESULT)
-        imageResult?.observe(viewLifecycleOwner) { res ->
-            if (res) viewModel.sendEvent(GetReinforcementStateEvent())
-        }
-    }
-
     private fun subscribeToViewModel(viewList: List<TokenView>) {
-        with(viewModel) {
-           subscribeToHotFlow(Lifecycle.State.CREATED, tokensStateFlow) { tokensState ->
-               showTokens(viewList, tokensState.tokens)
-           }
-
-            subscribeToHotFlow(Lifecycle.State.STARTED, winEffectsFlow) { effectsState ->
-                if (effectsState.celebrationId != lastCelebrationId) {
-                    lastCelebrationId = effectsState.celebrationId
-                    if (effectsState.isSoundPlaying) soundPlayer?.play()
-                    if (effectsState.isAnimationRunning) playAnimation()
-                }
-                if (!effectsState.isSoundPlaying) soundPlayer?.stop()
-                if (!effectsState.isAnimationRunning) pauseAnimation()
+        viewBinding.storageStatus.setOnClickListener { viewModel.retry() }
+        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.state) { state ->
+            showTokens(viewList, state.board?.tokens.orEmpty())
+            val ready = !state.loading && state.board != null && state.error != StorageFailure.READ
+            viewList.forEach { it.isEnabled = ready }
+            viewBinding.tokensToolbar.menu.findItem(R.id.changeChipsNum).isEnabled = ready
+            viewBinding.tokensToolbar.menu.findItem(R.id.clearTokens).isEnabled = ready
+            val effectsState = state.effects
+            if (effectsState.celebrationId != lastCelebrationId) {
+                lastCelebrationId = effectsState.celebrationId
+                if (effectsState.isSoundPlaying) soundPlayer?.play()
+                if (effectsState.isAnimationRunning) playAnimation()
             }
-
-            subscribeToHotFlow(Lifecycle.State.STARTED, navigateToSettingsFlow) {
-                findNavController().navigate(R.id.action_tokensFragment_to_settingsFragment)
-            }
-
-            subscribeToHotFlow(Lifecycle.State.STARTED, reinforcementStateFlow) { state ->
-                viewBinding.reinforcementImageCardView.isVisible = state.isReinforcementShow
-                viewBinding.reinforcementImage.setPhotoImage(state.reinforcementImageUri, com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+            if (!effectsState.isSoundPlaying) soundPlayer?.stop()
+            if (!effectsState.isAnimationRunning) pauseAnimation()
+            viewBinding.reinforcementImageCardView.isVisible = state.reinforcement?.enabled == true &&
+                requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+            viewBinding.reinforcementImage.setPhotoImage(state.reinforcement?.photoUri?.toUri(),
+                com.cerebus.tokens.core.ui.R.drawable.baseline_add_a_photo_24)
+            with(viewBinding.storageStatus) {
+                isVisible = state.loading || state.error != null
+                isEnabled = state.error != null
+                setText(when (state.error) {
+                    StorageFailure.READ -> com.cerebus.tokens.core.ui.R.string.storage_read_error
+                    StorageFailure.WRITE -> com.cerebus.tokens.core.ui.R.string.storage_write_error
+                    null -> com.cerebus.tokens.core.ui.R.string.storage_loading
+                })
             }
         }
-        logger.d("subscribed to viewModel")
     }
 
     private fun playAnimation() = with(viewBinding) {
@@ -203,38 +191,24 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
     private fun onMenuItemClicked(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.changeChipsNum -> {
-                findNavController().navigate(
-                    getTokensNumberAlertNavAction(
-                        minTokensNum = viewModel.getMinTokensNum(),
-                        maxTokensNum = viewModel.getMaxTokensNum(),
-                        currentTokensNum = viewModel.getTokensNum()
-                    )
-                )
+                val count = viewModel.state.value.board?.count ?: return true
+                findNavController().navigate(TokensFragmentDirections.actionTokensFragmentToSelectTokenNumberAlert(
+                    SelectTokensNumberAlertData(MIN_TOKEN_COUNT, MAX_TOKEN_COUNT, count)))
             }
             R.id.clearTokens -> viewModel.clearTokens()
-            R.id.appSettings -> viewModel.onSettingsPressed()
+            R.id.appSettings -> findNavController().navigate(R.id.action_tokensFragment_to_settingsFragment)
         }
         logger.d("${item.title} onMenuItem was clicked")
         return true
     }
 
-    private fun onTokenClick(index: Int) {
-        logger.d("token $index was clicked")
-        viewModel.onTokenClicked(index)
-    }
-
-    override fun getTokensNumberAlertNavAction(
-        minTokensNum: Int,
-        maxTokensNum: Int,
-        currentTokensNum: Int
-    ): NavDirections {
-        return TokensFragmentDirections.actionTokensFragmentToSelectTokenNumberAlert(
-            SelectTokensNumberAlertData(minTokensNum, maxTokensNum, currentTokensNum)
-        )
+    override fun onStart() {
+        super.onStart()
+        viewModel.onStart()
     }
 
     override fun onStop() {
-        viewModel.stopWinEffects()
+        viewModel.onStop()
         soundPlayer?.stop()
         pauseAnimation()
         super.onStop()
@@ -256,6 +230,5 @@ class TokensFragment : Fragment(R.layout.fragment_tokens), TokensNumberListener 
         const val ANIMATION_FIRST_DELAY = 500L
         const val ANIMATION_SECOND_DELAY = 300L
 
-        const val IS_IMAGE_SET_RESULT = "ImageUri"
     }
 }

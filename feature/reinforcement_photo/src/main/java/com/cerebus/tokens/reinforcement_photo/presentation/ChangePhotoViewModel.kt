@@ -10,16 +10,18 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cerebus.tokens.core.ui.PermissionsManager.isPermissionGranted
-import com.cerebus.tokens.reinforcement_photo.domain.usecases.GetSelectedPhotoPathUseCase
-import com.cerebus.tokens.reinforcement_photo.domain.usecases.SaveSelectedPhotoPathUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import com.cerebus.tokens.data.reinforcement.ReinforcementRepository
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -36,8 +38,7 @@ import java.util.Locale
  * @since 25.12.2023
  */
 class ChangePhotoViewModel(
-    private val getSelectedPhotoPathUseCase: GetSelectedPhotoPathUseCase,
-    private val saveSelectedPhotoPathUseCase: SaveSelectedPhotoPathUseCase
+    private val repository: ReinforcementRepository
 ) : ViewModel() {
 
     private var currentPhotoUri: Uri? = null
@@ -49,15 +50,48 @@ class ChangePhotoViewModel(
     private val permissionMutableSharedFlow = MutableSharedFlow<PermissionType>()
     val permissionSharedFlow: SharedFlow<PermissionType> = permissionMutableSharedFlow
 
-    private val placePhotoStateFlow =
-        MutableStateFlow(getSelectedPhotoPathUseCase.execute()?.toUri())
-    val photoUriStateFlow = placePhotoStateFlow
+    private val mutableState = MutableStateFlow(PhotoUiState())
+    val state = mutableState.asStateFlow()
+    private var observation: Job? = null
+    private var retrySave: (() -> Unit)? = null
 
     private val showMessageSharedFlow = MutableSharedFlow<String>()
     val messageSharedFlow: SharedFlow<String> = showMessageSharedFlow
 
-    private val setNavResultSharedFlow = MutableSharedFlow<Boolean>()
-    val navResultSharedFlow: SharedFlow<Boolean> = setNavResultSharedFlow
+    init { observe() }
+
+    private fun observe() {
+        observation?.cancel()
+        mutableState.update { it.copy(loading = true, error = null) }
+        observation = viewModelScope.launch {
+            try {
+                repository.settings.collect { value ->
+                    mutableState.update { it.copy(photoUri = value.photoUri, loading = false,
+                        error = it.error?.takeIf { error -> error == PhotoError.WRITE }) }
+                }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { mutableState.update { it.copy(loading = false, error = PhotoError.READ) } }
+        }
+    }
+
+    fun retry() {
+        if (state.value.error == PhotoError.WRITE) retrySave?.invoke() else observe()
+    }
+
+    internal fun saveSelection(uri: String?, acquireAccess: suspend () -> Unit = {}) {
+        if (uri == null || state.value.loading || state.value.saving || state.value.saved || state.value.error == PhotoError.READ) return
+        retrySave = { saveSelection(uri, acquireAccess) }
+        mutableState.update { it.copy(saving = true, error = null) }
+        viewModelScope.launch {
+            try {
+                acquireAccess()
+                repository.setPhotoUri(uri)
+                retrySave = null
+                mutableState.update { it.copy(saving = false, saved = true) }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { mutableState.update { it.copy(saving = false, error = PhotoError.WRITE) } }
+        }
+    }
 
     fun makePhoto(context: Context) {
         askToMakePhoto(context)
@@ -124,54 +158,29 @@ class ChangePhotoViewModel(
         mutableOpenSourceSharedFlow.emit(ImageSource.GALLERY)
     }
 
-    private fun savePhotoUri(context: Context, uri: Uri?) {
-        uri?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                context.contentResolver.takePersistableUriPermission(uri, flag)
-            } else {
-                context.grantUriPermission(
-                    context.packageName,
-                    uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            }
-            saveUriToStorage(uri)
-        }
-    }
-
-    private fun saveUriCamera() {
-        currentPhotoUri?.let { saveUriToStorage(it) }
-    }
-
-
     private fun removeJunkFileFromGallery(context: Context) {
         currentPhotoUri?.let { context.contentResolver.delete(it, null, null) }
     }
 
     fun onCameraResultReceived(context: Context, success: Boolean) {
-        try {
-            if (success) {
-                saveUriCamera()
-                galleryAddPic(context)
-            } else {
-                removeJunkFileFromGallery(context)
-            }
-            viewModelScope.launch {
-                setNavResultSharedFlow.emit(success)
-            }
-        } catch (e: Exception) {
-            showMessage("No photo made")
+        if (success) {
+            val appContext = context.applicationContext
+            saveSelection(currentPhotoUri?.toString()) { galleryAddPic(appContext) }
+        } else {
+            try { removeJunkFileFromGallery(context) }
+            catch (_: Exception) { showMessage("No photo made") }
         }
     }
 
     fun onGalleryResultReceived(context: Context, selectedImageUri: Uri?) {
-        try {
-            savePhotoUri(context, selectedImageUri)
-            viewModelScope.launch { setNavResultSharedFlow.emit(true) }
-        } catch (e: Exception) {
-            showMessage("No image selected")
-            viewModelScope.launch { setNavResultSharedFlow.emit(false) }
+        val appContext = context.applicationContext
+        saveSelection(selectedImageUri?.toString()) {
+            val uri = requireNotNull(selectedImageUri)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                appContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } else {
+                appContext.grantUriPermission(appContext.packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
         }
     }
 
@@ -201,19 +210,6 @@ class ChangePhotoViewModel(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             values
         )
-    }
-
-    /**
-     * @param imageUri - an uri of the new reinforcement image
-     * which could be taken from the camera or gallery
-     **/
-    private fun saveUriToStorage(imageUri: Uri) {
-        saveSelectedPhotoPathUseCase.execute(imageUri.toString())
-        viewModelScope.launch {
-            placePhotoStateFlow.emit(
-                getSelectedPhotoPathUseCase.execute()?.toUri()
-            )
-        }
     }
 
     private fun showMessage(message: String) {

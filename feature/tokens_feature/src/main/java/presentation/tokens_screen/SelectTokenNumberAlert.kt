@@ -1,68 +1,40 @@
 package presentation.tokens_screen
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.navArgs
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.core.ui.setNavigationResult
+import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.AlertSelectTokensNumberBinding
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
-import presentation.settings_screen.SettingsFragment
+import presentation.state.SaveState
 
-/**
- * [SelectTokenNumberAlert] - a dialog for selecting number of tokens
- * Can be called by the [TokensFragment] options menu and from the [SettingsFragment]
- * a typical parser of values is [TokensNumberListener]
- *
- * @see TokensFragment
- * @see SettingsFragment
- * @see TokensNumberListener
- *
- * @author Anastasia Drogunova
- * @since 25.05.2023
- */
-class SelectTokenNumberAlert: DialogFragment(R.layout.alert_select_tokens_number)
-{
-    private var newTokensNumber = 1
-    private val viewBinding: AlertSelectTokensNumberBinding by viewBinding()
-    private val navArgs: SelectTokenNumberAlertArgs by navArgs()
-    private val viewModel: SelectTokensNumberViewModel by viewModel<SelectTokensNumberViewModel>()
+class SelectTokenNumberAlert : DialogFragment(R.layout.alert_select_tokens_number) {
+    private val binding: AlertSelectTokensNumberBinding by viewBinding()
+    private val args: SelectTokenNumberAlertArgs by navArgs()
+    private val viewModel: SelectTokensNumberViewModel by viewModel()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        initNumPicker()
-        initButtons()
-        Log.d(TAG, " was initialized")
-    }
-
-
-    private fun initNumPicker() {
-        with(viewBinding.tokensNumPicker) {
-            minValue = navArgs.tokensNumberData.minTokensNum
-            maxValue = navArgs.tokensNumberData.maxTokensNum
-            value = navArgs.tokensNumberData.currentTokensNum
-            setOnValueChangedListener { _, _, newVal ->
-                newTokensNumber = newVal
-            }
-        }
-    }
-
-    private fun initButtons() {
-        with(viewBinding) {
-            okBtn.setOnClickListener {
-                viewModel.changeTokensNum(tokensNumPicker.value)
-                setNavigationResult(tokensNumPicker.value, CURRENT_TOKENS_NUMBER_RESULT_KEY)
-                dismiss()
-            }
+        with(binding) {
+            tokensNumPicker.minValue = args.tokensNumberData.minTokensNum
+            tokensNumPicker.maxValue = args.tokensNumberData.maxTokensNum
+            if (savedInstanceState == null) tokensNumPicker.value = args.tokensNumberData.currentTokensNum
+            okBtn.setOnClickListener { viewModel.changeTokensNum(tokensNumPicker.value) }
             cancelBtn.setOnClickListener { dismiss() }
-            Log.d(TAG, " was closed")
         }
-    }
-
-    companion object {
-        const val TAG = "SelectTokenNumberAlert"
+        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.state) { state ->
+            if (state == SaveState.SAVED) dismiss()
+            with(binding) {
+                val saving = state == SaveState.SAVING
+                isCancelable = !saving
+                okBtn.isEnabled = !saving
+                cancelBtn.isEnabled = !saving
+                tokensNumPicker.isEnabled = !saving
+                storageError.visibility = if (state == SaveState.ERROR) View.VISIBLE else View.GONE
+            }
+        }
     }
 }

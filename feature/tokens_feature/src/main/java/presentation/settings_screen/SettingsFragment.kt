@@ -1,129 +1,73 @@
 package presentation.settings_screen
 
-import presentation.SelectTokensNumberAlertData
-import presentation.SelectTokensNumberAlertData.Companion.CURRENT_TOKENS_NUMBER_RESULT_KEY
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
-import android.util.Log
 import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
-import com.cerebus.tokens.core.ui.getNavigationResultLiveData
+import com.cerebus.tokens.core.ui.subscribeToHotFlow
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.databinding.FragmentSettingsBinding
-import com.cerebus.tokens.logger.api.LoggerFactory
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.activityViewModel
-import presentation.tokens_screen.TokenView
-import presentation.tokens_screen.TokensNumberListener
+import domain.repository.MAX_TOKEN_COUNT
+import domain.repository.MIN_TOKEN_COUNT
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import presentation.SelectTokensNumberAlertData
+import presentation.state.StorageFailure
 
-/**
- * [SettingsFragment] - a fragment for changing settings
- * A user can change
- * - number of tokens
- * - tokens color
- * - win animation on/off
- * - win sound on/off
- * @see TokenView
- *
- * @author Anastasia Drogunova
- * @since 23.05.2023
- */
-class SettingsFragment: Fragment(R.layout.fragment_settings), TokensNumberListener {
-
-    private val viewModel: SettingsViewModel by activityViewModel<SettingsViewModel>()
-    private val viewBinding: FragmentSettingsBinding by viewBinding()
-    private val loggerFactory: LoggerFactory  by inject()
-    private val logger = loggerFactory.createLogger(this::class.java.simpleName)
+class SettingsFragment : Fragment(R.layout.fragment_settings) {
+    private val viewModel: SettingsViewModel by viewModel()
+    private val binding: FragmentSettingsBinding by viewBinding()
+    private var rendering = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
         }
-
-        with(viewBinding.settingsAppLayout) {
-            changeTokensColorButton.setOnClickListener { viewModel.askForChangeTokensColor() }
-            changeTokensNumberButton.setOnClickListener { viewModel.askChangeTokensNumber() }
-            currentTokensNumberTextView.text = viewModel.getTokensNum().toString()
-            animationSwitch.isChecked = viewModel.getIsAnimation()
-            soundSwitch.isChecked = viewModel.getIsSound()
-            reinforcementSwitch.isChecked = viewModel.getIsReinforcement()
-            animationSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.changeAnimation(isChecked) }
-            soundSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.changeSound(isChecked) }
-            reinforcementSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.changeReinforcement(isChecked)}
-        }
-        with(viewBinding.aboutAppLayout) {
-            youtubeLinkTextView.movementMethod = LinkMovementMethod.getInstance()
-            donateLinkTextView.movementMethod = LinkMovementMethod.getInstance()
-        }
-        Log.d(TAG, "Views were initialized")
-        subscribeToNavigationResultLiveData()
-        subscribeToViewModel()
-        logger.d("View created")
-    }
-
-    private fun subscribeToViewModel() = with(viewModel) {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                changeColorFlow.collectLatest {
-                    findNavController().navigate(R.id.action_settingsFragment_to_selectColorDialogFragment)
-                }
+        with(binding.settingsAppLayout) {
+            changeTokensColorButton.setOnClickListener {
+                findNavController().navigate(R.id.action_settingsFragment_to_selectColorDialogFragment)
             }
-        }
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                selectTokensNumberFlow.collectLatest {
-                    findNavController().navigate(
-                        getTokensNumberAlertNavAction(
-                            minTokensNum = viewModel.getMinTokensNum(),
-                            maxTokensNum = viewModel.getMaxTokensNum(),
-                            currentTokensNum = viewModel.getTokensNum()
-                        )
-                    )
-                }
+            changeTokensNumberButton.setOnClickListener {
+                val count = viewModel.state.value.tokens?.count ?: return@setOnClickListener
+                findNavController().navigate(SettingsFragmentDirections.actionSettingsFragmentToSelectTokenNumberAlert(
+                    SelectTokensNumberAlertData(MIN_TOKEN_COUNT, MAX_TOKEN_COUNT, count)))
             }
+            animationSwitch.setOnCheckedChangeListener { _, value -> if (!rendering) viewModel.changeAnimation(value) }
+            soundSwitch.setOnCheckedChangeListener { _, value -> if (!rendering) viewModel.changeSound(value) }
+            reinforcementSwitch.setOnCheckedChangeListener { _, value -> if (!rendering) viewModel.changeReinforcement(value) }
+            storageStatus.setOnClickListener { viewModel.retry() }
         }
-        colorLiveData.observe(viewLifecycleOwner) { newColor ->
-            viewBinding.settingsAppLayout.tokenColorPreview.setBackgroundColor(newColor)
-        }
-        changedTokensNumLiveData.observe(viewLifecycleOwner) {
-            if (it) viewBinding.settingsAppLayout.currentTokensNumberTextView.text = viewModel.getTokensNum().toString()
-        }
-        logger.d("Subscribed to viewModel")
+        binding.aboutAppLayout.youtubeLinkTextView.movementMethod = LinkMovementMethod.getInstance()
+        binding.aboutAppLayout.donateLinkTextView.movementMethod = LinkMovementMethod.getInstance()
+        subscribeToHotFlow(Lifecycle.State.STARTED, viewModel.state, ::render)
     }
 
-    override fun getTokensNumberAlertNavAction(
-        minTokensNum: Int,
-        maxTokensNum: Int,
-        currentTokensNum: Int
-    ): NavDirections {
-        return SettingsFragmentDirections.actionSettingsFragmentToSelectTokenNumberAlert(
-            SelectTokensNumberAlertData(minTokensNum, maxTokensNum, currentTokensNum)
-        )
-    }
-
-    companion object {
-        const val TAG = "SettingsFragment"
-    }
-
-    override fun subscribeToNavigationResultLiveData() {
-        val result = getNavigationResultLiveData<Int>(SelectTokensNumberAlertData.CURRENT_TOKENS_NUMBER_RESULT_KEY)
-        result?.observe(viewLifecycleOwner) { newNum ->
-            viewModel.updateTokensNum()
-            logger.d("$CURRENT_TOKENS_NUMBER_RESULT_KEY navigation result is taken NEW NUMBER = $newNum")
-        }
+    private fun render(state: SettingsUiState) = with(binding.settingsAppLayout) {
+        rendering = true
+        val enabled = !state.loading && !state.saving && state.tokens != null && state.error != StorageFailure.READ
+        listOf(changeTokensColorButton, changeTokensNumberButton, animationSwitch, soundSwitch, reinforcementSwitch)
+            .forEach { it.isEnabled = enabled }
+        currentTokensNumberTextView.text = state.tokens?.count?.toString().orEmpty()
+        state.tokens?.let { tokenColorPreview.setBackgroundColor(it.color) }
+        animationSwitch.isChecked = state.effects?.animation ?: false
+        soundSwitch.isChecked = state.effects?.sound ?: false
+        // Preserve the existing camera gate until the separately planned photo stage.
+        reinforcementSwitch.isChecked = state.reinforcement?.enabled == true &&
+            requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+        storageStatus.visibility = if (state.loading || state.error != null) View.VISIBLE else View.GONE
+        storageStatus.isEnabled = state.error != null
+        storageStatus.setText(when (state.error) {
+            StorageFailure.READ -> com.cerebus.tokens.core.ui.R.string.storage_read_error
+            StorageFailure.WRITE -> com.cerebus.tokens.core.ui.R.string.storage_write_error
+            null -> com.cerebus.tokens.core.ui.R.string.storage_loading
+        })
+        rendering = false
     }
 }

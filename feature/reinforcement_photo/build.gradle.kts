@@ -31,6 +31,7 @@ android {
 }
 
 dependencies {
+    testImplementation(libs.coroutinesTest)
     implementation(project(":core:logger"))
     implementation(project(":core:ui"))
     implementation(project(":data:reinforcement"))
