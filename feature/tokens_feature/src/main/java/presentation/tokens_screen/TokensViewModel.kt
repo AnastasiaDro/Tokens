@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import presentation.state.*
-import presentation.tokens_screen.mvi_contracts.win_effects_mvi_contract.WinEffectsState
 
 class TokensViewModel(
     private val tokens: TokenBoardRepository,

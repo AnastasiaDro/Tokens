@@ -2,7 +2,6 @@ package presentation.tokens_screen
 
 import com.cerebus.tokens.data.reinforcement.ReinforcementSettings
 import presentation.state.*
-import presentation.tokens_screen.mvi_contracts.win_effects_mvi_contract.WinEffectsState
 
 data class TokensUiState(
     val board: BoardState? = null,
@@ -30,4 +29,3 @@ fun reduceTokens(state: TokensUiState, action: TokensAction): TokensUiState = wh
     is TokensAction.Saving -> state.copy(saving = action.saving, error = if (action.saving) null else state.error)
     is TokensAction.Effects -> state.copy(effects = action.effects)
 }
-

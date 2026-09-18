@@ -62,7 +62,7 @@ class JsonStoresTest {
     }
 
     @Test fun malformedAndFutureDocumentsAreNotReplaced() = runBlocking {
-        for (content in listOf("{broken", """{"version":999}""")) {
+        for (content in listOf("{broken", "{}", """{"version":999}""")) {
             val file = folder.newFile()
             file.writeText(content)
             val job = SupervisorJob()

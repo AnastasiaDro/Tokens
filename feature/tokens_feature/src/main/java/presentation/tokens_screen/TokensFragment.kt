@@ -32,7 +32,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import presentation.tokens_screen.mvi_contracts.win_effects_mvi_contract.WinEffectsState
 
 /**
  * [TokensFragment] - a fragment for tokens displaying

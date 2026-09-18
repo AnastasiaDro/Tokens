@@ -55,7 +55,6 @@ dependencies {
     androidTestImplementation(libs.androidxTestJunit)
     androidTestImplementation(libs.androidxTestEspresso)
 
-    implementation(libs.androidxLifecycleLivedataKtx)
     implementation(libs.androidxLifecycleRuntimeKtx)
     implementation(libs.androidxLifecycleViewmodelKtx)
 

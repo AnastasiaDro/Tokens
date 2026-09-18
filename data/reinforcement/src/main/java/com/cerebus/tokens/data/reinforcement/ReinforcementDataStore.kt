@@ -7,6 +7,7 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Required
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -18,10 +19,10 @@ private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
 @Serializable
 internal data class ReinforcementDocument(
-    val version: Int = FORMAT_VERSION,
-    val migrated: Boolean = false,
-    val enabled: Boolean = false,
-    val photoUri: String? = null,
+    @Required val version: Int = FORMAT_VERSION,
+    @Required val migrated: Boolean = false,
+    @Required val enabled: Boolean = false,
+    @Required val photoUri: String? = null,
 )
 
 internal object ReinforcementSerializer : Serializer<ReinforcementDocument> {
