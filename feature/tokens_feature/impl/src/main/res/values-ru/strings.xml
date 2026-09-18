@@ -22,6 +22,11 @@
     <string name="youtube_link"><a href="https://www.youtube.com/channel/UCy-bYj7AH7QcmMxWWFklfkg">Мой YouTube канал</a></string>
     <string name="donate_link"><a href="https://www.tinkoff.ru/rm/drogunova.anastasiya1/5ILsY28581">Сделать донат</a></string>
 
+    <!-- Tokens -->
+    <string name="token_description">Жетон</string>
+    <string name="token_checked">Отмечен</string>
+    <string name="token_unchecked">Не отмечен</string>
+
     <!-- Animation -->
     <string name="settings_animation">Анимация при победе</string>
     <string name="settings_sound">Звук при победе</string>

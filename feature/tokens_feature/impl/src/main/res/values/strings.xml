@@ -23,6 +23,9 @@
     <string name="youtube_link"><a href="https://www.youtube.com/channel/UCy-bYj7AH7QcmMxWWFklfkg">My YouTube channel</a></string>
 
     <!-- Tokens -->
+    <string name="token_description">Token</string>
+    <string name="token_checked">Marked</string>
+    <string name="token_unchecked">Unmarked</string>
     <string name="settings_tokens_color">Tokens color</string>
     <string name="select_button_text">Select</string>
 
