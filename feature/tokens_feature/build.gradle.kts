@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinCompose)
     alias(libs.plugins.navigationSafeArgs)
@@ -34,6 +35,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.datastore)
+    implementation(libs.serializationJson)
     testImplementation(libs.coroutinesTest)
     implementation(libs.kotlinParcelizeRuntime)
 

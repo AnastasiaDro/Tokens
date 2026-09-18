@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
 }
 
@@ -28,6 +29,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.datastore)
+    implementation(libs.serializationJson)
+    testImplementation(libs.coroutinesTest)
     implementation(libs.androidxCoreKtx)
     implementation(libs.androidxAppcompat)
     implementation(libs.material)
