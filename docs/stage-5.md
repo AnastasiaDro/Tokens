@@ -43,3 +43,7 @@
 - Реальная внешняя камера/Photo Picker, уничтожение процесса ОС, Android 9 и физическое устройство пока не проверены. Файловые тесты и восстановление новой ViewModel из SavedStateHandle не подменяют эти сценарии.
 
 Следующая итерация — 5.2: Compose-фото и общий асинхронный preview. Compose Navigation (5.3) пока не реализована.
+
+### Исправление шаблонного теста перед 5.2
+
+По запросу пользователя исправлен app/ExampleInstrumentedTest: ожидаемый package name приведён к действующему applicationId `com.cerebus.tokens_new`. Конфигурация приложения не менялась. `:app:connectedDebugAndroidTest :app:compileDebugKotlin` — успешно, полный набор app 5/5 на API 36; прежняя ошибка теста устранена.
