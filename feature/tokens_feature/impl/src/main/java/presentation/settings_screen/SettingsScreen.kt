@@ -188,7 +188,7 @@ private fun AboutApp(onYoutube: () -> Unit, onDonate: () -> Unit) {
                 contentScale = ContentScale.Crop, modifier = Modifier.size(AUTHOR_PHOTO_SIZE_DP.dp).clip(CircleShape))
             Column {
                 TextButton(onClick = onYoutube) { Text(stringResource(R.string.youtube_link)) }
-                TextButton(onClick = onDonate) { Text(stringResource(R.string.donate_link)) }
+        TextButton(onClick = onDonate) { Text(stringResource(R.string.other_apps)) }
             }
         }
         Text(stringResource(R.string.aboutAppText), color = TokensColors.Text)

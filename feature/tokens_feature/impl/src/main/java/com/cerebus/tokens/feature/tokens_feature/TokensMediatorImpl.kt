@@ -38,7 +38,7 @@ internal class TokensMediatorImpl : TokensMediator {
                 SettingsRoute(vm, { count -> navController.navigate(CountDestination(count)) },
                     { navController.navigate(ColorDestination) },
                     { context.openSettingsLink(R.string.youtube_link) },
-                    { context.openSettingsLink(R.string.donate_link) })
+                    { context.openSettingsLink(R.string.other_apps) })
             }
             dialog<CountDestination>(dialogProperties = GuardedDialogProperties) { entry ->
                 val vm = navigationViewModel<SelectTokensNumberViewModel>(entry)

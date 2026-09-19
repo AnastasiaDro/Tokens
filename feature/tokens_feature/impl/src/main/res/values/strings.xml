@@ -24,7 +24,7 @@
     <string name="about_therapy">About Ontogenetic Kinesitherapy</string>
 
     <string name="donate_description">Even creating such a simple application requires effort and time. You can support me by sending a donation =)</string>
-    <string name="donate_link"><a href="https://www.tinkoff.ru/rm/drogunova.anastasiya1/5ILsY28581">Make a donation</a></string>
+    <string name="other_apps"><a href="https://hablotech.ru">Другие приложения</a></string>
     <string name="youtube_link"><a href="https://www.youtube.com/channel/UCy-bYj7AH7QcmMxWWFklfkg">My YouTube channel</a></string>
 
     <!-- Tokens -->

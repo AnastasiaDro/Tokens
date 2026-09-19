@@ -25,7 +25,7 @@
 
     <string name="donate_description">Даже создание такого простого приложения требует усилий и времени. Вы можете поддержать меня, сделав донат</string>
     <string name="youtube_link"><a href="https://www.youtube.com/channel/UCy-bYj7AH7QcmMxWWFklfkg">Мой YouTube канал</a></string>
-    <string name="donate_link"><a href="https://www.tinkoff.ru/rm/drogunova.anastasiya1/5ILsY28581">Сделать донат</a></string>
+    <string name="other_apps"><a href="https://hablotech.ru">Другие приложения</a></string>
 
     <!-- Tokens -->
     <string name="token_description">Жетон</string>

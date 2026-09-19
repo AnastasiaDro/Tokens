@@ -102,14 +102,14 @@ class SettingsScreenTest {
                     Box(Modifier.width(NARROW_WIDTH_DP.dp)) {
                         SettingsScreen(ready(), onSelectCount = {}, onSelectColor = {},
                             onAnimationChanged = {}, onSoundChanged = {}, onReinforcementChanged = {}, onRetry = {},
-                            onYoutube = { clicks += YOUTUBE }, onDonate = { clicks += DONATE })
+                            onYoutube = { clicks += YOUTUBE }, onDonate = { clicks += OTHER_APPS })
                     }
                 }
             }
         }
         compose.onNodeWithText(context.getString(R.string.youtube_link)).performScrollTo().assertIsDisplayed().performClick()
-        compose.onNodeWithText(context.getString(R.string.donate_link)).performScrollTo().assertIsDisplayed().performClick()
-        compose.runOnIdle { assertEquals(listOf(YOUTUBE, DONATE), clicks) }
+        compose.onNodeWithText(context.getString(R.string.other_apps)).performScrollTo().assertIsDisplayed().performClick()
+        compose.runOnIdle { assertEquals(listOf(YOUTUBE, OTHER_APPS), clicks) }
     }
 
     @Test fun countControlsRespectBoundsAndDelegateDraftWithoutSaving() {
@@ -164,6 +164,6 @@ class SettingsScreenTest {
         const val LARGE_FONT_SCALE = 2f
         const val NARROW_WIDTH_DP = 320
         const val YOUTUBE = "youtube"
-        const val DONATE = "donate"
+        const val OTHER_APPS = "other_apps"
     }
 }
