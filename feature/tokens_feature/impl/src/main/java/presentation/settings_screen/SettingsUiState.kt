@@ -23,6 +23,7 @@ data class SettingsUiState(
 }
 
 sealed interface SettingsAction {
+    data class Observed(val source: SettingsSnapshotState) : SettingsAction
     data object Loading : SettingsAction
     data class Loaded(val snapshot: SettingsSnapshot) : SettingsAction
     data object ReadFailed : SettingsAction
@@ -32,6 +33,10 @@ sealed interface SettingsAction {
 }
 
 fun reduceSettings(state: SettingsUiState, action: SettingsAction): SettingsUiState = when (action) {
+    is SettingsAction.Observed -> {
+        val loaded = action.source.snapshot?.let { reduceSettings(state, SettingsAction.Loaded(it)) } ?: state
+        loaded.copy(loading = action.source.loading, readFailure = action.source.readFailure)
+    }
     SettingsAction.Loading -> state.copy(loading = true)
     is SettingsAction.Loaded -> state.copy(
         tokens = TokenSettingsState(action.snapshot.board.count, action.snapshot.board.color),

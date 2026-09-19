@@ -6,6 +6,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Density
@@ -35,6 +37,50 @@ import com.cerebus.tokens.core.ui.R as CoreR
 class SettingsScreenTest {
     @get:Rule val compose = createComposeRule()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    @Test fun firstLoadedSwitchIsAlreadyAtItsFinalPositionAndRetryKeepsValue() {
+        val state = mutableStateOf(SettingsUiState())
+        compose.mainClock.autoAdvance = false
+        compose.setContent { TokensTheme {
+            SettingsScreen(state.value, {}, {}, {}, {}, {}, {}, {}, {})
+        } }
+        compose.onAllNodes(isToggleable()).assertCountEquals(NO_SWITCHES)
+        compose.onNodeWithText(context.getString(R.string.settings_sound)).assertExists()
+
+        compose.runOnIdle { state.value = ready() }
+        compose.mainClock.advanceTimeByFrame()
+        val sound = compose.onNodeWithText(context.getString(R.string.settings_sound))
+        sound.assertIsOn()
+        val firstFrame = sound.captureToImage().toPixelMap()
+        compose.mainClock.advanceTimeBy(SWITCH_SETTLE_MILLIS)
+        val settled = sound.captureToImage().toPixelMap()
+        assertEquals(firstFrame.width, settled.width)
+        assertEquals(firstFrame.height, settled.height)
+        // Compare rendered pixels, not just checked semantics: a moving thumb has checked=true too.
+        for (x in FIRST_PIXEL until firstFrame.width) {
+            for (y in FIRST_PIXEL until firstFrame.height) {
+                assertEquals("Switch moved after first frame at ($x,$y)",
+                    firstFrame[x, y].toArgb(), settled[x, y].toArgb())
+            }
+        }
+
+        compose.runOnIdle { state.value = state.value.copy(loading = true, readFailure = true) }
+        compose.mainClock.advanceTimeByFrame()
+        sound.assertIsOn().assertIsNotEnabled()
+    }
+
+    @Test fun loadingDoesNotExposeFalseToggleSemanticsOrInvokeCallbacks() {
+        val state = mutableStateOf(SettingsUiState())
+        val changes = mutableListOf<Boolean>()
+        compose.setContent { TokensTheme {
+            SettingsScreen(state.value, {}, {}, { changes += it }, { changes += it }, { changes += it }, {}, {}, {})
+        } }
+        compose.onAllNodes(isToggleable()).assertCountEquals(NO_SWITCHES)
+        compose.runOnIdle { state.value = ready().copy(effects = EffectsSettings(animation = false, sound = true)) }
+        compose.onNodeWithText(context.getString(R.string.settings_animation)).performScrollTo().assertIsOff()
+        compose.onNodeWithText(context.getString(R.string.settings_sound)).performScrollTo().assertIsOn()
+        compose.runOnIdle { assertTrue(changes.isEmpty()) }
+    }
 
     @Test fun switchRendersStateWithoutWritingAndClickOnlyDelegates() {
         val state = mutableStateOf(ready())
@@ -158,6 +204,9 @@ class SettingsScreenTest {
     )
 
     private companion object {
+        const val NO_SWITCHES = 0
+        const val FIRST_PIXEL = 0
+        const val SWITCH_SETTLE_MILLIS = 400L
         const val SELECTED_COUNT = 5
         const val TOKEN_COLOR = -65536
         const val COUNT_STEP = 1

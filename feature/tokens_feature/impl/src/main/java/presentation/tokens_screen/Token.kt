@@ -89,7 +89,7 @@ internal fun Token(
     val checkedDescription = stringResource(
         if (state.checked) R.string.token_checked else R.string.token_unchecked,
     )
-    val fillColor = if (state.checked) Color(state.color) else MaterialTheme.colorScheme.onSurfaceVariant
+    val fillColor = if (state.checked) Color(state.color) else colorResource(R.color.baseColor)
 
     Box(
         modifier = modifier

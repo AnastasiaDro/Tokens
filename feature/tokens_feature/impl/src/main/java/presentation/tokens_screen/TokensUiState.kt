@@ -21,6 +21,7 @@ data class TokensUiState(
 }
 
 sealed interface TokensAction {
+    data class Observed(val source: SettingsSnapshotState) : TokensAction
     data object Loading : TokensAction
     data class Loaded(val snapshot: SettingsSnapshot) : TokensAction
     data object ReadFailed : TokensAction
@@ -31,6 +32,10 @@ sealed interface TokensAction {
 }
 
 fun reduceTokens(state: TokensUiState, action: TokensAction): TokensUiState = when (action) {
+    is TokensAction.Observed -> {
+        val loaded = action.source.snapshot?.let { reduceTokens(state, TokensAction.Loaded(it)) } ?: state
+        loaded.copy(loading = action.source.loading, readFailure = action.source.readFailure)
+    }
     TokensAction.Loading -> state.copy(loading = true)
     is TokensAction.Loaded -> state.copy(board = action.snapshot.board.toState(),
         reinforcement = action.snapshot.reinforcement, loading = false, readFailure = false)

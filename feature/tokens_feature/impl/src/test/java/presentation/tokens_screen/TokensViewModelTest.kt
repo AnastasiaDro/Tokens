@@ -10,6 +10,7 @@ import org.junit.Before
 import org.junit.Test
 import presentation.*
 import presentation.state.StorageFailure
+import presentation.state.SettingsSnapshotSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TokensViewModelTest {
@@ -18,13 +19,16 @@ class TokensViewModelTest {
     private val tokens = FakeBoardRepository()
     private val effects = FakeEffectsRepository()
     private lateinit var vm: TokensViewModel
+    private lateinit var source: SettingsSnapshotSource
     @Before fun setUp() {
         Dispatchers.setMain(dispatcher)
-        vm = TokensViewModel(tokens, effects, FakeReinforcementRepository())
+        source = SettingsSnapshotSource(tokens, effects, FakeReinforcementRepository(),
+            CoroutineScope(SupervisorJob() + dispatcher))
+        vm = TokensViewModel(tokens, source)
         store.put("tokens", vm)
         vm.onStart()
     }
-    @After fun tearDown() { store.clear(); Dispatchers.resetMain() }
+    @After fun tearDown() { store.clear(); source.close(); Dispatchers.resetMain() }
 
     private fun win() { tokens.values.value.tokens.forEach { vm.onTokenClicked(it.id) } }
 

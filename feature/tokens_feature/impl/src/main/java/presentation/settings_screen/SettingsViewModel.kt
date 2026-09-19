@@ -3,7 +3,6 @@ package presentation.settings_screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cerebus.tokens.data.reinforcement.ReinforcementRepository
-import domain.repository.TokenBoardRepository
 import domain.repository.WinEffectsRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -12,44 +11,37 @@ import kotlinx.coroutines.sync.withLock
 import presentation.state.*
 
 class SettingsViewModel(
-    private val tokens: TokenBoardRepository,
+    private val source: SettingsSnapshotSource,
     private val effects: WinEffectsRepository,
     private val reinforcement: ReinforcementRepository,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(SettingsUiState())
+    private val mutableState = MutableStateFlow(reduceSettings(SettingsUiState(), SettingsAction.Observed(source.state.value)))
     val state = mutableState.asStateFlow()
-    private var observation: Job? = null
+    private var retryWriteAfterRead = false
     private val writes = Mutex()
     private var retryWrite: (suspend () -> Unit)? = null
 
-    init { observe() }
+    init { viewModelScope.launch { source.state.collect(::onSnapshot) } }
     private fun dispatch(action: SettingsAction) { mutableState.update { reduceSettings(it, action) } }
 
-    private fun observe(retryPendingWrite: Boolean = false) {
-        observation?.cancel()
-        dispatch(SettingsAction.Loading)
-        observation = viewModelScope.launch {
-            var shouldRetryWrite = retryPendingWrite
-            try {
-                observeSettings(tokens, effects, reinforcement).collect {
-                    dispatch(SettingsAction.Loaded(it))
-                    if (shouldRetryWrite) {
-                        shouldRetryWrite = false
-                        retryFailedWrite()
-                    }
-                }
-            }
-            catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { dispatch(SettingsAction.ReadFailed) }
+    private fun onSnapshot(snapshot: SettingsSnapshotState) {
+        dispatch(SettingsAction.Observed(snapshot))
+        if (snapshot.ready && retryWriteAfterRead) {
+            retryWriteAfterRead = false
+            retryFailedWrite()
         }
     }
 
     fun retry() {
         val current = state.value
         when {
-            current.readFailure -> observe(current.writeFailure && retryWrite != null)
+            current.readFailure -> {
+                retryWriteAfterRead = retryWriteAfterRead || (current.writeFailure && retryWrite != null)
+                source.retry()
+                onSnapshot(source.state.value)
+            }
             current.writeFailure -> retryFailedWrite()
-            else -> observe()
+            else -> source.retry()
         }
     }
 

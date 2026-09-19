@@ -12,7 +12,7 @@ object TokensDimensions {
 
     private const val SMALL_SPACING_DP = 8
     private const val MEDIUM_SPACING_DP = 16
-    private const val CONTENT_PADDING_DP = 20
+    private const val CONTENT_PADDING_DP = 12
     private const val CORNER_RADIUS_DP = 16
     private const val MINIMUM_TOUCH_TARGET_DP = 48
 }

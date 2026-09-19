@@ -8,6 +8,11 @@ import domain.repository.TokenBoardRepository
 import domain.repository.WinEffectsRepository
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import org.koin.dsl.onClose
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import presentation.state.SettingsSnapshotSource
 import presentation.settings_screen.SettingsViewModel
 import presentation.settings_screen.SelectColorViewModel
 import presentation.tokens_screen.SelectTokensNumberViewModel
@@ -21,7 +26,10 @@ val tokensFeatureModule = module {
     single<TokensMediator> { TokensMediatorImpl() }
     single<TokenBoardRepository> { DataStoreTokenBoardRepository(get<android.content.Context>()) }
     single<WinEffectsRepository> { DataStoreWinEffectsRepository(get<android.content.Context>()) }
-    viewModel { TokensViewModel(get(), get(), get()) }
+    single {
+        SettingsSnapshotSource(get(), get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Default))
+    } onClose { it?.close() }
+    viewModel { TokensViewModel(get(), get()) }
     viewModel { SettingsViewModel(get(), get(), get()) }
     viewModel { SelectTokensNumberViewModel(get(), get()) }
     viewModel { SelectColorViewModel(get(), get()) }

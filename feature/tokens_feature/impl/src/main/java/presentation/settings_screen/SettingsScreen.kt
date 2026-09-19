@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cerebus.tokens.core.ui.theme.TokensComponentDefaults
 import com.cerebus.tokens.core.ui.theme.TokensDimensions
+import com.cerebus.tokens.core.ui.theme.link
 import com.cerebus.tokens.feature.tokens_feature.R
 import presentation.state.StorageFailure
 import com.cerebus.tokens.core.ui.R as CoreR
@@ -140,7 +142,10 @@ private fun SettingsControls(
             Text(stringResource(R.string.changeChips), modifier = Modifier.weight(LABEL_WEIGHT))
             Text(state.tokens?.count?.toString().orEmpty(), Modifier.testTag(SETTINGS_COUNT_TAG))
             TextButton(onClick = onSelectCount, enabled = enabled) {
-                Text(stringResource(CoreR.string.change), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(CoreR.string.change),
+                    style = MaterialTheme.typography.link,
+                )
             }
         }
         HorizontalDivider()
@@ -152,15 +157,18 @@ private fun SettingsControls(
                     .testTag(SETTINGS_COLOR_TAG))
             }
             TextButton(onClick = onSelectColor, enabled = enabled) {
-                Text(stringResource(R.string.select_button_text), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(R.string.select_button_text),
+                    style = MaterialTheme.typography.link,
+                )
             }
         }
         HorizontalDivider()
-        SettingsSwitch(stringResource(R.string.settings_animation), state.effects?.animation == true, enabled,
+        SettingsSwitch(stringResource(R.string.settings_animation), state.effects?.animation, enabled,
             onAnimationChanged, verticalSpacing)
-        SettingsSwitch(stringResource(R.string.settings_sound), state.effects?.sound == true, enabled,
+        SettingsSwitch(stringResource(R.string.settings_sound), state.effects?.sound, enabled,
             onSoundChanged, verticalSpacing)
-        SettingsSwitch(stringResource(R.string.reinforcement_image), state.reinforcement?.enabled == true,
+        SettingsSwitch(stringResource(R.string.reinforcement_image), state.reinforcement?.enabled,
             enabled, onReinforcementChanged, verticalSpacing)
     }
 }
@@ -168,19 +176,24 @@ private fun SettingsControls(
 @Composable
 private fun SettingsSwitch(
     label: String,
-    checked: Boolean,
+    checked: Boolean?,
     enabled: Boolean,
     onChange: (Boolean) -> Unit,
     verticalSpacing: Dp,
 ) {
     Row(
-        Modifier.fillMaxWidth().toggleable(checked, enabled = enabled, role = Role.Switch, onValueChange = onChange)
+        Modifier.fillMaxWidth().then(
+            if (checked != null) Modifier.toggleable(checked, enabled = enabled, role = Role.Switch, onValueChange = onChange)
+            else Modifier,
+        )
             .padding(vertical = verticalSpacing),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing),
     ) {
         Text(label, Modifier.weight(LABEL_WEIGHT))
-        Switch(
+        if (checked == null) {
+            Spacer(Modifier.size(width = SWITCH_WIDTH_DP.dp, height = SWITCH_HEIGHT_DP.dp))
+        } else Switch(
             checked = checked,
             onCheckedChange = null,
             enabled = enabled,
@@ -206,11 +219,13 @@ private fun AboutApp(onYoutube: () -> Unit, onDonate: () -> Unit, verticalSpacin
                 contentScale = ContentScale.Crop, modifier = Modifier.size(AUTHOR_PHOTO_SIZE_DP.dp).clip(CircleShape))
             Column {
                 TextButton(onClick = onYoutube, contentPadding = LINK_CONTENT_PADDING) {
-                    Text(stringResource(R.string.youtube_link), style = MaterialTheme.typography.bodyLarge,
+                    Text(stringResource(R.string.youtube_link),
+                        style = MaterialTheme.typography.link,
                         modifier = Modifier.offset(y = LINK_TEXT_OFFSET))
                 }
                 TextButton(onClick = onDonate, contentPadding = LINK_CONTENT_PADDING) {
-                    Text(stringResource(R.string.other_apps), style = MaterialTheme.typography.bodyLarge,
+                    Text(stringResource(R.string.other_apps),
+                        style = MaterialTheme.typography.link,
                         modifier = Modifier.offset(y = -LINK_TEXT_OFFSET))
                 }
             }
@@ -225,6 +240,8 @@ private const val TWO_PANE_MIN_WIDTH_DP = 600
 private const val PANE_WEIGHT = 1f
 private const val LABEL_WEIGHT = 1f
 private const val COLOR_PREVIEW_SIZE_DP = 20
+private const val SWITCH_WIDTH_DP = 52
+private const val SWITCH_HEIGHT_DP = 32
 private const val AUTHOR_PHOTO_SIZE_DP = 80
 private const val COMPACT_SPACING_DIVISOR = 2
 private val SETTINGS_COMPACT_SPACING = TokensDimensions.SmallSpacing / COMPACT_SPACING_DIVISOR

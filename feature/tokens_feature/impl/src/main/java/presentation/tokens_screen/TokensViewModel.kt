@@ -2,7 +2,6 @@ package presentation.tokens_screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cerebus.tokens.data.reinforcement.ReinforcementRepository
 import domain.repository.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -12,54 +11,47 @@ import presentation.state.*
 
 class TokensViewModel(
     private val tokens: TokenBoardRepository,
-    private val effects: WinEffectsRepository,
-    private val reinforcement: ReinforcementRepository,
+    private val source: SettingsSnapshotSource,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(TokensUiState())
+    private val mutableState = MutableStateFlow(reduceTokens(TokensUiState(), TokensAction.Observed(source.state.value)))
     val state = mutableState.asStateFlow()
-    private var observation: Job? = null
+    private var retryWriteAfterRead = false
     private var timer: Job? = null
     private var foreground = false
     private var visit = INITIAL_GENERATION
     private var celebrationId = WinEffectsState.NO_CELEBRATION_ID
     private var celebrationRevision: Long? = null
-    private var snapshot: SettingsSnapshot? = null
+    private var snapshot: SettingsSnapshot? = source.state.value.snapshot
     private val writes = Mutex()
     private var retryWrite: (() -> Unit)? = null
 
-    init { observe() }
+    init { viewModelScope.launch { source.state.collect(::onSnapshot) } }
 
     private fun dispatch(action: TokensAction) { mutableState.update { reduceTokens(it, action) } }
 
-    private fun observe(retryPendingWrite: Boolean = false) {
-        observation?.cancel()
-        dispatch(TokensAction.Loading)
-        observation = viewModelScope.launch {
-            var shouldRetryWrite = retryPendingWrite
-            try {
-                observeSettings(tokens, effects, reinforcement).collect {
-                    if (celebrationRevision != null && celebrationRevision != it.board.revision) stopWinEffects()
-                    snapshot = it
-                    dispatch(TokensAction.Loaded(it))
-                    if (shouldRetryWrite) {
-                        shouldRetryWrite = false
-                        retryFailedWrite()
-                    }
-                }
-            } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) {
-                stopWinEffects()
-                dispatch(TokensAction.ReadFailed)
-            }
+    private fun onSnapshot(observed: SettingsSnapshotState) {
+        if (observed.readFailure ||
+            (celebrationRevision != null && celebrationRevision != observed.snapshot?.board?.revision)) {
+            stopWinEffects()
+        }
+        snapshot = observed.snapshot
+        dispatch(TokensAction.Observed(observed))
+        if (observed.ready && retryWriteAfterRead) {
+            retryWriteAfterRead = false
+            retryFailedWrite()
         }
     }
 
     fun retry() {
         val current = state.value
         when {
-            current.readFailure -> observe(current.writeFailure && retryWrite != null)
+            current.readFailure -> {
+                retryWriteAfterRead = retryWriteAfterRead || (current.writeFailure && retryWrite != null)
+                source.retry()
+                onSnapshot(source.state.value)
+            }
             current.writeFailure -> retryFailedWrite()
-            else -> observe()
+            else -> source.retry()
         }
     }
 
