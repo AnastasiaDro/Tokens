@@ -14,7 +14,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -145,7 +144,7 @@ private fun BoardMenu(
                 Icon(
                     painter = painterResource(R.drawable.ic_more_vert),
                     contentDescription = null,
-                    tint = colorResource(R.color.baseColor),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(MENU_ICON_SIZE_DP.dp).testTag(TOKEN_MENU_ICON_TAG),
                 )
             }

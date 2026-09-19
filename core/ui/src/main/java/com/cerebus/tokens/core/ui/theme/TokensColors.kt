@@ -2,20 +2,33 @@ package com.cerebus.tokens.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-/** Shared legacy palette. Feature-specific token and switch colors stay in their feature. */
+/** Shared application palette. The selected token color remains feature state. */
 object TokensColors {
-    val Accent = Color(ACCENT_ARGB)
-    val Link = Color(LINK_ARGB)
-    val Text = Color(TEXT_ARGB)
+    val Background = Color(BACKGROUND_ARGB)
+    val PrimaryText = Color(PRIMARY_TEXT_ARGB)
     val SecondaryText = Color(SECONDARY_TEXT_ARGB)
-    val BackgroundStart = Color(BACKGROUND_START_ARGB)
-    val BackgroundEnd = Color(BACKGROUND_END_ARGB)
-    val Surface = Color.White
+    val Action = Color(ACTION_ARGB)
+    val PressedAction = Color(PRESSED_ACTION_ARGB)
+    val SwitchCheckedTrack = Color(SWITCH_CHECKED_TRACK_ARGB)
+    val SwitchUncheckedTrack = Color(SWITCH_UNCHECKED_TRACK_ARGB)
+    val SwitchThumb = Color(SWITCH_THUMB_ARGB)
+    val Divider = Color(DIVIDER_ARGB)
 
-    private const val ACCENT_ARGB = 0xFF03DAC5
-    private const val LINK_ARGB = 0xFF008B8B
-    private const val TEXT_ARGB = 0xFF444444
-    private const val SECONDARY_TEXT_ARGB = 0xFF777777
-    private const val BACKGROUND_START_ARGB = 0xFFA9F0A9
-    private const val BACKGROUND_END_ARGB = 0xFFADD8E6
+    // Compatibility aliases for existing consumers of the shared theme tokens.
+    val Accent = SecondaryText
+    val Link = Action
+    val Text = PrimaryText
+    val Surface = Background
+    val BackgroundStart = Background
+    val BackgroundEnd = Background
+
+    private const val BACKGROUND_ARGB = 0xFFFFF8F4
+    private const val PRIMARY_TEXT_ARGB = 0xFF1A1A1A
+    private const val SECONDARY_TEXT_ARGB = 0xFF6B7280
+    private const val ACTION_ARGB = 0xFFD9480F
+    private const val PRESSED_ACTION_ARGB = 0xFFB9380A
+    private const val SWITCH_CHECKED_TRACK_ARGB = 0xFF22C55E
+    private const val SWITCH_UNCHECKED_TRACK_ARGB = 0xFFD1D5DB
+    private const val SWITCH_THUMB_ARGB = 0xFFFFFFFF
+    private const val DIVIDER_ARGB = 0xFFE5E7EB
 }

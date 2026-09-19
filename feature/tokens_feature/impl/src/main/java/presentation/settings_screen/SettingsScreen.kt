@@ -23,7 +23,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,15 +34,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.colorResource
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.cerebus.tokens.core.ui.theme.TokensColors
+import com.cerebus.tokens.core.ui.theme.TokensComponentDefaults
 import com.cerebus.tokens.core.ui.theme.TokensDimensions
 import com.cerebus.tokens.feature.tokens_feature.R
 import presentation.state.StorageFailure
@@ -186,11 +184,7 @@ private fun SettingsSwitch(
             checked = checked,
             onCheckedChange = null,
             enabled = enabled,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = colorResource(R.color.switchThumbColor),
-                checkedTrackColor = colorResource(R.color.switchTrackColor),
-                uncheckedTrackColor = colorResource(R.color.switchTrackColorOff),
-            ),
+            colors = TokensComponentDefaults.switchColors(),
         )
     }
 }
@@ -221,7 +215,7 @@ private fun AboutApp(onYoutube: () -> Unit, onDonate: () -> Unit, verticalSpacin
                 }
             }
         }
-        Text(stringResource(R.string.aboutAppText), color = TokensColors.Text)
+        Text(stringResource(R.string.aboutAppText))
     }
 }
 

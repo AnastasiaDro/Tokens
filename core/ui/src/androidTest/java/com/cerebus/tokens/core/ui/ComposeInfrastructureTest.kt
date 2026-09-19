@@ -30,14 +30,15 @@ class ComposeInfrastructureTest {
     val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun themeProvidesLegacyPaletteAndUpdatesContent() {
+    fun themeProvidesApplicationPaletteAndUpdatesContent() {
         val text = mutableStateOf(INITIAL_TEXT)
         compose.setContent {
             TokensTheme {
-                assertEquals(TokensColors.Link, MaterialTheme.colorScheme.primary)
-                assertEquals(TokensColors.Accent, MaterialTheme.colorScheme.secondary)
-                assertEquals(TokensColors.Text, MaterialTheme.colorScheme.onSurface)
-                assertEquals(TokensColors.Surface, MaterialTheme.colorScheme.background)
+                assertEquals(TokensColors.Action, MaterialTheme.colorScheme.primary)
+                assertEquals(TokensColors.PrimaryText, MaterialTheme.colorScheme.onSurface)
+                assertEquals(TokensColors.SecondaryText, MaterialTheme.colorScheme.onSurfaceVariant)
+                assertEquals(TokensColors.Background, MaterialTheme.colorScheme.background)
+                assertEquals(TokensColors.Divider, MaterialTheme.colorScheme.outlineVariant)
                 Text(text.value)
             }
         }
@@ -59,7 +60,7 @@ class ComposeInfrastructureTest {
                 id = android.R.id.content
                 setViewTreeLifecycleOwner(owner)
                 setTokensContent {
-                    assertEquals(TokensColors.Link, MaterialTheme.colorScheme.primary)
+                    assertEquals(TokensColors.Action, MaterialTheme.colorScheme.primary)
                     DisposableEffect(Unit) {
                         entered = true
                         onDispose { disposed = true }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -88,7 +89,7 @@ internal fun Token(
     val checkedDescription = stringResource(
         if (state.checked) R.string.token_checked else R.string.token_unchecked,
     )
-    val fillColor = if (state.checked) Color(state.color) else colorResource(R.color.baseColor)
+    val fillColor = if (state.checked) Color(state.color) else MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(
         modifier = modifier

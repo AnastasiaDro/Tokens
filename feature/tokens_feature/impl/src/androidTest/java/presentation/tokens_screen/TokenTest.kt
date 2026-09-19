@@ -31,6 +31,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.cerebus.tokens.core.ui.theme.TokensColors
 import com.cerebus.tokens.core.ui.theme.TokensTheme
 import com.cerebus.tokens.feature.tokens_feature.R
 import org.junit.Assert.assertEquals
@@ -60,7 +61,7 @@ class TokenTest {
             .assert(SemanticsMatcher.expectValue(
                 SemanticsProperties.StateDescription, context.getString(R.string.token_unchecked),
             ))
-        node.assertCenterColor(context.getColor(R.color.baseColor))
+        node.assertCenterColor(TokensColors.SecondaryText.toArgb())
 
         compose.runOnIdle { state.value = state.value.copy(checked = true) }
         node.assertIsOn().assert(SemanticsMatcher.expectValue(
@@ -70,7 +71,7 @@ class TokenTest {
 
         compose.runOnIdle { state.value = state.value.copy(checked = false) }
         node.assertIsOff()
-        node.assertCenterColor(context.getColor(R.color.baseColor))
+        node.assertCenterColor(TokensColors.SecondaryText.toArgb())
     }
 
     @Test
@@ -86,7 +87,7 @@ class TokenTest {
         node.assertIsOn()
         node.assertCenterColor(UPDATED_COLOR)
         compose.runOnIdle { state.value = state.value.copy(checked = false, color = INITIAL_COLOR) }
-        node.assertCenterColor(context.getColor(R.color.baseColor))
+        node.assertCenterColor(TokensColors.SecondaryText.toArgb())
         compose.runOnIdle { state.value = state.value.copy(checked = true) }
         node.assertCenterColor(INITIAL_COLOR)
     }
