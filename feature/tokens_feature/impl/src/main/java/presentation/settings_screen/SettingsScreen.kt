@@ -1,5 +1,6 @@
 package presentation.settings_screen
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -31,11 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cerebus.tokens.core.ui.theme.TokensColors
@@ -79,28 +84,33 @@ internal fun SettingsScreen(
     onDonate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val verticalSpacing = if (isLandscape) SETTINGS_COMPACT_SPACING else TokensDimensions.SmallSpacing
+    val verticalContentPadding = if (isLandscape) SETTINGS_COMPACT_SPACING else TokensDimensions.ContentPadding
     val controls: @Composable () -> Unit = {
         SettingsControls(state, onSelectCount, onSelectColor,
-            onAnimationChanged, onSoundChanged, onReinforcementChanged, onRetry)
+            onAnimationChanged, onSoundChanged, onReinforcementChanged, onRetry, verticalSpacing)
     }
     BoxWithConstraints(
         modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .safeDrawingPadding()
-            .padding(TokensDimensions.ContentPadding),
+            .padding(horizontal = TokensDimensions.ContentPadding, vertical = verticalContentPadding),
     ) {
         if (maxWidth >= TWO_PANE_MIN_WIDTH_DP.dp) {
             Row(horizontalArrangement = Arrangement.spacedBy(TokensDimensions.ContentPadding)) {
                 Column(Modifier.weight(PANE_WEIGHT).verticalScroll(rememberScrollState())) { controls() }
-                Column(Modifier.weight(PANE_WEIGHT).verticalScroll(rememberScrollState())) { AboutApp(onYoutube, onDonate) }
+                Column(Modifier.weight(PANE_WEIGHT).verticalScroll(rememberScrollState())) {
+                    AboutApp(onYoutube, onDonate, verticalSpacing)
+                }
             }
         } else {
             Column(
                 Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(TokensDimensions.ContentPadding),
+                verticalArrangement = Arrangement.spacedBy(verticalSpacing),
             ) {
                 controls()
-                AboutApp(onYoutube, onDonate)
+                AboutApp(onYoutube, onDonate, verticalSpacing)
             }
         }
     }
@@ -115,10 +125,11 @@ private fun SettingsControls(
     onSoundChanged: (Boolean) -> Unit,
     onReinforcementChanged: (Boolean) -> Unit,
     onRetry: () -> Unit,
+    verticalSpacing: Dp,
 ) {
     val enabled = !state.loading && !state.saving && state.tokens != null && state.error != StorageFailure.READ
-    Column(verticalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing)) {
-        SectionTitle(stringResource(R.string.settings))
+    Column(verticalArrangement = Arrangement.spacedBy(verticalSpacing)) {
+        SectionTitle(stringResource(R.string.settings), verticalSpacing)
         when {
             state.error != null -> Button(onClick = onRetry, enabled = !state.saving && !state.loading) {
                 Text(stringResource(if (state.error == StorageFailure.READ) CoreR.string.storage_read_error else CoreR.string.storage_write_error))
@@ -130,7 +141,9 @@ private fun SettingsControls(
             horizontalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing)) {
             Text(stringResource(R.string.changeChips), modifier = Modifier.weight(LABEL_WEIGHT))
             Text(state.tokens?.count?.toString().orEmpty(), Modifier.testTag(SETTINGS_COUNT_TAG))
-            TextButton(onClick = onSelectCount, enabled = enabled) { Text(stringResource(CoreR.string.change)) }
+            TextButton(onClick = onSelectCount, enabled = enabled) {
+                Text(stringResource(CoreR.string.change), style = MaterialTheme.typography.bodyLarge)
+            }
         }
         HorizontalDivider()
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
@@ -140,21 +153,31 @@ private fun SettingsControls(
                 Box(Modifier.size(COLOR_PREVIEW_SIZE_DP.dp).background(Color(it.color), CircleShape)
                     .testTag(SETTINGS_COLOR_TAG))
             }
-            TextButton(onClick = onSelectColor, enabled = enabled) { Text(stringResource(R.string.select_button_text)) }
+            TextButton(onClick = onSelectColor, enabled = enabled) {
+                Text(stringResource(R.string.select_button_text), style = MaterialTheme.typography.bodyLarge)
+            }
         }
         HorizontalDivider()
-        SettingsSwitch(stringResource(R.string.settings_animation), state.effects?.animation == true, enabled, onAnimationChanged)
-        SettingsSwitch(stringResource(R.string.settings_sound), state.effects?.sound == true, enabled, onSoundChanged)
+        SettingsSwitch(stringResource(R.string.settings_animation), state.effects?.animation == true, enabled,
+            onAnimationChanged, verticalSpacing)
+        SettingsSwitch(stringResource(R.string.settings_sound), state.effects?.sound == true, enabled,
+            onSoundChanged, verticalSpacing)
         SettingsSwitch(stringResource(R.string.reinforcement_image), state.reinforcement?.enabled == true,
-            enabled, onReinforcementChanged)
+            enabled, onReinforcementChanged, verticalSpacing)
     }
 }
 
 @Composable
-private fun SettingsSwitch(label: String, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
+private fun SettingsSwitch(
+    label: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onChange: (Boolean) -> Unit,
+    verticalSpacing: Dp,
+) {
     Row(
         Modifier.fillMaxWidth().toggleable(checked, enabled = enabled, role = Role.Switch, onValueChange = onChange)
-            .padding(vertical = TokensDimensions.SmallSpacing),
+            .padding(vertical = verticalSpacing),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing),
     ) {
@@ -173,22 +196,29 @@ private fun SettingsSwitch(label: String, checked: Boolean, enabled: Boolean, on
 }
 
 @Composable
-private fun SectionTitle(text: String) {
+private fun SectionTitle(text: String, verticalPadding: Dp) {
     Surface(shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
-        Text(text, Modifier.padding(TokensDimensions.SmallSpacing), style = MaterialTheme.typography.titleMedium)
+        Text(text, Modifier.padding(horizontal = TokensDimensions.SmallSpacing, vertical = verticalPadding),
+            style = MaterialTheme.typography.titleMedium)
     }
 }
 
 @Composable
-private fun AboutApp(onYoutube: () -> Unit, onDonate: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing)) {
-        SectionTitle(stringResource(R.string.aboutAppTitle))
+private fun AboutApp(onYoutube: () -> Unit, onDonate: () -> Unit, verticalSpacing: Dp) {
+    Column(verticalArrangement = Arrangement.spacedBy(verticalSpacing)) {
+        SectionTitle(stringResource(R.string.aboutAppTitle), verticalSpacing)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.me1), contentDescription = null,
                 contentScale = ContentScale.Crop, modifier = Modifier.size(AUTHOR_PHOTO_SIZE_DP.dp).clip(CircleShape))
             Column {
-                TextButton(onClick = onYoutube) { Text(stringResource(R.string.youtube_link)) }
-        TextButton(onClick = onDonate) { Text(stringResource(R.string.other_apps)) }
+                TextButton(onClick = onYoutube, contentPadding = LINK_CONTENT_PADDING) {
+                    Text(stringResource(R.string.youtube_link), style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.offset(y = LINK_TEXT_OFFSET))
+                }
+                TextButton(onClick = onDonate, contentPadding = LINK_CONTENT_PADDING) {
+                    Text(stringResource(R.string.other_apps), style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.offset(y = -LINK_TEXT_OFFSET))
+                }
             }
         }
         Text(stringResource(R.string.aboutAppText), color = TokensColors.Text)
@@ -202,3 +232,10 @@ private const val PANE_WEIGHT = 1f
 private const val LABEL_WEIGHT = 1f
 private const val COLOR_PREVIEW_SIZE_DP = 20
 private const val AUTHOR_PHOTO_SIZE_DP = 80
+private const val COMPACT_SPACING_DIVISOR = 2
+private val SETTINGS_COMPACT_SPACING = TokensDimensions.SmallSpacing / COMPACT_SPACING_DIVISOR
+private val LINK_CONTENT_PADDING = PaddingValues(
+    horizontal = TokensDimensions.SmallSpacing,
+    vertical = SETTINGS_COMPACT_SPACING,
+)
+private val LINK_TEXT_OFFSET = SETTINGS_COMPACT_SPACING
