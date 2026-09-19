@@ -8,9 +8,24 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.app.MultiWindowModeChangedInfo
+import androidx.core.util.Consumer
+import androidx.navigation.FloatingWindow
 import androidx.navigation.NavHostController
+import androidx.navigation.NavGraph
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import com.cerebus.tokens.feature.tokens_feature.api.TokensBoard
 import com.cerebus.tokens.core.ui.theme.TokensTheme
 import com.cerebus.tokens.feature.tokens_feature.api.TokensGraph
 import com.cerebus.tokens.feature.tokens_feature.api.TokensMediator
@@ -36,6 +51,40 @@ class MainActivity : ComponentActivity() {
                     enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
                     tokensMediator.registerGraph(this, controller)
                     photoMediator.registerGraph(this, controller)
+                }
+                TokenBoardOrientationEffect(controller)
+            }
+        }
+    }
+
+    @Composable
+    private fun TokenBoardOrientationEffect(controller: NavHostController) {
+        val configuration = LocalConfiguration.current
+        val visibleEntries by controller.visibleEntries.collectAsState()
+        var isInMultiWindowMode by remember(this@MainActivity) {
+            mutableStateOf(this@MainActivity.isInMultiWindowMode)
+        }
+
+        DisposableEffect(this@MainActivity) {
+            val listener = Consumer<MultiWindowModeChangedInfo> { info ->
+                isInMultiWindowMode = info.isInMultiWindowMode
+            }
+            addOnMultiWindowModeChangedListener(listener)
+            onDispose { removeOnMultiWindowModeChangedListener(listener) }
+        }
+
+        val baseDestination = visibleEntries.asReversed().firstOrNull { entry ->
+            entry.destination !is FloatingWindow && entry.destination !is NavGraph
+        }?.destination
+        if (baseDestination != null) {
+            val requestedOrientation = tokenBoardRequestedOrientation(
+                isTokenBoard = baseDestination.hasRoute<TokensBoard>(),
+                smallestScreenWidthDp = configuration.smallestScreenWidthDp,
+                isInMultiWindowMode = isInMultiWindowMode,
+            )
+            LaunchedEffect(this@MainActivity, requestedOrientation) {
+                if (this@MainActivity.requestedOrientation != requestedOrientation) {
+                    this@MainActivity.requestedOrientation = requestedOrientation
                 }
             }
         }

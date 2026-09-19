@@ -1,7 +1,5 @@
 package com.cerebus.tokens
 
-import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.test.core.app.ActivityScenario
@@ -21,7 +19,7 @@ class FeatureNavigationTest {
     @get:Rule val compose = createEmptyComposeRule()
     private val koin get() = GlobalContext.get()
 
-    @Test fun boardSettingsAndPhotoKeepTheirDestinationInBothOrientations() {
+    @Test fun boardSettingsAndPhotoKeepTheirDestinationAfterRecreation() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.waitForIdle()
             listOf(TokensBoard, TokensSettings, PhotoDestination).forEach { screen ->
@@ -32,19 +30,10 @@ class FeatureNavigationTest {
                     }
                 }
                 compose.waitForIdle()
-                listOf(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE).forEach { orientation ->
-                    scenario.onActivity { it.requestedOrientation = orientation }
-                    val expected = if (orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-                        Configuration.ORIENTATION_PORTRAIT else Configuration.ORIENTATION_LANDSCAPE
-                    compose.waitUntil(TIMEOUT_MS) {
-                        var actual = Configuration.ORIENTATION_UNDEFINED
-                        scenario.onActivity { actual = it.resources.configuration.orientation }
-                        actual == expected
-                    }
-                    compose.waitForIdle()
-                    scenario.onActivity {
-                        assertTrue(it.navController.currentDestination!!.hasRoute(screen::class))
-                    }
+                scenario.recreate()
+                compose.waitForIdle()
+                scenario.onActivity {
+                    assertTrue(it.navController.currentDestination!!.hasRoute(screen::class))
                 }
             }
         }
@@ -115,5 +104,4 @@ class FeatureNavigationTest {
             }
         }
     }
-    private companion object { const val TIMEOUT_MS = 5_000L }
 }
