@@ -112,6 +112,25 @@ class TokensScreenTest {
         compose.runOnIdle { assertEquals(listOf(COUNT, CLEAR, SETTINGS), actions) }
     }
 
+    @Test fun compactMenuIconStaysAtTopOfFullTouchTargetWithLargeFont() {
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
+                TokensTheme { TokensScreen(ready(), {}, {}, {}, {}, {}, {}) }
+            }
+        }
+        val menu = compose.onNodeWithContentDescription(context.getString(R.string.tokens_menu))
+            .assertWidthIsEqualTo(MENU_TOUCH_SIZE.dp).assertHeightIsEqualTo(MENU_TOUCH_SIZE.dp)
+        val icon = compose.onNodeWithTag(TOKEN_MENU_ICON_TAG, useUnmergedTree = true)
+            .assertIsDisplayed().assertWidthIsEqualTo(MENU_ICON_SIZE.dp).assertHeightIsEqualTo(MENU_ICON_SIZE.dp)
+        val menuBounds = menu.fetchSemanticsNode().boundsInRoot
+        val iconBounds = icon.fetchSemanticsNode().boundsInRoot
+        assertEquals(menuBounds.top, iconBounds.top, PIXEL_TOLERANCE)
+        assertEquals(menuBounds.center.x, iconBounds.center.x, PIXEL_TOLERANCE)
+        // The lower half remains clickable even though the icon is at the top.
+        menu.performTouchInput { click(Offset(centerX, height * MENU_LOWER_TOUCH_FRACTION)) }
+        compose.onNodeWithText(context.getString(R.string.settings)).assertIsDisplayed()
+    }
+
     @Test fun photoLeavesRoomForAllTokensAndFollowsOnlySavedSetting() {
         val enabled = mutableStateOf(true)
         val photos = mutableListOf<Unit>()
@@ -257,6 +276,9 @@ class TokensScreenTest {
         const val PHONE_COLUMNS = 5
         const val CENTER_DIVISOR = 2
         const val PIXEL_TOLERANCE = 1f
+        const val MENU_TOUCH_SIZE = 48
+        const val MENU_ICON_SIZE = 24
+        const val MENU_LOWER_TOUCH_FRACTION = 0.75f
         val PHONE_WINDOW = DpSize(BOARD_WIDTH.dp, 600.dp)
         val LANDSCAPE_WINDOW = DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp)
         val TABLET_WINDOW = DpSize(1000.dp, TABLET_HEIGHT.dp)

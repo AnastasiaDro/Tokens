@@ -15,6 +15,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -56,7 +57,24 @@ internal fun TokensScreen(
 ) {
     val ready = !state.loading && state.board != null && state.error != StorageFailure.READ
     val showPhoto = state.reinforcement?.enabled == true
-    BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding()) {
+    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        TokensContent(state, ready, showPhoto, onTokenClick, onClear, onRetry, onPhoto)
+        BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings, showPhoto, onPhoto,
+            Modifier.align(Alignment.TopEnd).safeDrawingPadding())
+    }
+}
+
+@Composable
+private fun TokensContent(
+    state: TokensUiState,
+    ready: Boolean,
+    showPhoto: Boolean,
+    onTokenClick: (String) -> Unit,
+    onClear: () -> Unit,
+    onRetry: () -> Unit,
+    onPhoto: () -> Unit,
+) {
+    BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
         val statusMaxHeight = maxHeight / STATUS_HEIGHT_DIVISOR
         Column(Modifier.fillMaxSize()) {
             if (state.loading || state.error != null) {
@@ -106,8 +124,6 @@ internal fun TokensScreen(
                 }
             }
         }
-        BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings, showPhoto, onPhoto,
-            Modifier.align(Alignment.TopEnd))
     }
 }
 
@@ -121,8 +137,12 @@ private fun BoardMenu(
     val menuDescription = stringResource(R.string.tokens_menu)
     Box(modifier, contentAlignment = Alignment.CenterEnd) {
         Box {
-            IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = menuDescription }) {
-                Text("⋮", style = MaterialTheme.typography.headlineMedium)
+            IconButton(onClick = { expanded = true }, modifier = Modifier.size(TokensDimensions.MinimumTouchTarget)
+                .semantics { contentDescription = menuDescription }) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                    Icon(painterResource(R.drawable.ic_more_vert), contentDescription = null,
+                        modifier = Modifier.size(MENU_ICON_SIZE_DP.dp).testTag(TOKEN_MENU_ICON_TAG))
+                }
             }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 DropdownMenuItem(text = { Text(stringResource(R.string.changeChips)) }, enabled = enabled,
@@ -198,6 +218,8 @@ private fun ReinforcementPhoto(uri: String?, onClick: () -> Unit, modifier: Modi
 internal fun tokenTag(id: String) = "board-token-$id"
 internal const val TOKEN_BOARD_TAG = "token-board"
 internal const val REINFORCEMENT_TAG = "board-reinforcement"
+internal const val TOKEN_MENU_ICON_TAG = "board-menu-icon"
+private const val MENU_ICON_SIZE_DP = 24
 private const val CONTENT_WEIGHT = 1f
 private const val PHOTO_MAX_SIZE_DP = 150
 private const val WIDE_WINDOW_MIN_WIDTH_DP = 840
