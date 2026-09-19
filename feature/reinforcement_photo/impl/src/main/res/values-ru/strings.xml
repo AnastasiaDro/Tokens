@@ -5,4 +5,5 @@
     <string name="make_a_photo">Сфотографировать</string>
     <string name="from_gallery">Из галереи</string>
     <string name="photo_source_unavailable">Не удалось открыть камеру или выбор фото. Попробуйте другой источник.</string>
+    <string name="close_photo_dialog">Закрыть выбор фото</string>
 </resources>

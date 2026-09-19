@@ -9,7 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.cerebus.tokens.core.ui.theme.TokensTheme
+import com.cerebus.tokens.core.ui.theme.TokensDimensions
 import com.cerebus.tokens.reinforcement_photo.presentation.*
 import org.junit.Assert.*
 import org.junit.Rule
@@ -19,12 +21,17 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class PhotoScreenTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-    @Test fun shortPhotoWindowScrollsToEveryAction() {
+    @Test fun shortPhotoWindowKeepsCloseVisibleAndScrollsToSourceActions() {
         compose.setContent { TokensTheme {
             Box(Modifier.size(320.dp, 200.dp)) { PhotoScreen(PhotoUiState(loading = false), {}, {}, {}, {}) }
         } }
-        listOf(PHOTO_CANCEL_TAG, PHOTO_CAMERA_TAG, PHOTO_GALLERY_TAG).forEach {
+        compose.onNodeWithTag(PHOTO_CLOSE_TAG).assertIsDisplayed().assertIsEnabled()
+            .assertWidthIsEqualTo(TokensDimensions.MinimumTouchTarget)
+            .assertHeightIsEqualTo(TokensDimensions.MinimumTouchTarget)
+        compose.onNodeWithContentDescription(context.getString(R.string.close_photo_dialog)).assertIsDisplayed()
+        listOf(PHOTO_CAMERA_TAG, PHOTO_GALLERY_TAG).forEach {
             compose.onNodeWithTag(it).performScrollTo().assertIsDisplayed().assertIsEnabled()
         }
     }
@@ -36,15 +43,16 @@ class PhotoScreenTest {
         compose.setContent { TokensTheme {
             PhotoScreen(state.value, {}, {}, { retried = true }, { cancelled = true })
         } }
-        listOf(PHOTO_CAMERA_TAG, PHOTO_GALLERY_TAG, PHOTO_CANCEL_TAG).forEach {
+        listOf(PHOTO_CAMERA_TAG, PHOTO_GALLERY_TAG).forEach {
             compose.onNodeWithTag(it).performScrollTo().assertIsNotEnabled()
         }
+        compose.onNodeWithTag(PHOTO_CLOSE_TAG).assertIsDisplayed().assertIsNotEnabled()
         compose.runOnIdle { state.value = PhotoUiState(loading = false, readFailure = true) }
         listOf(PHOTO_CAMERA_TAG, PHOTO_GALLERY_TAG).forEach {
             compose.onNodeWithTag(it).performScrollTo().assertIsNotEnabled()
         }
         compose.onNodeWithTag(PHOTO_RETRY_TAG).performScrollTo().performClick()
-        compose.onNodeWithTag(PHOTO_CANCEL_TAG).performScrollTo().performClick()
+        compose.onNodeWithTag(PHOTO_CLOSE_TAG).assertIsEnabled().performClick()
         compose.runOnIdle { assertTrue(retried); assertTrue(cancelled) }
     }
 

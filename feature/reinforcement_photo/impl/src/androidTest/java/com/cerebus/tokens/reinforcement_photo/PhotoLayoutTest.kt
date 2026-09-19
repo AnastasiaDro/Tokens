@@ -136,7 +136,7 @@ class PhotoLayoutTest {
             }
             scenario.recreate()
             assertActions()
-            click(PHOTO_CANCEL_TAG)
+            compose.onNodeWithTag(PHOTO_CLOSE_TAG).assertIsDisplayed().performClick()
             assertClosed(scenario)
             assertEquals(NO_WRITES, repository.writes)
         }
@@ -187,7 +187,7 @@ class PhotoLayoutTest {
                 // Native cancellation must be blocked synchronously, not just after recomposition.
                 assertFalse(ViewModelProvider.create(it.navController.currentBackStackEntry!!)[ChangePhotoViewModel::class].state.value.cancellable)
             }
-            compose.onNodeWithTag(PHOTO_CANCEL_TAG).performScrollTo().assertIsNotEnabled()
+            compose.onNodeWithTag(PHOTO_CLOSE_TAG).assertIsDisplayed().assertIsNotEnabled()
             onView(isRoot()).inRoot(isDialog()).perform(pressBack())
             scenario.onActivity { assertTrue(it.navController.currentDestination!!.hasRoute<PhotoDestination>()) }
             repository.gate!!.complete(Unit)
@@ -224,7 +224,7 @@ class PhotoLayoutTest {
         launch().use { scenario ->
             click(PHOTO_GALLERY_TAG)
             scenario.onActivity { it.completeResult(Activity.RESULT_OK, Intent().setData(SELECTED_URI.toUri())) }
-            compose.onNodeWithTag(PHOTO_CANCEL_TAG).performScrollTo().assertIsNotEnabled()
+            compose.onNodeWithTag(PHOTO_CLOSE_TAG).assertIsDisplayed().assertIsNotEnabled()
             outsideTap()
             scenario.onActivity { assertTrue(it.navController.currentDestination!!.hasRoute<PhotoDestination>()) }
             repository.gate!!.complete(Unit)
@@ -260,7 +260,8 @@ class PhotoLayoutTest {
 
     private fun click(tag: String) { compose.onNodeWithTag(tag).performScrollTo().performClick(); compose.waitForIdle() }
     private fun assertActions() {
-        listOf(PHOTO_CANCEL_TAG, PHOTO_CAMERA_TAG, PHOTO_GALLERY_TAG).forEach { tag ->
+        compose.onNodeWithTag(PHOTO_CLOSE_TAG).assertIsDisplayed().assertIsEnabled()
+        listOf(PHOTO_CAMERA_TAG, PHOTO_GALLERY_TAG).forEach { tag ->
             compose.onNodeWithTag(tag).performScrollTo().assertIsDisplayed().assertIsEnabled()
         }
     }
