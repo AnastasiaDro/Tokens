@@ -14,6 +14,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -135,14 +136,18 @@ private fun BoardMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val menuDescription = stringResource(R.string.tokens_menu)
+    val menuVisualOffset =
+        (TokensDimensions.MinimumTouchTarget - MENU_ICON_SIZE_DP.dp) / MENU_CENTERING_DIVISOR
     Box(modifier, contentAlignment = Alignment.CenterEnd) {
         Box {
-            IconButton(onClick = { expanded = true }, modifier = Modifier.size(TokensDimensions.MinimumTouchTarget)
-                .semantics { contentDescription = menuDescription }) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-                    Icon(painterResource(R.drawable.ic_more_vert), contentDescription = null,
-                        modifier = Modifier.size(MENU_ICON_SIZE_DP.dp).testTag(TOKEN_MENU_ICON_TAG))
-                }
+            IconButton(onClick = { expanded = true }, modifier = Modifier.offset(y = -menuVisualOffset)
+                .size(TokensDimensions.MinimumTouchTarget).semantics { contentDescription = menuDescription }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_more_vert),
+                    contentDescription = null,
+                    tint = colorResource(R.color.baseColor),
+                    modifier = Modifier.size(MENU_ICON_SIZE_DP.dp).testTag(TOKEN_MENU_ICON_TAG),
+                )
             }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 DropdownMenuItem(text = { Text(stringResource(R.string.changeChips)) }, enabled = enabled,
@@ -220,6 +225,7 @@ internal const val TOKEN_BOARD_TAG = "token-board"
 internal const val REINFORCEMENT_TAG = "board-reinforcement"
 internal const val TOKEN_MENU_ICON_TAG = "board-menu-icon"
 private const val MENU_ICON_SIZE_DP = 24
+private const val MENU_CENTERING_DIVISOR = 2
 private const val CONTENT_WEIGHT = 1f
 private const val PHOTO_MAX_SIZE_DP = 150
 private const val WIDE_WINDOW_MIN_WIDTH_DP = 840

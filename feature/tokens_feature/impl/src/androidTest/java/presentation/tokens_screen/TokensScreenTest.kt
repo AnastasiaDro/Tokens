@@ -112,7 +112,7 @@ class TokensScreenTest {
         compose.runOnIdle { assertEquals(listOf(COUNT, CLEAR, SETTINGS), actions) }
     }
 
-    @Test fun compactMenuIconStaysAtTopOfFullTouchTargetWithLargeFont() {
+    @Test fun compactMenuIconAndPressTargetShareTheirCenterWithLargeFont() {
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
                 TokensTheme { TokensScreen(ready(), {}, {}, {}, {}, {}, {}) }
@@ -124,9 +124,9 @@ class TokensScreenTest {
             .assertIsDisplayed().assertWidthIsEqualTo(MENU_ICON_SIZE.dp).assertHeightIsEqualTo(MENU_ICON_SIZE.dp)
         val menuBounds = menu.fetchSemanticsNode().boundsInRoot
         val iconBounds = icon.fetchSemanticsNode().boundsInRoot
-        assertEquals(menuBounds.top, iconBounds.top, PIXEL_TOLERANCE)
         assertEquals(menuBounds.center.x, iconBounds.center.x, PIXEL_TOLERANCE)
-        // The lower half remains clickable even though the icon is at the top.
+        assertEquals(menuBounds.center.y, iconBounds.center.y, PIXEL_TOLERANCE)
+        // The complete minimum touch target remains clickable around the centered indication.
         menu.performTouchInput { click(Offset(centerX, height * MENU_LOWER_TOUCH_FRACTION)) }
         compose.onNodeWithText(context.getString(R.string.settings)).assertIsDisplayed()
     }
