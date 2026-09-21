@@ -113,16 +113,34 @@ class SettingsScreenTest {
             }
         }
         val change = compose.onNodeWithText(context.getString(CoreR.string.change))
+        val select = compose.onNodeWithText(context.getString(R.string.select_button_text))
         change.performScrollTo().assertIsNotEnabled()
         compose.runOnIdle { state.value = ready().copy(readFailure = true, writeFailure = true) }
         change.assertIsNotEnabled()
         compose.onNodeWithText(context.getString(CoreR.string.storage_read_error)).performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(listOf(Unit), retries)
+            state.value = ready()
+        }
+        val enabledButton = change.performScrollTo().assertIsEnabled().captureToImage().toPixelMap()
+        compose.runOnIdle {
             state.value = ready().copy(saving = true)
         }
         change.performScrollTo().assertIsNotEnabled()
+        select.performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText(context.getString(R.string.settings_saving)).assertDoesNotExist()
+        val disabledButton = change.captureToImage().toPixelMap()
+        assertEquals(enabledButton.width, disabledButton.width)
+        assertEquals(enabledButton.height, disabledButton.height)
+        for (x in FIRST_PIXEL until enabledButton.width) {
+            for (y in FIRST_PIXEL until enabledButton.height) {
+                assertEquals(
+                    "Settings action changed color at ($x,$y)",
+                    enabledButton[x, y].toArgb(),
+                    disabledButton[x, y].toArgb(),
+                )
+            }
+        }
         compose.runOnIdle { state.value = ready().copy(writeFailure = true) }
         compose.onNodeWithText(context.getString(CoreR.string.storage_write_error)).performScrollTo().assertIsEnabled()
         change.assertIsEnabled()

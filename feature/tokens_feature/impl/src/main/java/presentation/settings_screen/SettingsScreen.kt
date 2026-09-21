@@ -20,6 +20,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -140,12 +141,11 @@ private fun SettingsControls(
             horizontalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing)) {
             Text(stringResource(R.string.changeChips), modifier = Modifier.weight(LABEL_WEIGHT))
             Text(state.tokens?.count?.toString().orEmpty(), Modifier.testTag(SETTINGS_COUNT_TAG))
-            TextButton(onClick = onSelectCount, enabled = enabled) {
-                Text(
-                    stringResource(CoreR.string.change),
-                    style = MaterialTheme.typography.link,
-                )
-            }
+            SettingsActionButton(
+                text = stringResource(CoreR.string.change),
+                enabled = enabled,
+                onClick = onSelectCount,
+            )
         }
         HorizontalDivider()
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
@@ -155,12 +155,11 @@ private fun SettingsControls(
                 Box(Modifier.size(COLOR_PREVIEW_SIZE_DP.dp).background(Color(it.color), CircleShape)
                     .testTag(SETTINGS_COLOR_TAG))
             }
-            TextButton(onClick = onSelectColor, enabled = enabled) {
-                Text(
-                    stringResource(R.string.select_button_text),
-                    style = MaterialTheme.typography.link,
-                )
-            }
+            SettingsActionButton(
+                text = stringResource(R.string.select_button_text),
+                enabled = enabled,
+                onClick = onSelectColor,
+            )
         }
         HorizontalDivider()
         SettingsSwitch(stringResource(R.string.settings_animation), state.effects?.animation, enabled,
@@ -169,6 +168,25 @@ private fun SettingsControls(
             onSoundChanged, verticalSpacing)
         SettingsSwitch(stringResource(R.string.reinforcement_image), state.reinforcement?.enabled,
             enabled, onReinforcementChanged, verticalSpacing)
+    }
+}
+
+@Composable
+private fun SettingsActionButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val actionColor = MaterialTheme.colorScheme.primary
+    TextButton(
+        onClick = onClick,
+        enabled = enabled,
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = actionColor,
+            disabledContentColor = actionColor,
+        ),
+    ) {
+        Text(text, style = MaterialTheme.typography.link)
     }
 }
 
