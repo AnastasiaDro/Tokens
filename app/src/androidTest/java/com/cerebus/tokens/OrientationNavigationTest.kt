@@ -34,7 +34,7 @@ class OrientationNavigationTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
-    fun boardRequestsLandscapeAndSettingsReleaseOrientation() {
+    fun boardAndSettingsUsePhoneLandscape() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             waitForRoute<TokensBoard>(scenario)
             val boardOrientation = scenario.expectedBoardOrientation()
@@ -47,7 +47,7 @@ class OrientationNavigationTest {
                 koin.get<TokensMediator>().open(it.navController, TokensEntry.SETTINGS)
             }
             waitForRoute<TokensSettings>(scenario)
-            waitForRequestedOrientation(scenario, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+            waitForRequestedOrientation(scenario, boardOrientation)
 
             scenario.onActivity { assertTrue(it.navController.popBackStack()) }
             waitForRoute<TokensBoard>(scenario)
@@ -71,11 +71,11 @@ class OrientationNavigationTest {
                 koin.get<TokensMediator>().open(it.navController, TokensEntry.SETTINGS)
             }
             waitForRoute<TokensSettings>(scenario)
-            waitForRequestedOrientation(scenario, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+            waitForRequestedOrientation(scenario, boardOrientation)
 
             openPhoto(scenario)
             waitForRoute<PhotoDestination>(scenario)
-            waitForRequestedOrientation(scenario, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+            waitForRequestedOrientation(scenario, boardOrientation)
         }
     }
 
@@ -95,18 +95,18 @@ class OrientationNavigationTest {
                 koin.get<TokensMediator>().open(it.navController, TokensEntry.SETTINGS)
             }
             waitForRoute<TokensSettings>(scenario)
-            waitForRequestedOrientation(scenario, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+            waitForRequestedOrientation(scenario, boardOrientation)
 
             compose.onNodeWithText(context.getString(CoreR.string.change)).performScrollTo().performClick()
             compose.onNodeWithContentDescription(context.getString(TokensR.string.increase_tokens_count))
                 .fetchSemanticsNode()
-            waitForRequestedOrientation(scenario, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+            waitForRequestedOrientation(scenario, boardOrientation)
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).performClick()
 
             compose.onNodeWithText(context.getString(TokensR.string.select_button_text))
                 .performScrollTo().performClick()
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).performScrollTo().fetchSemanticsNode()
-            waitForRequestedOrientation(scenario, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+            waitForRequestedOrientation(scenario, boardOrientation)
         }
     }
 
@@ -125,7 +125,7 @@ class OrientationNavigationTest {
             waitForRoute<TokensSettings>(scenario)
             scenario.recreate()
             waitForRoute<TokensSettings>(scenario)
-            waitForRequestedOrientation(scenario, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+            waitForRequestedOrientation(scenario, boardOrientation)
         }
     }
 

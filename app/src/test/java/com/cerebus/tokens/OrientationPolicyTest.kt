@@ -16,10 +16,21 @@ class OrientationPolicyTest {
     }
 
     @Test
-    fun settingsOnPhoneLeaveOrientationToSystem() {
+    fun settingsOnPhoneRequestsLandscape() {
+        assertOrientation(
+            expected = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
+            isTokenBoard = false,
+            isSettings = true,
+            smallestScreenWidthDp = PHONE_SMALLEST_WIDTH_DP,
+        )
+    }
+
+    @Test
+    fun unrelatedScreenOnPhoneLeavesOrientationToSystem() {
         assertOrientation(
             expected = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
             isTokenBoard = false,
+            isSettings = false,
             smallestScreenWidthDp = PHONE_SMALLEST_WIDTH_DP,
         )
     }
@@ -73,13 +84,15 @@ class OrientationPolicyTest {
     private fun assertOrientation(
         expected: Int,
         isTokenBoard: Boolean,
+        isSettings: Boolean = false,
         smallestScreenWidthDp: Int,
         isInMultiWindowMode: Boolean = false,
     ) {
         assertEquals(
             expected,
-            tokenBoardRequestedOrientation(
+            tokensRequestedOrientation(
                 isTokenBoard = isTokenBoard,
+                isSettings = isSettings,
                 smallestScreenWidthDp = smallestScreenWidthDp,
                 isInMultiWindowMode = isInMultiWindowMode,
             ),

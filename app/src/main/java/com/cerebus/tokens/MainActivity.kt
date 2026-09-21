@@ -29,6 +29,7 @@ import com.cerebus.tokens.feature.tokens_feature.api.TokensBoard
 import com.cerebus.tokens.core.ui.theme.TokensTheme
 import com.cerebus.tokens.feature.tokens_feature.api.TokensGraph
 import com.cerebus.tokens.feature.tokens_feature.api.TokensMediator
+import com.cerebus.tokens.feature.tokens_feature.api.TokensSettings
 import com.cerebus.tokens.reinforcement_photo.api.ReinforcementPhotoMediator
 import org.koin.android.ext.android.inject
 
@@ -52,13 +53,13 @@ class MainActivity : ComponentActivity() {
                     tokensMediator.registerGraph(this, controller)
                     photoMediator.registerGraph(this, controller)
                 }
-                TokenBoardOrientationEffect(controller)
+                TokensOrientationEffect(controller)
             }
         }
     }
 
     @Composable
-    private fun TokenBoardOrientationEffect(controller: NavHostController) {
+    private fun TokensOrientationEffect(controller: NavHostController) {
         val configuration = LocalConfiguration.current
         val visibleEntries by controller.visibleEntries.collectAsState()
         var isInMultiWindowMode by remember(this@MainActivity) {
@@ -77,8 +78,9 @@ class MainActivity : ComponentActivity() {
             entry.destination !is FloatingWindow && entry.destination !is NavGraph
         }?.destination
         if (baseDestination != null) {
-            val requestedOrientation = tokenBoardRequestedOrientation(
+            val requestedOrientation = tokensRequestedOrientation(
                 isTokenBoard = baseDestination.hasRoute<TokensBoard>(),
+                isSettings = baseDestination.hasRoute<TokensSettings>(),
                 smallestScreenWidthDp = configuration.smallestScreenWidthDp,
                 isInMultiWindowMode = isInMultiWindowMode,
             )
