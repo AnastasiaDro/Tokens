@@ -20,6 +20,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -84,8 +85,16 @@ object TokensComponentDefaults {
     fun switchColors(): SwitchColors = SwitchDefaults.colors(
         checkedThumbColor = TokensColors.SwitchThumb,
         checkedTrackColor = TokensColors.SwitchCheckedTrack,
+        checkedBorderColor = Color.Transparent,
         uncheckedThumbColor = TokensColors.SwitchThumb,
         uncheckedTrackColor = TokensColors.SwitchUncheckedTrack,
+        uncheckedBorderColor = TokensColors.Divider,
+        disabledCheckedThumbColor = TokensColors.SwitchThumb,
+        disabledCheckedTrackColor = TokensColors.SwitchCheckedTrack,
+        disabledCheckedBorderColor = Color.Transparent,
+        disabledUncheckedThumbColor = TokensColors.SwitchThumb,
+        disabledUncheckedTrackColor = TokensColors.SwitchUncheckedTrack,
+        disabledUncheckedBorderColor = TokensColors.Divider,
     )
 
     @Composable

@@ -126,6 +126,12 @@ class SettingsScreenTest {
             state.value = ready()
         }
         val enabledButton = change.performScrollTo().assertIsEnabled().captureToImage().toPixelMap()
+        val sound = compose.onNodeWithText(context.getString(R.string.settings_sound))
+        val enabledCheckedSwitch = sound.performScrollTo().assertIsEnabled().assertIsOn()
+            .captureToImage().toPixelMap()
+        val reinforcement = compose.onNodeWithText(context.getString(R.string.reinforcement_image))
+        val enabledUncheckedSwitch = reinforcement.performScrollTo().assertIsEnabled().assertIsOff()
+            .captureToImage().toPixelMap()
         compose.runOnIdle {
             state.value = ready().copy(saving = true)
         }
@@ -133,15 +139,25 @@ class SettingsScreenTest {
         select.performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText(context.getString(R.string.settings_saving)).assertDoesNotExist()
         val disabledButton = change.captureToImage().toPixelMap()
-        assertEquals(enabledButton.width, disabledButton.width)
-        assertEquals(enabledButton.height, disabledButton.height)
-        for (x in FIRST_PIXEL until enabledButton.width) {
-            for (y in FIRST_PIXEL until enabledButton.height) {
-                assertEquals(
-                    "Settings action changed color at ($x,$y)",
-                    enabledButton[x, y].toArgb(),
-                    disabledButton[x, y].toArgb(),
-                )
+        val disabledCheckedSwitch = sound.performScrollTo().assertIsNotEnabled().assertIsOn()
+            .captureToImage().toPixelMap()
+        val disabledUncheckedSwitch = reinforcement.performScrollTo().assertIsNotEnabled().assertIsOff()
+            .captureToImage().toPixelMap()
+        listOf(
+            Triple("Settings action", enabledButton, disabledButton),
+            Triple("Checked switch", enabledCheckedSwitch, disabledCheckedSwitch),
+            Triple("Unchecked switch", enabledUncheckedSwitch, disabledUncheckedSwitch),
+        ).forEach { (component, enabledImage, disabledImage) ->
+            assertEquals(enabledImage.width, disabledImage.width)
+            assertEquals(enabledImage.height, disabledImage.height)
+            for (x in FIRST_PIXEL until enabledImage.width) {
+                for (y in FIRST_PIXEL until enabledImage.height) {
+                    assertEquals(
+                        "$component changed color at ($x,$y)",
+                        enabledImage[x, y].toArgb(),
+                        disabledImage[x, y].toArgb(),
+                    )
+                }
             }
         }
         compose.runOnIdle { state.value = ready().copy(writeFailure = true) }
