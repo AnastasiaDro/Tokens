@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Density
@@ -29,8 +30,10 @@ import presentation.settings_screen.SettingsUiState
 import presentation.settings_screen.TokenSettingsState
 import presentation.state.SaveState
 import presentation.tokens_screen.COUNT_VALUE_TAG
+import presentation.tokens_screen.COUNT_WHEEL_TAG
 import presentation.tokens_screen.SelectTokensNumberScreen
 import presentation.tokens_screen.SelectTokensNumberUiState
+import presentation.tokens_screen.countPresetTag
 import com.cerebus.tokens.core.ui.R as CoreR
 
 @RunWith(AndroidJUnit4::class)
@@ -177,27 +180,32 @@ class SettingsScreenTest {
         compose.runOnIdle { assertEquals(listOf(YOUTUBE, OTHER_APPS), clicks) }
     }
 
-    @Test fun countControlsRespectBoundsAndDelegateDraftWithoutSaving() {
+    @Test fun countWheelAndPresetsDelegateDraftWithoutSaving() {
         val state = mutableStateOf(SelectTokensNumberUiState(count = MIN_TOKEN_COUNT))
         val selections = mutableListOf<Int>()
         val confirmations = mutableListOf<Unit>()
         compose.setContent {
             TokensTheme {
-                SelectTokensNumberScreen(state.value, { selections += it }, { confirmations += Unit }, {})
+                SelectTokensNumberScreen(state.value, {
+                    selections += it
+                    state.value = state.value.copy(count = it)
+                }, { confirmations += Unit }, {})
             }
         }
-        val decrease = compose.onNodeWithContentDescription(context.getString(R.string.decrease_tokens_count))
-        val increase = compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count))
-        decrease.assertIsNotEnabled()
-        increase.performClick()
-        compose.runOnIdle {
-            assertEquals(listOf(MIN_TOKEN_COUNT + COUNT_STEP), selections)
-            assertTrue(confirmations.isEmpty())
-            state.value = state.value.copy(count = MAX_TOKEN_COUNT)
+        compose.onNodeWithTag(countPresetTag(MIN_TOKEN_COUNT)).assertIsSelected()
+        compose.onNodeWithTag(COUNT_WHEEL_TAG).performSemanticsAction(SemanticsActions.SetProgress) { setProgress ->
+            assertTrue(setProgress(NON_PRESET_COUNT.toFloat()))
         }
-        increase.assertIsNotEnabled()
-        decrease.assertIsEnabled()
+        compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(NON_PRESET_COUNT.toString())
+        compose.onNodeWithText(PREVIOUS_COUNT.toString()).assertIsDisplayed()
+        compose.onNodeWithText(NEXT_COUNT.toString()).assertIsDisplayed()
+        PRESET_COUNTS.forEach { count -> compose.onNodeWithTag(countPresetTag(count)).assertIsNotSelected() }
+        compose.onNodeWithTag(countPresetTag(MAX_TOKEN_COUNT)).performClick().assertIsSelected()
         compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(MAX_TOKEN_COUNT.toString())
+        compose.runOnIdle {
+            assertEquals(listOf(NON_PRESET_COUNT, MAX_TOKEN_COUNT), selections)
+            assertTrue(confirmations.isEmpty())
+        }
     }
 
     @Test fun countSaveBlocksAllActionsAndErrorKeepsSelection() {
@@ -208,8 +216,8 @@ class SettingsScreenTest {
         }
         compose.onNodeWithText(context.getString(CoreR.string.OK)).assertIsNotEnabled()
         compose.onNodeWithText(context.getString(CoreR.string.cancel)).assertIsNotEnabled()
-        compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).assertIsNotEnabled()
-        compose.onNodeWithContentDescription(context.getString(R.string.decrease_tokens_count)).assertIsNotEnabled()
+        compose.onNodeWithTag(COUNT_WHEEL_TAG).assertIsNotEnabled()
+        compose.onNodeWithTag(countPresetTag(SELECTED_COUNT)).assertIsNotEnabled()
         compose.runOnIdle { state.value = state.value.copy(save = SaveState.ERROR) }
         compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(SELECTED_COUNT.toString())
         compose.onNodeWithText(context.getString(CoreR.string.storage_save_error)).assertIsDisplayed()
@@ -227,11 +235,17 @@ class SettingsScreenTest {
         const val FIRST_PIXEL = 0
         const val SWITCH_SETTLE_MILLIS = 400L
         const val SELECTED_COUNT = 5
-        const val TOKEN_COLOR = -65536
+        const val NON_PRESET_COUNT = 7
         const val COUNT_STEP = 1
+        const val PREVIOUS_COUNT = NON_PRESET_COUNT - COUNT_STEP
+        const val NEXT_COUNT = NON_PRESET_COUNT + COUNT_STEP
+        const val PRESET_TEN = 10
+        const val PRESET_FIFTEEN = 15
+        const val TOKEN_COLOR = -65536
         const val LARGE_FONT_SCALE = 2f
         const val NARROW_WIDTH_DP = 320
         const val YOUTUBE = "youtube"
         const val OTHER_APPS = "other_apps"
+        val PRESET_COUNTS = listOf(MIN_TOKEN_COUNT, SELECTED_COUNT, PRESET_TEN, PRESET_FIFTEEN, MAX_TOKEN_COUNT)
     }
 }

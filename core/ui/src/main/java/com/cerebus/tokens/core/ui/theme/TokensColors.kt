@@ -15,6 +15,7 @@ object TokensColors {
     val Divider = Color(DIVIDER_ARGB)
     val MenuSurface = Color(MENU_SURFACE_ARGB)
     val MenuPressed = Color(MENU_PRESSED_ARGB)
+    val WarmActionContainer = Color(WARM_ACTION_CONTAINER_ARGB)
 
     // Compatibility aliases for existing consumers of the shared theme tokens.
     val Accent = SecondaryText
@@ -35,4 +36,5 @@ object TokensColors {
     private const val DIVIDER_ARGB = 0xFFE5E7EB
     private const val MENU_SURFACE_ARGB = 0xFFFFFFFF
     private const val MENU_PRESSED_ARGB = 0xFFFCE8DF
+    private const val WARM_ACTION_CONTAINER_ARGB = 0xFFFFF1E8
 }

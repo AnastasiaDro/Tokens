@@ -7,11 +7,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.cerebus.tokens.feature.tokens_feature.ColorDestination
 import androidx.test.core.app.ActivityScenario
@@ -55,6 +56,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.geometry.Offset
 import org.junit.Assert.assertNotEquals
 import presentation.tokens_screen.COUNT_VALUE_TAG
+import presentation.tokens_screen.COUNT_WHEEL_TAG
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import com.cerebus.tokens.core.ui.R as CoreR
@@ -86,6 +88,14 @@ class SettingsFlowTest {
         compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(INITIAL_COUNT.toString())
     }
 
+    private fun selectCount(count: Int) {
+        compose.onNodeWithTag(COUNT_WHEEL_TAG)
+            .performSemanticsAction(SemanticsActions.SetProgress) { setProgress ->
+                assertTrue(setProgress(count.toFloat()))
+            }
+        compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(count.toString())
+    }
+
     @Test fun settingsAndColorDraftRemainUsableInBothOrientations() {
         launch().use { scenario ->
             scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
@@ -105,8 +115,7 @@ class SettingsFlowTest {
     @Test fun draftSurvivesActivityRecreationAndSavedCountUpdatesSettings() {
         launch().use { scenario ->
             openCount()
-            compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).performClick()
-            compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(CHANGED_COUNT.toString())
+            selectCount(CHANGED_COUNT)
             assertEquals(INITIAL_COUNT, board.board.value.count)
             scenario.recreate()
             compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(CHANGED_COUNT.toString())
@@ -120,7 +129,7 @@ class SettingsFlowTest {
     @Test fun cancelDiscardsDraftAndReopeningUsesSavedCount() {
         launch().use {
             openCount()
-            compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).performClick()
+            selectCount(CHANGED_COUNT)
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).performClick()
             compose.onNodeWithTag(SETTINGS_COUNT_TAG).assertTextEquals(INITIAL_COUNT.toString())
             openCount()
@@ -247,7 +256,7 @@ class SettingsFlowTest {
         board.failWrite = true
         launch().use { scenario ->
             openCount()
-            compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).performClick()
+            selectCount(CHANGED_COUNT)
             compose.onNodeWithText(context.getString(CoreR.string.OK)).performClick()
             compose.onNodeWithText(context.getString(CoreR.string.OK)).assertIsNotEnabled()
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).assertIsNotEnabled()

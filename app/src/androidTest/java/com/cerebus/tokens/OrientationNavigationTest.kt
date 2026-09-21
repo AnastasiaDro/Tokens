@@ -86,7 +86,7 @@ class OrientationNavigationTest {
             val boardOrientation = scenario.expectedBoardOrientation()
             compose.onNodeWithContentDescription(context.getString(TokensR.string.tokens_menu)).performClick()
             compose.onNodeWithText(context.getString(TokensR.string.changeChips)).performClick()
-            compose.onNodeWithContentDescription(context.getString(TokensR.string.increase_tokens_count))
+            compose.onNodeWithText(context.getString(TokensR.string.quick_count_selection))
                 .fetchSemanticsNode()
             waitForRequestedOrientation(scenario, boardOrientation)
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).performClick()
@@ -98,7 +98,7 @@ class OrientationNavigationTest {
             waitForRequestedOrientation(scenario, boardOrientation)
 
             compose.onNodeWithText(context.getString(CoreR.string.change)).performScrollTo().performClick()
-            compose.onNodeWithContentDescription(context.getString(TokensR.string.increase_tokens_count))
+            compose.onNodeWithText(context.getString(TokensR.string.quick_count_selection))
                 .fetchSemanticsNode()
             waitForRequestedOrientation(scenario, boardOrientation)
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).performClick()

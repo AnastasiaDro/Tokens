@@ -6,6 +6,8 @@
     <string name="settings_saving">Сохранение…</string>
     <string name="decrease_tokens_count">Уменьшить количество жетонов</string>
     <string name="increase_tokens_count">Увеличить количество жетонов</string>
+    <string name="quick_count_selection">Быстрый выбор</string>
+    <string name="token_count_range">Можно выбрать от %1$d до %2$d</string>
     <string name="link_open_error">Нет приложения для открытия ссылки.</string>
     <string name="changeChips">Кол-во жетонов</string>
     <string name="clearChecked">Очистить</string>

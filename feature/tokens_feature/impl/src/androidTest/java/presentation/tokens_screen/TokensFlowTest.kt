@@ -3,6 +3,7 @@ package presentation.tokens_screen
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.lifecycle.Lifecycle
@@ -69,6 +70,13 @@ class TokensFlowTest {
     private fun openMenu() = compose.onNodeWithContentDescription(context.getString(R.string.tokens_menu)).performClick()
     private fun click(id: String) = compose.onNodeWithTag(tokenTag(id)).performClick()
     private fun win() { click(FIRST_ID); click(LAST_ID) }
+    private fun selectCount(count: Int) {
+        compose.onNodeWithTag(COUNT_WHEEL_TAG)
+            .performSemanticsAction(SemanticsActions.SetProgress) { setProgress ->
+                assertTrue(setProgress(count.toFloat()))
+            }
+        compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(count.toString())
+    }
 
     @Test fun soundOnlyVictoryPlaysOnceAndRecreationDoesNotReplayIt() {
         launch().use { scenario ->
@@ -139,7 +147,7 @@ class TokensFlowTest {
             click(FIRST_ID)
             openMenu()
             compose.onNodeWithText(context.getString(R.string.changeChips)).performClick()
-            compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).performClick()
+            selectCount(RESIZED_COUNT)
             compose.onNodeWithText(context.getString(CoreR.string.OK)).performClick()
             compose.onAllNodesWithContentDescription(context.getString(R.string.token_description)).assertCountEquals(RESIZED_COUNT)
             compose.onNodeWithTag(tokenTag(FIRST_ID)).assertIsOn()
@@ -165,10 +173,7 @@ class TokensFlowTest {
             click(FIRST_ID)
             openMenu()
             compose.onNodeWithText(context.getString(R.string.changeChips)).performClick()
-            repeat(MAX_TOKEN_COUNT - board.board.value.count) {
-                compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).performClick()
-            }
-            compose.onNodeWithContentDescription(context.getString(R.string.increase_tokens_count)).assertIsNotEnabled()
+            selectCount(MAX_TOKEN_COUNT)
             scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
             compose.waitUntil(ROTATION_TIMEOUT_MS) {
                 context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
