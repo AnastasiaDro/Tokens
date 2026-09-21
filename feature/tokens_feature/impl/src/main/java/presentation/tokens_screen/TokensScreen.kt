@@ -149,8 +149,8 @@ private fun BoardMenu(
     val menuVisualOffset =
         (TokensDimensions.MinimumTouchTarget - MENU_ICON_SIZE_DP.dp) / MENU_CENTERING_DIVISOR
     Box(modifier, contentAlignment = Alignment.CenterEnd) {
-        Box {
-            IconButton(onClick = { expanded = true }, modifier = Modifier.offset(y = -menuVisualOffset)
+        Box(Modifier.offset(y = -menuVisualOffset)) {
+            IconButton(onClick = { expanded = true }, modifier = Modifier
                 .size(TokensDimensions.MinimumTouchTarget).semantics { contentDescription = menuDescription }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_more_vert),
@@ -251,13 +251,9 @@ private class TokenMenuPositionProvider(
             LayoutDirection.Ltr -> anchorBounds.right - popupContentSize.width
             LayoutDirection.Rtl -> anchorBounds.left
         }
-        val belowAnchor = anchorBounds.bottom
-        val aboveAnchor = anchorBounds.top - popupContentSize.height
-        val maxY = windowSize.height - windowMargin
-        val desiredY = if (belowAnchor + popupContentSize.height <= maxY) belowAnchor else aboveAnchor
         return IntOffset(
             x = constrainedPopupPosition(desiredX, popupContentSize.width, windowSize.width, windowMargin),
-            y = constrainedPopupPosition(desiredY, popupContentSize.height, windowSize.height, windowMargin),
+            y = constrainedPopupPosition(anchorBounds.top, popupContentSize.height, windowSize.height, windowMargin),
         )
     }
 }
