@@ -106,13 +106,6 @@ internal fun SelectTokensNumberScreen(
                     modifier = Modifier.weight(DIALOG_CONTENT_WEIGHT),
                 )
             }
-            if (state.save == SaveState.SAVING) {
-                Text(
-                    text = stringResource(R.string.settings_saving),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
             if (state.save == SaveState.ERROR) {
                 Text(
                     text = stringResource(CoreR.string.storage_save_error),
