@@ -10,6 +10,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.Modifier
@@ -20,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.cerebus.tokens.core.ui.theme.TokensTheme
+import com.cerebus.tokens.core.ui.theme.TokensColors
+import com.cerebus.tokens.core.ui.theme.TokensDimensions
 import com.cerebus.tokens.data.reinforcement.ReinforcementSettings
 import com.cerebus.tokens.feature.tokens_feature.R
 import domain.repository.MAX_TOKEN_COUNT
@@ -129,6 +133,40 @@ class TokensScreenTest {
         // The complete minimum touch target remains clickable around the centered indication.
         menu.performTouchInput { click(Offset(centerX, height * MENU_LOWER_TOUCH_FRACTION)) }
         compose.onNodeWithText(context.getString(R.string.settings)).assertIsDisplayed()
+    }
+
+    @Test fun overflowMenuUsesCompactThemeMetrics() {
+        compose.setContent { TokensTheme { TokensScreen(ready(), {}, {}, {}, {}, {}, {}) } }
+
+        openMenu()
+
+        val popup = compose.onNodeWithTag(TOKEN_MENU_POPUP_TAG)
+            .assertIsDisplayed()
+            .assertWidthIsEqualTo(TokensDimensions.MenuWidth)
+        val popupBounds = popup.fetchSemanticsNode().boundsInRoot
+        val count = compose.onNodeWithText(context.getString(R.string.changeChips))
+            .assertHeightIsAtLeast(TokensDimensions.MenuItemMinHeight)
+            .fetchSemanticsNode().boundsInRoot
+        val clear = compose.onNodeWithText(context.getString(R.string.clearChecked))
+            .assertHeightIsAtLeast(TokensDimensions.MenuItemMinHeight)
+            .fetchSemanticsNode().boundsInRoot
+        val settings = compose.onNodeWithText(context.getString(R.string.settings))
+            .assertHeightIsAtLeast(TokensDimensions.MenuItemMinHeight)
+            .fetchSemanticsNode().boundsInRoot
+        val divider = compose.onNodeWithTag(TOKEN_MENU_DIVIDER_TAG)
+            .assertHeightIsEqualTo(TokensDimensions.MenuDividerThickness)
+            .fetchSemanticsNode().boundsInRoot
+        val verticalPaddingPx = with(compose.density) { TokensDimensions.MenuVerticalPadding.toPx() }
+
+        assertEquals(verticalPaddingPx, count.top - popupBounds.top, PIXEL_TOLERANCE)
+        assertEquals(verticalPaddingPx, popupBounds.bottom - settings.bottom, PIXEL_TOLERANCE)
+        assertTrue(clear.bottom <= divider.top && divider.bottom <= settings.top)
+
+        val popupPixels = popup.captureToImage().toPixelMap()
+        assertEquals(
+            TokensColors.MenuSurface.toArgb(),
+            popupPixels[popupPixels.width / CENTER_DIVISOR, MENU_SURFACE_SAMPLE_Y].toArgb(),
+        )
     }
 
     @Test fun photoLeavesRoomForAllTokensAndFollowsOnlySavedSetting() {
@@ -279,6 +317,7 @@ class TokensScreenTest {
         const val MENU_TOUCH_SIZE = 48
         const val MENU_ICON_SIZE = 24
         const val MENU_LOWER_TOUCH_FRACTION = 0.75f
+        const val MENU_SURFACE_SAMPLE_Y = 2
         val PHONE_WINDOW = DpSize(BOARD_WIDTH.dp, 600.dp)
         val LANDSCAPE_WINDOW = DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp)
         val TABLET_WINDOW = DpSize(1000.dp, TABLET_HEIGHT.dp)

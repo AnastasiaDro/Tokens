@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,11 +20,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cerebus.tokens.core.ui.PhotoPreview
+import com.cerebus.tokens.core.ui.theme.TokensColors
+import com.cerebus.tokens.core.ui.theme.TokensComponentDefaults
 import com.cerebus.tokens.core.ui.theme.TokensDimensions
+import com.cerebus.tokens.core.ui.theme.menuItem
 import com.cerebus.tokens.feature.tokens_feature.R
 import presentation.state.StorageFailure
 import presentation.state.TokenState
@@ -148,18 +159,118 @@ private fun BoardMenu(
                     modifier = Modifier.size(MENU_ICON_SIZE_DP.dp).testTag(TOKEN_MENU_ICON_TAG),
                 )
             }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                DropdownMenuItem(text = { Text(stringResource(R.string.changeChips)) }, enabled = enabled,
-                    onClick = { expanded = false; onSelectCount() })
-                DropdownMenuItem(text = { Text(stringResource(R.string.clearChecked)) }, enabled = enabled,
-                    onClick = { expanded = false; onClear() })
-                DropdownMenuItem(text = { Text(stringResource(R.string.settings)) },
-                    onClick = { expanded = false; onSettings() })
-                if (showPhoto) DropdownMenuItem(text = { Text(stringResource(R.string.reinforcement_image)) },
-                    onClick = { expanded = false; onPhoto() })
+            CompactDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                BoardMenuItem(stringResource(R.string.changeChips), enabled) {
+                    expanded = false
+                    onSelectCount()
+                }
+                BoardMenuItem(stringResource(R.string.clearChecked), enabled) {
+                    expanded = false
+                    onClear()
+                }
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = TokensDimensions.MenuHorizontalPadding)
+                        .testTag(TOKEN_MENU_DIVIDER_TAG),
+                    thickness = TokensDimensions.MenuDividerThickness,
+                    color = TokensColors.Divider,
+                )
+                BoardMenuItem(stringResource(R.string.settings)) {
+                    expanded = false
+                    onSettings()
+                }
+                if (showPhoto) BoardMenuItem(stringResource(R.string.reinforcement_image)) {
+                    expanded = false
+                    onPhoto()
+                }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CompactDropdownMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (!expanded) return
+    val density = LocalDensity.current
+    val positionProvider = remember(density) {
+        TokenMenuPositionProvider(with(density) { TokensDimensions.SmallSpacing.roundToPx() })
+    }
+    CompositionLocalProvider(
+        LocalRippleConfiguration provides RippleConfiguration(color = TokensColors.MenuPressed),
+    ) {
+        Popup(
+            popupPositionProvider = positionProvider,
+            onDismissRequest = onDismissRequest,
+            properties = PopupProperties(focusable = true),
+        ) {
+            Surface(
+                modifier = Modifier.width(TokensDimensions.MenuWidth).testTag(TOKEN_MENU_POPUP_TAG),
+                shape = RoundedCornerShape(TokensDimensions.MenuCornerRadius),
+                color = TokensColors.MenuSurface,
+                shadowElevation = TokensDimensions.MenuElevation,
+            ) {
+                Column(
+                    modifier = Modifier.padding(vertical = TokensDimensions.MenuVerticalPadding),
+                    content = content,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoardMenuItem(
+    text: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(text, style = MaterialTheme.typography.menuItem) },
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.heightIn(min = TokensDimensions.MenuItemMinHeight),
+        colors = TokensComponentDefaults.menuItemColors(),
+        contentPadding = PaddingValues(horizontal = TokensDimensions.MenuHorizontalPadding),
+    )
+}
+
+private class TokenMenuPositionProvider(
+    private val windowMargin: Int,
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset {
+        val desiredX = when (layoutDirection) {
+            LayoutDirection.Ltr -> anchorBounds.right - popupContentSize.width
+            LayoutDirection.Rtl -> anchorBounds.left
+        }
+        val belowAnchor = anchorBounds.bottom
+        val aboveAnchor = anchorBounds.top - popupContentSize.height
+        val maxY = windowSize.height - windowMargin
+        val desiredY = if (belowAnchor + popupContentSize.height <= maxY) belowAnchor else aboveAnchor
+        return IntOffset(
+            x = constrainedPopupPosition(desiredX, popupContentSize.width, windowSize.width, windowMargin),
+            y = constrainedPopupPosition(desiredY, popupContentSize.height, windowSize.height, windowMargin),
+        )
+    }
+}
+
+private fun constrainedPopupPosition(
+    desired: Int,
+    contentSize: Int,
+    windowSize: Int,
+    windowMargin: Int,
+): Int {
+    val maxPosition = (windowSize - contentSize - windowMargin).coerceAtLeast(NO_SIZE)
+    val minPosition = windowMargin.coerceAtMost(maxPosition)
+    return desired.coerceIn(minPosition, maxPosition)
 }
 
 @Composable
@@ -223,6 +334,8 @@ internal fun tokenTag(id: String) = "board-token-$id"
 internal const val TOKEN_BOARD_TAG = "token-board"
 internal const val REINFORCEMENT_TAG = "board-reinforcement"
 internal const val TOKEN_MENU_ICON_TAG = "board-menu-icon"
+internal const val TOKEN_MENU_POPUP_TAG = "board-menu-popup"
+internal const val TOKEN_MENU_DIVIDER_TAG = "board-menu-divider"
 private const val MENU_ICON_SIZE_DP = 24
 private const val MENU_CENTERING_DIVISOR = 2
 private const val CONTENT_WEIGHT = 1f

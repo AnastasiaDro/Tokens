@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalRippleConfiguration
@@ -74,6 +76,9 @@ private val TokensShapes = Shapes(medium = RoundedCornerShape(TokensDimensions.C
 val Typography.link: TextStyle
     get() = bodyLarge.copy(textDecoration = TextDecoration.Underline)
 
+val Typography.menuItem: TextStyle
+    get() = bodyLarge.copy(fontWeight = FontWeight.Normal)
+
 object TokensComponentDefaults {
     @Composable
     fun switchColors(): SwitchColors = SwitchDefaults.colors(
@@ -81,6 +86,11 @@ object TokensComponentDefaults {
         checkedTrackColor = TokensColors.SwitchCheckedTrack,
         uncheckedThumbColor = TokensColors.SwitchThumb,
         uncheckedTrackColor = TokensColors.SwitchUncheckedTrack,
+    )
+
+    @Composable
+    fun menuItemColors(): MenuItemColors = MenuDefaults.itemColors(
+        textColor = TokensColors.PrimaryText,
     )
 }
 

@@ -13,6 +13,8 @@ object TokensColors {
     val SwitchUncheckedTrack = Color(SWITCH_UNCHECKED_TRACK_ARGB)
     val SwitchThumb = Color(SWITCH_THUMB_ARGB)
     val Divider = Color(DIVIDER_ARGB)
+    val MenuSurface = Color(MENU_SURFACE_ARGB)
+    val MenuPressed = Color(MENU_PRESSED_ARGB)
 
     // Compatibility aliases for existing consumers of the shared theme tokens.
     val Accent = SecondaryText
@@ -31,4 +33,6 @@ object TokensColors {
     private const val SWITCH_UNCHECKED_TRACK_ARGB = 0xFFD1D5DB
     private const val SWITCH_THUMB_ARGB = 0xFFFFFFFF
     private const val DIVIDER_ARGB = 0xFFE5E7EB
+    private const val MENU_SURFACE_ARGB = 0xFFFFFFFF
+    private const val MENU_PRESSED_ARGB = 0xFFFCE8DF
 }
