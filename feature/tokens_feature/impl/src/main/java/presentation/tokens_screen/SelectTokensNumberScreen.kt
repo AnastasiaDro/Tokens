@@ -253,8 +253,8 @@ private fun QuickCountSelection(
             style = MaterialTheme.typography.titleSmall,
         )
         Row(
-            modifier = Modifier.padding(top = QUICK_SELECTION_TOP_PADDING_DP.dp),
-            horizontalArrangement = Arrangement.spacedBy(PRESET_SPACING_DP.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = QUICK_SELECTION_TOP_PADDING_DP.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             TOKEN_COUNT_PRESETS.forEach { count ->
                 CountPreset(
@@ -341,7 +341,7 @@ private const val PRESET_FIFTEEN = 15
 private const val PRESET_TWENTY = 20
 private const val MINIMUM_TOKEN_COUNT = PRESET_ONE
 private const val MAXIMUM_TOKEN_COUNT = PRESET_TWENTY
-private const val DIALOG_MAX_WIDTH_DP = 600
+private const val DIALOG_MAX_WIDTH_DP = 364
 private const val DIALOG_CONTENT_PADDING_DP = 16
 private const val DIALOG_ELEVATION_DP = 8
 private const val DIALOG_CORNER_RADIUS_DP = 24
@@ -356,7 +356,6 @@ private const val NEIGHBOR_COUNT_TEXT_SIZE_SP = 20
 private const val NEIGHBOR_COUNT_LINE_HEIGHT_SP = 24
 private const val QUICK_SELECTION_TOP_PADDING_DP = 8
 private const val QUICK_SELECTION_CAPTION_PADDING_DP = 8
-private const val PRESET_SPACING_DP = 6
 private const val PRESET_HEIGHT_DP = 38
 private const val PRESET_MIN_WIDTH_DP = 38
 private const val PRESET_HORIZONTAL_PADDING_DP = 12
