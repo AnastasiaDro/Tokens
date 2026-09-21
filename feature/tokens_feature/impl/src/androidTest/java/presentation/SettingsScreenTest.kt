@@ -122,6 +122,7 @@ class SettingsScreenTest {
             state.value = ready().copy(saving = true)
         }
         change.performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText(context.getString(R.string.settings_saving)).assertDoesNotExist()
         compose.runOnIdle { state.value = ready().copy(writeFailure = true) }
         compose.onNodeWithText(context.getString(CoreR.string.storage_write_error)).performScrollTo().assertIsEnabled()
         change.assertIsEnabled()

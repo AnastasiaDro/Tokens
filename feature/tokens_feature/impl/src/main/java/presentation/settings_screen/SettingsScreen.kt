@@ -135,7 +135,6 @@ private fun SettingsControls(
                 Text(stringResource(if (state.error == StorageFailure.READ) CoreR.string.storage_read_error else CoreR.string.storage_write_error))
             }
             state.loading -> Text(stringResource(CoreR.string.storage_loading))
-            state.saving -> Text(stringResource(R.string.settings_saving))
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing)) {
