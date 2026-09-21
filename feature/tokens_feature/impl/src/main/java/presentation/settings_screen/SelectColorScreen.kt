@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,6 +30,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,13 +74,12 @@ internal fun SelectColorScreen(
                     Text(stringResource(CoreR.string.storage_read_error), color = MaterialTheme.colorScheme.error)
                 }
                 state.loading -> Text(stringResource(CoreR.string.storage_loading))
-                state.save == SaveState.SAVING -> Text(stringResource(R.string.settings_saving))
                 state.save == SaveState.ERROR ->
                     Text(stringResource(CoreR.string.storage_save_error), color = MaterialTheme.colorScheme.error)
             }
-            // Mount only a ready, interactive picker. A disabled controller cannot initialize its coordinates.
-            if (state.editable) {
-                ColorPicker(state.color!!, onColorChange)
+            // Keep a ready picker mounted while saving so the dialog geometry remains stable.
+            if (state.color != null && !state.loading && !state.readError) {
+                ColorPicker(state.color, state.editable, onColorChange)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onCancel, enabled = state.cancellable) { Text(stringResource(CoreR.string.cancel)) }
@@ -90,29 +92,52 @@ internal fun SelectColorScreen(
 }
 
 @Composable
-private fun ColorPicker(color: Int, onColorChange: (Int) -> Unit) {
+private fun ColorPicker(color: Int, enabled: Boolean, onColorChange: (Int) -> Unit) {
     val controller = rememberColorPickerController()
     val initialColor = remember { Color(color) }
     val currentOnColorChange by rememberUpdatedState(onColorChange)
     val paletteDescription = stringResource(R.string.color_palette)
     val brightnessDescription = stringResource(R.string.color_brightness)
-    HsvColorPicker(
-        modifier = Modifier.size(PICKER_SIZE_DP.dp).testTag(COLOR_PICKER_TAG)
-            .semantics { contentDescription = paletteDescription },
-        controller = controller,
-        initialColor = initialColor,
-        onColorChanged = { envelope ->
-            // Initialization and brightness restoration are not edits to the draft.
-            if (envelope.fromUser) currentOnColorChange(envelope.color.toArgb())
-        },
-    )
-    Text(brightnessDescription)
-    BrightnessSlider(
-        modifier = Modifier.fillMaxWidth().height(TokensDimensions.MinimumTouchTarget)
-            .testTag(COLOR_BRIGHTNESS_TAG).semantics { contentDescription = brightnessDescription },
-        controller = controller,
-        initialColor = initialColor,
-    )
+    Box(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(TokensDimensions.SmallSpacing),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            HsvColorPicker(
+                modifier = Modifier.size(PICKER_SIZE_DP.dp).testTag(COLOR_PICKER_TAG)
+                    .semantics {
+                        contentDescription = paletteDescription
+                        if (!enabled) disabled()
+                    },
+                controller = controller,
+                initialColor = initialColor,
+                onColorChanged = { envelope ->
+                    // Initialization and brightness restoration are not edits to the draft.
+                    if (enabled && envelope.fromUser) currentOnColorChange(envelope.color.toArgb())
+                },
+            )
+            Text(brightnessDescription)
+            BrightnessSlider(
+                modifier = Modifier.fillMaxWidth().height(TokensDimensions.MinimumTouchTarget)
+                    .testTag(COLOR_BRIGHTNESS_TAG).semantics {
+                        contentDescription = brightnessDescription
+                        if (!enabled) disabled()
+                    },
+                controller = controller,
+                initialColor = initialColor,
+            )
+        }
+        if (!enabled) {
+            Box(Modifier.matchParentSize().pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent(PointerEventPass.Initial).changes.forEach { it.consume() }
+                    }
+                }
+            })
+        }
+    }
 }
 
 internal const val COLOR_PICKER_TAG = "color-picker"

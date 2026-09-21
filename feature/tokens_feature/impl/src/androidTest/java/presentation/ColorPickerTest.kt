@@ -50,7 +50,7 @@ class ColorPickerTest {
         }
         val selected = state.value.color
         compose.runOnIdle { state.value = state.value.copy(save = SaveState.SAVING) }
-        compose.onNodeWithTag(COLOR_PICKER_TAG).assertDoesNotExist()
+        compose.onNodeWithTag(COLOR_PICKER_TAG).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
         compose.runOnIdle { state.value = state.value.copy(save = SaveState.ERROR) }
         compose.onNodeWithTag(COLOR_PICKER_TAG).performScrollTo().assertIsDisplayed()
         compose.runOnIdle { assertEquals(selected, state.value.color) }
@@ -72,7 +72,7 @@ class ColorPickerTest {
         assertEquals(state.value.color, pixels[pixels.width / HALF_DIVISOR, pixels.height / HALF_DIVISOR].toArgb())
     }
 
-    @Test fun loadingReadFailureAndSavingDoNotMountPickerOrAllowConfirmation() {
+    @Test fun loadingAndReadFailureHidePickerWhileSavingKeepsItDisabled() {
         val state = mutableStateOf(ColorUiState())
         val retries = mutableListOf<Unit>()
         compose.setContent {
@@ -89,7 +89,7 @@ class ColorPickerTest {
             assertEquals(listOf(Unit), retries)
             state.value = state.value.copy(readError = false, save = SaveState.SAVING)
         }
-        compose.onNodeWithTag(COLOR_PICKER_TAG).assertDoesNotExist()
+        compose.onNodeWithTag(COLOR_PICKER_TAG).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
         compose.onNodeWithText(context.getString(CoreR.string.cancel)).assertIsNotEnabled()
         compose.runOnIdle { state.value = state.value.copy(save = SaveState.ERROR) }
         compose.onNodeWithTag(COLOR_PICKER_TAG).performScrollTo().assertIsDisplayed()
