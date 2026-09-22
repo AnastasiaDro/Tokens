@@ -147,11 +147,34 @@ class TokensFlowTest {
             click(FIRST_ID)
             openMenu()
             compose.onNodeWithText(context.getString(R.string.changeChips)).performClick()
+            compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(board.board.value.count.toString())
             selectCount(RESIZED_COUNT)
             compose.onNodeWithText(context.getString(CoreR.string.OK)).performClick()
             compose.onAllNodesWithContentDescription(context.getString(R.string.token_description)).assertCountEquals(RESIZED_COUNT)
             compose.onNodeWithTag(tokenTag(FIRST_ID)).assertIsOn()
             compose.runOnIdle { assertTrue(sound.plays.isEmpty()) }
+            openMenu()
+            compose.onNodeWithText(context.getString(R.string.changeChips)).performClick()
+            compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(RESIZED_COUNT.toString())
+        }
+    }
+
+    @Test fun photoActionCallsMediatorOnceAndObservationDoesNotReplayNavigation() {
+        reinforcement.settings.value = ReinforcementSettings(enabled = true)
+        launch().use { scenario ->
+            openMenu()
+            compose.onNodeWithText(context.getString(R.string.reinforcement_image)).performClick()
+            compose.runOnIdle {
+                assertEquals(listOf(Unit), photo.opens)
+                reinforcement.settings.value = reinforcement.settings.value.copy(photoUri = "content://test/photo")
+            }
+            compose.runOnIdle { assertEquals(listOf(Unit), photo.opens) }
+            scenario.recreate()
+            compose.onNodeWithTag(tokenTag(FIRST_ID)).assertIsDisplayed()
+            compose.runOnIdle { assertEquals(listOf(Unit), photo.opens) }
+            openMenu()
+            compose.onNodeWithText(context.getString(R.string.reinforcement_image)).performClick()
+            compose.runOnIdle { assertEquals(listOf(Unit, Unit), photo.opens) }
         }
     }
 
@@ -247,8 +270,9 @@ class TokensFlowTest {
         override fun stop() { playing = false }
     }
     private class PhotoMediator : ReinforcementPhotoMediator {
+        val opens = mutableListOf<Unit>()
         override fun registerGraph(builder: NavGraphBuilder, navController: NavHostController) = Unit
-        override fun open(navController: NavController) = Unit
+        override fun open(navController: NavController) { opens += Unit }
     }
     private class EffectsRepository : WinEffectsRepository {
         override val settings = MutableStateFlow(EffectsSettings(animation = false, sound = true))

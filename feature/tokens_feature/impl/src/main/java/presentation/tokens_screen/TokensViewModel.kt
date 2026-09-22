@@ -8,13 +8,22 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import presentation.state.*
+import presentation.tokens_screen.TokensReducer.effectsChanged
+import presentation.tokens_screen.TokensReducer.loadingStarted
+import presentation.tokens_screen.TokensReducer.readFailed
+import presentation.tokens_screen.TokensReducer.snapshotLoaded
+import presentation.tokens_screen.TokensReducer.snapshotObserved
+import presentation.tokens_screen.TokensReducer.writeFailed
+import presentation.tokens_screen.TokensReducer.writeStarted
+import presentation.tokens_screen.TokensReducer.writeSucceeded
 import kotlin.time.Duration.Companion.milliseconds
 
 class TokensViewModel(
     private val tokens: TokenBoardRepository,
     private val source: SettingsSnapshotSource,
+    internal val navigator: TokensNavigator,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(reduceTokens(TokensUiState(), TokensAction.Observed(source.state.value)))
+    private val mutableState = MutableStateFlow(TokensUiState().snapshotObserved(source.state.value))
     val state = mutableState.asStateFlow()
     private var retryWriteAfterRead = false
     private var timer: Job? = null
@@ -28,7 +37,32 @@ class TokensViewModel(
 
     init { viewModelScope.launch { source.state.collect(::onSnapshot) } }
 
-    private fun dispatch(action: TokensAction) { mutableState.update { reduceTokens(it, action) } }
+    fun onAction(action: TokensAction) {
+        when (action) {
+            is TokensAction.TokenClicked -> if (canUseBoard() && state.value.board?.tokens?.any { it.id == action.id } == true) {
+                toggleToken(action.id)
+            }
+            TokensAction.ClearClicked -> if (canUseBoard()) clearTokens()
+            TokensAction.RetryClicked -> if (state.value.error != null && !state.value.saving) retry()
+            TokensAction.SelectCountClicked -> if (canUseBoard()) state.value.board?.let { navigator.selectCount(it.count) }
+            TokensAction.SettingsClicked -> { onStop(); navigator.settings() }
+            TokensAction.PhotoClicked -> if (state.value.reinforcement?.enabled == true) navigator.photo()
+            is TokensAction.Observed -> updateState { snapshotObserved(action.source) }
+            TokensAction.Loading -> updateState { loadingStarted() }
+            is TokensAction.Loaded -> updateState { snapshotLoaded(action.snapshot) }
+            TokensAction.ReadFailed -> updateState { readFailed() }
+            TokensAction.WriteStarted -> updateState { writeStarted() }
+            TokensAction.WriteSucceeded -> updateState { writeSucceeded() }
+            TokensAction.WriteFailed -> updateState { writeFailed() }
+            is TokensAction.Effects -> updateState { effectsChanged(action.effects) }
+        }
+    }
+
+    private fun updateState(reduce: TokensUiState.() -> TokensUiState) {
+        mutableState.update { it.reduce() }
+    }
+
+    private fun canUseBoard(): Boolean = state.value.let { !it.loading && it.board != null && !it.readFailure }
 
     private fun onSnapshot(observed: SettingsSnapshotState) {
         if (observed.readFailure ||
@@ -36,14 +70,14 @@ class TokensViewModel(
             stopWinEffects()
         }
         snapshot = observed.snapshot
-        dispatch(TokensAction.Observed(observed))
+        onAction(TokensAction.Observed(observed))
         if (observed.ready && retryWriteAfterRead) {
             retryWriteAfterRead = false
             retryFailedWrite()
         }
     }
 
-    fun retry() {
+    private fun retry() {
         val current = state.value
         when {
             current.readFailure -> {
@@ -65,10 +99,9 @@ class TokensViewModel(
     fun onStart() { foreground = true }
     fun onStop() { foreground = false; visit += GENERATION_STEP; stopWinEffects() }
 
-    fun onTokenClicked(id: String) {
-        if (state.value.loading || state.value.board == null || state.value.error == StorageFailure.READ) return
+    private fun toggleToken(id: String) {
         val clickVisit = visit
-        mutate({ onTokenClicked(id) }) {
+        mutate({ onAction(TokensAction.TokenClicked(id)) }) {
             val result = tokens.toggle(id)
             if (result.changed && !result.board.completed) stopWinEffects()
             // A read needed only to guard an effect must not turn a committed toggle
@@ -84,7 +117,7 @@ class TokensViewModel(
                 timer?.cancel()
                 celebrationRevision = result.board.revision
                 celebrationId += GENERATION_STEP
-                dispatch(TokensAction.Effects(WinEffectsState(flags.animation, flags.sound, celebrationId)))
+                onAction(TokensAction.Effects(WinEffectsState(flags.animation, flags.sound, celebrationId)))
                 timer = viewModelScope.launch {
                     delay(WIN_EFFECTS_DURATION_MS.milliseconds)
                     stopWinEffects()
@@ -93,25 +126,24 @@ class TokensViewModel(
         }
     }
 
-    fun clearTokens() {
-        if (state.value.loading || state.value.board == null || state.value.error == StorageFailure.READ) return
+    private fun clearTokens() {
         visit += GENERATION_STEP
         stopWinEffects()
-        mutate(::clearTokens) { tokens.clear() }
+        mutate({ onAction(TokensAction.ClearClicked) }) { tokens.clear() }
     }
 
     private fun mutate(retry: () -> Unit, action: suspend () -> Unit) {
         viewModelScope.launch {
             writes.withLock {
                 retryWrite = null
-                dispatch(TokensAction.WriteStarted)
+                onAction(TokensAction.WriteStarted)
                 try {
                     action()
-                    dispatch(TokensAction.WriteSucceeded)
+                    onAction(TokensAction.WriteSucceeded)
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) {
                     retryWrite = retry
-                    dispatch(TokensAction.WriteFailed)
+                    onAction(TokensAction.WriteFailed)
                 }
             }
         }
@@ -121,7 +153,7 @@ class TokensViewModel(
         timer?.cancel()
         timer = null
         celebrationRevision = null
-        dispatch(TokensAction.Effects(WinEffectsState(false, false)))
+        onAction(TokensAction.Effects(WinEffectsState(false, false)))
     }
 
     private companion object {

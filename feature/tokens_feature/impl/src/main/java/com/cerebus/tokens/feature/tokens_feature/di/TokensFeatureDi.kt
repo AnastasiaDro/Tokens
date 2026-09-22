@@ -17,6 +17,7 @@ import presentation.settings_screen.SettingsViewModel
 import presentation.settings_screen.SelectColorViewModel
 import presentation.tokens_screen.SelectTokensNumberViewModel
 import presentation.tokens_screen.TokensViewModel
+import presentation.tokens_screen.TokensNavigator
 import presentation.tokens_screen.WinSoundOutput
 import presentation.tokens_screen.WinSoundPlayer
 import com.cerebus.tokens.logger.api.LoggerFactory
@@ -29,7 +30,8 @@ val tokensFeatureModule = module {
     single {
         SettingsSnapshotSource(get(), get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Default))
     } onClose { it?.close() }
-    viewModel { TokensViewModel(get(), get()) }
+    factory { TokensNavigator() }
+    viewModel { TokensViewModel(get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), get()) }
     viewModel { SelectTokensNumberViewModel(get(), get()) }
     viewModel { SelectColorViewModel(get(), get()) }

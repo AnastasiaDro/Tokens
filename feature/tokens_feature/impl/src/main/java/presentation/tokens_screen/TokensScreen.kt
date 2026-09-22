@@ -44,14 +44,16 @@ import com.cerebus.tokens.core.ui.R as CoreR
 @Composable
 internal fun TokensRoute(
     viewModel: TokensViewModel,
-    onSelectCount: (Int) -> Unit,
-    onSettings: () -> Unit,
-    onPhoto: () -> Unit,
+    onNavigate: (TokensNavigator.Destination) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val navigate by rememberUpdatedState(onNavigate)
+    DisposableEffect(viewModel.navigator) {
+        val binding = viewModel.navigator.bind { navigate(it) }
+        onDispose { binding.close() }
+    }
     Box(Modifier.fillMaxSize()) {
-        TokensScreen(state, viewModel::onTokenClicked, viewModel::clearTokens,
-            viewModel::retry, onSelectCount, onSettings, onPhoto)
+        TokensScreen(state, onAction = viewModel::onAction)
         WinCelebration(state.effects, Modifier.matchParentSize())
     }
 }
@@ -59,20 +61,15 @@ internal fun TokensRoute(
 @Composable
 internal fun TokensScreen(
     state: TokensUiState,
-    onTokenClick: (String) -> Unit,
-    onClear: () -> Unit,
-    onRetry: () -> Unit,
-    onSelectCount: (Int) -> Unit,
-    onSettings: () -> Unit,
-    onPhoto: () -> Unit,
+    onAction: (TokensAction) -> Unit,
     modifier: Modifier = Modifier,
     safeDrawingInsets: WindowInsets = WindowInsets.safeDrawing,
 ) {
     val ready = !state.loading && state.board != null && state.error != StorageFailure.READ
     val showPhoto = state.reinforcement?.enabled == true
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TokensContent(state, ready, showPhoto, onTokenClick, onClear, onRetry, onPhoto, safeDrawingInsets)
-        BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings, showPhoto, onPhoto,
+        TokensContent(state, ready, showPhoto, onAction, safeDrawingInsets)
+        BoardMenu(ready, showPhoto, onAction,
             Modifier.align(Alignment.TopEnd).windowInsetsPadding(safeDrawingInsets))
     }
 }
@@ -82,10 +79,7 @@ private fun TokensContent(
     state: TokensUiState,
     ready: Boolean,
     showPhoto: Boolean,
-    onTokenClick: (String) -> Unit,
-    onClear: () -> Unit,
-    onRetry: () -> Unit,
-    onPhoto: () -> Unit,
+    onAction: (TokensAction) -> Unit,
     safeDrawingInsets: WindowInsets,
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(safeDrawingInsets)) {
@@ -104,7 +98,7 @@ private fun TokensContent(
         } else safeDrawingInsets.union(designInsets)
         Column(Modifier.fillMaxSize().windowInsetsPadding(contentInsets)) {
             if (state.loading || state.error != null) {
-                TextButton(onClick = onRetry, enabled = state.error != null && !state.saving,
+                TextButton(onClick = { onAction(TokensAction.RetryClicked) }, enabled = state.error != null && !state.saving,
                     modifier = Modifier.padding(end = TokensDimensions.MinimumTouchTarget + TokensDimensions.SmallSpacing)
                         .heightIn(max = statusMaxHeight).verticalScroll(rememberScrollState())) {
                     Text(stringResource(when (state.error) {
@@ -142,8 +136,8 @@ private fun TokensContent(
                     TokenBoard(
                         tokens = state.board?.tokens.orEmpty(),
                         enabled = ready,
-                        onTokenClick = onTokenClick,
-                        onClear = onClear,
+                        onTokenClick = { onAction(TokensAction.TokenClicked(it)) },
+                        onClear = { onAction(TokensAction.ClearClicked) },
                         modifier = with(density) { Modifier.size(plan.boardWidth.toDp(), plan.boardHeight.toDp()) },
                         plannedGeometry = plan.tokens,
                     )
@@ -151,7 +145,7 @@ private fun TokensContent(
                         val photoPosition = plan.photoTop?.let { top ->
                             Modifier.align(Alignment.TopCenter).offset(y = with(density) { top.toDp() })
                         } ?: Modifier.align(if (plan.photoBelow) Alignment.BottomCenter else Alignment.CenterEnd)
-                        ReinforcementPhoto(state.reinforcement?.photoUri, onPhoto,
+                        ReinforcementPhoto(state.reinforcement?.photoUri, { onAction(TokensAction.PhotoClicked) },
                             photoPosition.size(with(density) { plan.photoSize.toDp() }))
                     }
                 }
@@ -162,8 +156,7 @@ private fun TokensContent(
 
 @Composable
 private fun BoardMenu(
-    enabled: Boolean, onSelectCount: () -> Unit, onClear: () -> Unit,
-    onSettings: () -> Unit, showPhoto: Boolean, onPhoto: () -> Unit,
+    enabled: Boolean, showPhoto: Boolean, onAction: (TokensAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -184,11 +177,11 @@ private fun BoardMenu(
             CompactDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 BoardMenuItem(stringResource(R.string.changeChips), enabled) {
                     expanded = false
-                    onSelectCount()
+                    onAction(TokensAction.SelectCountClicked)
                 }
                 BoardMenuItem(stringResource(R.string.clearChecked), enabled) {
                     expanded = false
-                    onClear()
+                    onAction(TokensAction.ClearClicked)
                 }
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = TokensDimensions.MenuHorizontalPadding)
@@ -198,11 +191,11 @@ private fun BoardMenu(
                 )
                 BoardMenuItem(stringResource(R.string.settings)) {
                     expanded = false
-                    onSettings()
+                    onAction(TokensAction.SettingsClicked)
                 }
                 if (showPhoto) BoardMenuItem(stringResource(R.string.reinforcement_image)) {
                     expanded = false
-                    onPhoto()
+                    onAction(TokensAction.PhotoClicked)
                 }
             }
         }

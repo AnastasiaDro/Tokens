@@ -13,6 +13,8 @@ import org.junit.Test
 import org.junit.Assert.*
 import presentation.settings_screen.*
 import presentation.tokens_screen.*
+import presentation.tokens_screen.TokensReducer.snapshotLoaded
+import presentation.tokens_screen.TokensReducer.writeFailed
 import presentation.state.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,7 +33,7 @@ class ScreenStateTest {
     @After fun after() { store.clear(); source.close(); Dispatchers.resetMain() }
 
     @Test fun twoScreensAndLateSubscriberSeeSameSavedSettings() = runTest(dispatcher) {
-        val board = track(TokensViewModel(tokens, source))
+        val board = track(TokensViewModel(tokens, source, TokensNavigator()))
         val settings = track(SettingsViewModel(source, effects, reinforcement))
         assertTrue(board.state.value.loading)
         runCurrent()
@@ -55,7 +57,7 @@ class ScreenStateTest {
     }
 
     @Test fun boardPreloadsSettingsAndClosingViewModelsDoesNotDiscardSnapshot() = runTest(dispatcher) {
-        val board = track(TokensViewModel(tokens, source))
+        val board = track(TokensViewModel(tokens, source, TokensNavigator()))
         effects.setAnimation(false)
         reinforcement.setEnabled(true)
         runCurrent()
@@ -99,12 +101,12 @@ class ScreenStateTest {
 
     @Test fun readFailureIsNotAnEmptyBoardAndCanRetry() = runTest(dispatcher) {
         tokens.failRead = true
-        val vm = track(TokensViewModel(tokens, source))
+        val vm = track(TokensViewModel(tokens, source, TokensNavigator()))
         runCurrent()
         assertNull(vm.state.value.board)
         assertEquals(StorageFailure.READ, vm.state.value.error)
         tokens.failRead = false
-        vm.retry()
+        vm.onAction(TokensAction.RetryClicked)
         runCurrent()
         assertEquals(FakeBoardRepository.BOARD_SIZE, vm.state.value.board?.count)
         assertNull(vm.state.value.error)
@@ -165,8 +167,8 @@ class ScreenStateTest {
     @Test fun reducersPreserveSavedDataOnFailureWithoutMutatingOldState() {
         val initial = TokensUiState()
         val snapshot = SettingsSnapshot(tokens.values.value, effects.values.value, reinforcement.settings.value)
-        val loaded = reduceTokens(initial, TokensAction.Loaded(snapshot))
-        val failed = reduceTokens(loaded, TokensAction.WriteFailed)
+        val loaded = initial.snapshotLoaded(snapshot)
+        val failed = loaded.writeFailed()
         assertNull(initial.board)
         assertEquals(loaded.board, failed.board)
         assertNull(loaded.error)

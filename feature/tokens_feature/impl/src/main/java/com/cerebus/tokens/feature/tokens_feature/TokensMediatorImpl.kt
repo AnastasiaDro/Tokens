@@ -27,10 +27,13 @@ internal class TokensMediatorImpl : TokensMediator {
             composable<TokensBoard> { entry ->
                 val vm = navigationViewModel<TokensViewModel>(entry)
                 TokensLifecycle(vm)
-                TokensRoute(vm,
-                    onSelectCount = { navController.navigate(CountDestination(it)) },
-                    onSettings = { vm.onStop(); navController.navigate(TokensSettings) },
-                    onPhoto = { GlobalContext.get().get<ReinforcementPhotoMediator>().open(navController) })
+                TokensRoute(vm) { destination ->
+                    when (destination) {
+                        is TokensNavigator.Destination.SelectCount -> navController.navigate(CountDestination(destination.count))
+                        TokensNavigator.Destination.Settings -> navController.navigate(TokensSettings)
+                        TokensNavigator.Destination.Photo -> GlobalContext.get().get<ReinforcementPhotoMediator>().open(navController)
+                    }
+                }
             }
             composable<TokensSettings>(deepLinks = listOf(navDeepLink { uriPattern = SETTINGS_DEEP_LINK })) {
                 val vm = navigationViewModel<SettingsViewModel>(it)

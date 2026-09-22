@@ -85,10 +85,9 @@ class TokensScreenTest {
 
     @Test fun loadingAndReadFailureDisableTokensCountAndClearButNotSettings() {
         val state = mutableStateOf(TokensUiState())
-        val settings = mutableListOf<Unit>()
-        val retries = mutableListOf<Unit>()
+        val actions = mutableListOf<TokensAction>()
         compose.setContent { TokensTheme {
-            TokensScreen(state.value, {}, {}, { retries += Unit }, {}, { settings += Unit }, {})
+            TokensScreen(state.value, { actions += it })
         } }
         compose.onNodeWithText(context.getString(CoreR.string.storage_loading)).assertIsDisplayed()
         openMenu()
@@ -98,14 +97,13 @@ class TokensScreenTest {
         compose.runOnIdle { state.value = ready().copy(readFailure = true, writeFailure = true) }
         compose.onNodeWithTag(tokenTag(tokens().first().id)).assertIsNotEnabled()
         compose.onNodeWithText(context.getString(CoreR.string.storage_read_error)).performClick()
-        compose.runOnIdle { assertEquals(listOf(Unit), settings); assertEquals(listOf(Unit), retries) }
+        compose.runOnIdle { assertEquals(listOf(TokensAction.SettingsClicked, TokensAction.RetryClicked), actions) }
     }
 
     @Test fun menuDelegatesCountClearAndSettingsWithoutLocalMutation() {
-        val actions = mutableListOf<String>()
+        val actions = mutableListOf<TokensAction>()
         compose.setContent { TokensTheme {
-            TokensScreen(ready(), {}, { actions += CLEAR }, {}, { assertEquals(MAX_TOKEN_COUNT, it); actions += COUNT },
-                { actions += SETTINGS }, {})
+            TokensScreen(ready(), { actions += it })
         } }
         openMenu()
         compose.onNodeWithText(context.getString(R.string.changeChips)).performClick()
@@ -113,13 +111,28 @@ class TokensScreenTest {
         compose.onNodeWithText(context.getString(R.string.clearChecked)).performClick()
         openMenu()
         compose.onNodeWithText(context.getString(R.string.settings)).performClick()
-        compose.runOnIdle { assertEquals(listOf(COUNT, CLEAR, SETTINGS), actions) }
+        compose.runOnIdle {
+            assertEquals(listOf(TokensAction.SelectCountClicked, TokensAction.ClearClicked, TokensAction.SettingsClicked), actions)
+        }
+    }
+
+    @Test fun screenEmitsTokenAndSwipeActionsWithoutChangingSavedState() {
+        val actions = mutableListOf<TokensAction>()
+        val state = ready()
+        val id = state.board!!.tokens.first().id
+        compose.setContent { TokensTheme { TokensScreen(state, { actions += it }) } }
+        compose.onNodeWithTag(tokenTag(id)).performClick().assertIsOff()
+        compose.onNodeWithTag(TOKEN_BOARD_TAG).performTouchInput { swipeLeft() }
+        compose.runOnIdle {
+            assertEquals(listOf(TokensAction.TokenClicked(id), TokensAction.ClearClicked), actions)
+            assertTrue(state.board.tokens.none { it.checked })
+        }
     }
 
     @Test fun compactMenuIconAndPressTargetShareTheirCenterWithLargeFont() {
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
-                TokensTheme { TokensScreen(ready(), {}, {}, {}, {}, {}, {}) }
+                TokensTheme { TokensScreen(ready(), {}) }
             }
         }
         val menu = compose.onNodeWithContentDescription(context.getString(R.string.tokens_menu))
@@ -136,7 +149,7 @@ class TokensScreenTest {
     }
 
     @Test fun overflowMenuUsesCompactThemeMetrics() {
-        compose.setContent { TokensTheme { TokensScreen(ready(), {}, {}, {}, {}, {}, {}) } }
+        compose.setContent { TokensTheme { TokensScreen(ready(), {}) } }
 
         openMenu()
 
@@ -171,7 +184,7 @@ class TokensScreenTest {
 
     @Test fun photoLeavesRoomForAllTokensAndFollowsOnlySavedSetting() {
         val enabled = mutableStateOf(true)
-        val photos = mutableListOf<Unit>()
+        val photos = mutableListOf<TokensAction>()
         compose.setContent {
             // Keep the intended content size independent of the host's density and system bars.
             // The tight-window test separately verifies hiding the photo when space is insufficient.
@@ -180,14 +193,14 @@ class TokensScreenTest {
                     Box(Modifier.size((BOARD_WIDTH + DESIGN_PADDING + MENU_VISIBLE_END_PADDING).dp, SCREEN_HEIGHT.dp)
                         .consumeWindowInsets(WindowInsets.systemBars)) {
                         TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = enabled.value)),
-                            {}, {}, {}, {}, {}, { photos += Unit })
+                            { photos += it })
                     }
                 }
             }
         }
         compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed().performClick()
         tokens().forEach { compose.onNodeWithTag(tokenTag(it.id)).assertIsDisplayed() }
-        compose.runOnIdle { assertEquals(listOf(Unit), photos); enabled.value = false }
+        compose.runOnIdle { assertEquals(listOf(TokensAction.PhotoClicked), photos); enabled.value = false }
         compose.onNodeWithTag(REINFORCEMENT_TAG).assertDoesNotExist()
     }
 
@@ -202,7 +215,7 @@ class TokensScreenTest {
                         TokensScreen(ready().copy(
                             board = BoardState(tokens().take(count.value), COLOR, REVISION),
                             reinforcement = ReinforcementSettings(enabled = showPhoto.value)),
-                            {}, {}, {}, {}, {}, {})
+                            {})
                     }
                 }
             }
@@ -239,7 +252,7 @@ class TokensScreenTest {
                 TokensTheme {
                     Box(Modifier.size(window.value).testTag(WINDOW_TAG)) {
                         TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = true)),
-                            {}, {}, {}, {}, {}, {}, safeDrawingInsets = WindowInsets(
+                            {}, safeDrawingInsets = WindowInsets(
                                 left = safeEdges.value.first.dp, right = safeEdges.value.second.dp,
                                 top = TOP_SAFE_INSET.dp, bottom = BOTTOM_SAFE_INSET.dp))
                     }
@@ -296,7 +309,7 @@ class TokensScreenTest {
                 TokensTheme {
                     Box(Modifier.size(window.value).testTag(WINDOW_TAG)) {
                         TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = true)),
-                            {}, {}, {}, {}, {}, {}, safeDrawingInsets = WindowInsets(NO_SAFE_INSET))
+                            {}, safeDrawingInsets = WindowInsets(NO_SAFE_INSET))
                     }
                 }
             }
@@ -328,7 +341,7 @@ class TokensScreenTest {
                         TokensScreen(ready().copy(
                             board = BoardState(tokens().take(SINGLE_SIZE), COLOR, REVISION),
                             reinforcement = ReinforcementSettings(enabled = true)),
-                            {}, {}, {}, {}, {}, {}, safeDrawingInsets = WindowInsets(NO_SAFE_INSET))
+                            {}, safeDrawingInsets = WindowInsets(NO_SAFE_INSET))
                     }
                 }
             }
@@ -349,7 +362,7 @@ class TokensScreenTest {
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
                 TokensTheme { Box(Modifier.size(window.value).consumeWindowInsets(WindowInsets.systemBars)) {
                     TokensScreen(ready().copy(board = BoardState(tokens().take(count.value), COLOR, REVISION),
-                        reinforcement = ReinforcementSettings(enabled = photo.value)), {}, {}, {}, {}, {}, {})
+                        reinforcement = ReinforcementSettings(enabled = photo.value)), {})
                 } }
             }
         }
@@ -368,7 +381,7 @@ class TokensScreenTest {
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
                 TokensTheme { Box(Modifier.size(window.value).consumeWindowInsets(WindowInsets.systemBars)) {
-                    TokensScreen(ready(), {}, {}, {}, {}, {}, {})
+                    TokensScreen(ready(), {})
                 } }
             }
         }
@@ -386,7 +399,7 @@ class TokensScreenTest {
                     Box(Modifier.size(window.value).testTag(WINDOW_TAG)
                         .consumeWindowInsets(WindowInsets.safeDrawing)) {
                         TokensScreen(ready().copy(board = BoardState(tokens().take(count.value), COLOR, REVISION)),
-                            {}, {}, {}, {}, {}, {})
+                            {})
                     }
                 }
             }
@@ -406,12 +419,12 @@ class TokensScreenTest {
     }
 
     @Test fun tightWindowKeepsTokensVisibleDuringErrorAndPhotoAccessibleFromMenu() {
-        val photos = mutableListOf<Unit>()
+        val photos = mutableListOf<TokensAction>()
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY, LARGE_FONT)) {
                 TokensTheme { Box(Modifier.size(TIGHT_WINDOW).consumeWindowInsets(WindowInsets.systemBars)) {
                     TokensScreen(ready().copy(writeFailure = true, reinforcement = ReinforcementSettings(enabled = true)),
-                        {}, {}, {}, {}, {}, { photos += Unit })
+                        { photos += it })
                 } }
             }
         }
@@ -419,7 +432,7 @@ class TokensScreenTest {
         compose.onNodeWithTag(REINFORCEMENT_TAG).assertDoesNotExist()
         openMenu()
         compose.onNodeWithText(context.getString(R.string.reinforcement_image)).performClick()
-        compose.runOnIdle { assertEquals(listOf(Unit), photos) }
+        compose.runOnIdle { assertEquals(listOf(TokensAction.PhotoClicked), photos) }
     }
 
     private fun assertPhotoAlignedWithMenu(photo: androidx.compose.ui.geometry.Rect) {
@@ -462,9 +475,6 @@ class TokensScreenTest {
         const val SINGLE_SIZE = 1
         const val SWIPE_START = 0.6f
         const val SHORT_END = 0.5f
-        const val CLEAR = "clear"
-        const val COUNT = "count"
-        const val SETTINGS = "settings"
         const val TEST_DENSITY = 1f
         const val LARGE_FONT = 2f
         const val ZERO_SIZE = 0f

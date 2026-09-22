@@ -21,6 +21,12 @@ data class TokensUiState(
 }
 
 sealed interface TokensAction {
+    data class TokenClicked(val id: String) : TokensAction
+    data object ClearClicked : TokensAction
+    data object RetryClicked : TokensAction
+    data object SelectCountClicked : TokensAction
+    data object SettingsClicked : TokensAction
+    data object PhotoClicked : TokensAction
     data class Observed(val source: SettingsSnapshotState) : TokensAction
     data object Loading : TokensAction
     data class Loaded(val snapshot: SettingsSnapshot) : TokensAction
@@ -29,19 +35,4 @@ sealed interface TokensAction {
     data object WriteSucceeded : TokensAction
     data object WriteFailed : TokensAction
     data class Effects(val effects: WinEffectsState) : TokensAction
-}
-
-fun reduceTokens(state: TokensUiState, action: TokensAction): TokensUiState = when (action) {
-    is TokensAction.Observed -> {
-        val loaded = action.source.snapshot?.let { reduceTokens(state, TokensAction.Loaded(it)) } ?: state
-        loaded.copy(loading = action.source.loading, readFailure = action.source.readFailure)
-    }
-    TokensAction.Loading -> state.copy(loading = true)
-    is TokensAction.Loaded -> state.copy(board = action.snapshot.board.toState(),
-        reinforcement = action.snapshot.reinforcement, loading = false, readFailure = false)
-    TokensAction.ReadFailed -> state.copy(loading = false, readFailure = true)
-    TokensAction.WriteStarted -> state.copy(saving = true, writeFailure = false)
-    TokensAction.WriteSucceeded -> state.copy(saving = false, writeFailure = false)
-    TokensAction.WriteFailed -> state.copy(saving = false, writeFailure = true)
-    is TokensAction.Effects -> state.copy(effects = action.effects)
 }
