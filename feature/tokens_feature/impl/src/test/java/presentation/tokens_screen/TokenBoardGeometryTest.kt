@@ -74,6 +74,32 @@ class TokenBoardGeometryTest {
         assertEquals(geometry(NARROW_SIZE, SHORT_HEIGHT), tight.tokens)
     }
 
+    @Test fun portraitTabletPhotoSitsAboveUnchangedFullHeightBoardForEveryCount() {
+        for (count in MIN_TOKEN_COUNT..MAX_TOKEN_COUNT) {
+            val plan = boardContentGeometry(TABLET_WIDTH, TABLET_HEIGHT, count, PREFERRED_DIAMETER,
+                PREFERRED_GAP, MINIMUM_DIAMETER, false, true, PHOTO_SIZE, largePortraitLayout = true)
+            assertEquals(TABLET_WIDTH, plan.boardWidth)
+            assertEquals(TABLET_HEIGHT, plan.boardHeight)
+            assertEquals(geometry(TABLET_WIDTH, TABLET_HEIGHT, count), plan.tokens)
+            assertEquals(PHOTO_SIZE * TABLET_PHOTO_SCALE, plan.photoSize)
+            val tokensTop = (TABLET_HEIGHT - plan.tokens.height) / CENTER_DIVISOR
+            assertEquals(tokensTop - PREFERRED_GAP * TABLET_GAP_SCALE, plan.photoTop!! + plan.photoSize)
+            assertTrue(plan.photoTop >= EMPTY_SIZE)
+            assertFalse(plan.overlapsTopEndControl(TABLET_WIDTH, TABLET_HEIGHT, MINIMUM_DIAMETER))
+        }
+    }
+
+    @Test fun constrainedPortraitTabletShrinksPhotoWithoutMovingOrResizingTokens() {
+        val height = TABLET_WIDTH + SINGLE_PIXEL
+        val plan = boardContentGeometry(TABLET_WIDTH, height, MAX_TOKEN_COUNT, PREFERRED_DIAMETER,
+            PREFERRED_GAP, MINIMUM_DIAMETER, false, true, PHOTO_SIZE, largePortraitLayout = true)
+        assertEquals(height, plan.boardHeight)
+        assertEquals(geometry(TABLET_WIDTH, height), plan.tokens)
+        assertTrue(plan.photoSize in MINIMUM_DIAMETER until PHOTO_SIZE * TABLET_PHOTO_SCALE)
+        assertTrue(plan.photoTop!! >= EMPTY_SIZE)
+        assertTrue(plan.photoTop + plan.photoSize < (height - plan.tokens.height) / CENTER_DIVISOR)
+    }
+
     @Test fun emptyBoardHasNoDimensions() {
         val result = geometry(WIDE_SIZE, NARROW_SIZE, EMPTY_SIZE)
         assertEquals(EMPTY_SIZE, result.height)
@@ -135,5 +161,11 @@ class TokenBoardGeometryTest {
         const val TWO_ROWS = 2
         const val FOUR_ROWS = 4
         const val RADIUS_DIVISOR = 2
+        const val TABLET_WIDTH = 600
+        const val TABLET_HEIGHT = 1000
+        const val TABLET_PHOTO_SCALE = 2
+        const val TABLET_GAP_SCALE = 2
+        const val CENTER_DIVISOR = 2
+        const val SINGLE_PIXEL = 1
     }
 }

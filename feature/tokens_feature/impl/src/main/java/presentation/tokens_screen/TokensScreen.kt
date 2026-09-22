@@ -107,7 +107,8 @@ private fun TokensContent(
                         preferredDiameter.roundToPx(), TokensDimensions.SmallSpacing.roundToPx(),
                         TokensDimensions.MinimumTouchTarget.roundToPx(),
                         maxWidth >= WIDE_WINDOW_MIN_WIDTH_DP.dp && maxHeight >= WIDE_WINDOW_MIN_HEIGHT_DP.dp,
-                        showPhoto, PHOTO_MAX_SIZE_DP.dp.roundToPx())
+                        showPhoto, PHOTO_MAX_SIZE_DP.dp.roundToPx(),
+                        largePortraitLayout = maxWidth >= TABLET_MIN_WIDTH_DP.dp && maxHeight > maxWidth)
                 }
                 val widthPx = with(density) { maxWidth.roundToPx() }
                 val heightPx = with(density) { maxHeight.roundToPx() }
@@ -128,9 +129,11 @@ private fun TokensContent(
                         plannedGeometry = plan.tokens,
                     )
                     if (plan.photoSize > NO_SIZE) {
+                        val photoPosition = plan.photoTop?.let { top ->
+                            Modifier.align(Alignment.TopCenter).offset(y = with(density) { top.toDp() })
+                        } ?: Modifier.align(if (plan.photoBelow) Alignment.BottomCenter else Alignment.CenterEnd)
                         ReinforcementPhoto(state.reinforcement?.photoUri, onPhoto,
-                            Modifier.align(if (plan.photoBelow) Alignment.BottomCenter else Alignment.CenterEnd)
-                                .size(with(density) { plan.photoSize.toDp() }))
+                            photoPosition.size(with(density) { plan.photoSize.toDp() }))
                     }
                 }
             }
@@ -336,6 +339,7 @@ private const val MENU_ICON_SIZE_DP = 24
 private const val MENU_CENTERING_DIVISOR = 2
 private const val CONTENT_WEIGHT = 1f
 private const val PHOTO_MAX_SIZE_DP = 150
+private const val TABLET_MIN_WIDTH_DP = 600
 private const val WIDE_WINDOW_MIN_WIDTH_DP = 840
 private const val WIDE_WINDOW_MIN_HEIGHT_DP = 480
 private const val NO_SIZE = 0

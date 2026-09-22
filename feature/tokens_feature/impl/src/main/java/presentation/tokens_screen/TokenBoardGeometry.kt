@@ -17,6 +17,7 @@ internal data class BoardContentGeometry(
     val tokens: TokenBoardGeometry,
     val photoSize: Int,
     val photoBelow: Boolean,
+    val photoTop: Int? = null,
 )
 
 /** The menu can use the empty corner unless it intersects the actual token or photo bounds. */
@@ -25,8 +26,8 @@ internal fun BoardContentGeometry.overlapsTopEndControl(width: Int, height: Int,
     val tokensTop = (boardHeight - tokens.height) / CENTER_DIVISOR
     val tokensRight = (boardWidth + tokens.rowWidth(tokens.columns)) / CENTER_DIVISOR
     val tokensOverlap = tokens.rows > NO_SIZE && tokensTop < controlSize && tokensRight > controlLeft
-    val photoTop = if (photoBelow) height - photoSize else (height - photoSize) / CENTER_DIVISOR
-    val photoRight = if (photoBelow) (width + photoSize) / CENTER_DIVISOR else width
+    val photoTop = this.photoTop ?: if (photoBelow) height - photoSize else (height - photoSize) / CENTER_DIVISOR
+    val photoRight = if (photoBelow || this.photoTop != null) (width + photoSize) / CENTER_DIVISOR else width
     val photoOverlaps = photoSize > NO_SIZE && photoTop < controlSize && photoRight > controlLeft
     return tokensOverlap || photoOverlaps
 }
@@ -64,10 +65,21 @@ internal fun boardContentGeometry(
     wideLayout: Boolean,
     showPhoto: Boolean,
     preferredPhotoSize: Int,
+    largePortraitLayout: Boolean = false,
 ): BoardContentGeometry {
     val base = tokenBoardGeometry(width, height, count, preferredDiameter, preferredGap, minimumDiameter, wideLayout)
     val below = height > width
     if (!showPhoto) return BoardContentGeometry(width, height, base, NO_SIZE, below)
+    if (largePortraitLayout && below) {
+        // Keep the full-height board centered; fit the photo into the space above its tokens.
+        val tokensTop = (height - base.height) / CENTER_DIVISOR
+        val photoGap = preferredGap * TABLET_PHOTO_GAP_MULTIPLIER
+        val photo = minOf(preferredPhotoSize * TABLET_PHOTO_SIZE_MULTIPLIER,
+            width / PHOTO_CROSS_AXIS_DIVISOR, tokensTop - photoGap).coerceAtLeast(NO_SIZE)
+        if (photo < minimumDiameter) return BoardContentGeometry(width, height, base, NO_SIZE, below)
+        return BoardContentGeometry(width, height, base, photo, false,
+            photoTop = tokensTop - photoGap - photo)
+    }
     // Reserve tokens first, allowing their gaps to shrink before reducing their diameter.
     val freeSpace = if (below) height - base.rows * base.diameter else width - base.columns * base.diameter
     val desiredPhoto = minOf(preferredPhotoSize,
@@ -119,3 +131,5 @@ private const val PHOTO_MAIN_AXIS_DIVISOR = 4
 private const val PHOTO_CROSS_AXIS_DIVISOR = 2
 private const val RADIUS_DIVISOR = 2
 private const val CENTER_DIVISOR = 2
+private const val TABLET_PHOTO_SIZE_MULTIPLIER = 2
+private const val TABLET_PHOTO_GAP_MULTIPLIER = 2

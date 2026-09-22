@@ -191,6 +191,44 @@ class TokensScreenTest {
         compose.onNodeWithTag(REINFORCEMENT_TAG).assertDoesNotExist()
     }
 
+    @Test fun portraitTabletPhotoIsAboveTokensWithoutChangingTheirCenterOrSize() {
+        val showPhoto = mutableStateOf(false)
+        val count = mutableStateOf(PHONE_COLUMNS)
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
+                TokensTheme {
+                    Box(Modifier.size(PORTRAIT_TABLET_WINDOW).testTag(WINDOW_TAG)
+                        .consumeWindowInsets(WindowInsets.safeDrawing)) {
+                        TokensScreen(ready().copy(
+                            board = BoardState(tokens().take(count.value), COLOR, REVISION),
+                            reinforcement = ReinforcementSettings(enabled = showPhoto.value)),
+                            {}, {}, {}, {}, {}, {})
+                    }
+                }
+            }
+        }
+        listOf(PHONE_COLUMNS, MAX_TOKEN_COUNT).forEach { tokenCount ->
+            compose.runOnIdle { count.value = tokenCount; showPhoto.value = false }
+            val before = assertTokensFit(tokenCount)
+            compose.runOnIdle { showPhoto.value = true }
+            val after = assertTokensFit(tokenCount)
+            assertEquals(before, after)
+            val viewport = compose.onNodeWithTag(WINDOW_TAG).fetchSemanticsNode().boundsInRoot
+            val photo = compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed()
+                .fetchSemanticsNode().boundsInRoot
+            val top = after.minOf { it.top }
+            // Resource dimensions retain the host density; the photo may shrink above a tall grid.
+            val expectedPhotoSize = minOf(TABLET_PHOTO_SIZE.toFloat(), top - viewport.top - TABLET_PHOTO_GAP)
+            assertEquals(expectedPhotoSize, photo.width, PIXEL_TOLERANCE)
+            assertEquals(photo.width, photo.height, PIXEL_TOLERANCE)
+            assertEquals(viewport.center.y, (top + after.maxOf { it.bottom }) / CENTER_DIVISOR, PIXEL_TOLERANCE)
+            assertEquals(viewport.center.x, photo.center.x, PIXEL_TOLERANCE)
+            assertEquals(TABLET_PHOTO_GAP, top - photo.bottom, PIXEL_TOLERANCE)
+            assertTrue(photo.top >= viewport.top)
+            after.forEach { assertFalse(photo.overlaps(it)) }
+        }
+    }
+
     @Test fun adaptiveScreenFitsEveryCountWithPhotoAndLargeFontAcrossWindowSizes() {
         val window = mutableStateOf(WINDOWS.first())
         val count = mutableStateOf(MAX_TOKEN_COUNT)
@@ -318,6 +356,9 @@ class TokensScreenTest {
         const val MENU_ICON_SIZE = 24
         const val MENU_LOWER_TOUCH_FRACTION = 0.75f
         const val MENU_SURFACE_SAMPLE_Y = 2
+        const val TABLET_PHOTO_SIZE = 300
+        const val TABLET_PHOTO_GAP = 16f
+        val PORTRAIT_TABLET_WINDOW = DpSize(600.dp, 1000.dp)
         val PHONE_WINDOW = DpSize(BOARD_WIDTH.dp, 600.dp)
         val LANDSCAPE_WINDOW = DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp)
         val TABLET_WINDOW = DpSize(1000.dp, TABLET_HEIGHT.dp)
