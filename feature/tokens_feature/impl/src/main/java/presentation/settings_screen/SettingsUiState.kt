@@ -14,6 +14,9 @@ data class SettingsUiState(
     val readFailure: Boolean = false,
     val writeFailure: Boolean = false,
 ) {
+    val editable: Boolean
+        get() = !loading && !saving && tokens != null && !readFailure
+
     val error: StorageFailure?
         get() = when {
             readFailure -> StorageFailure.READ
@@ -23,6 +26,14 @@ data class SettingsUiState(
 }
 
 sealed interface SettingsAction {
+    data object SelectCountClicked : SettingsAction
+    data object SelectColorClicked : SettingsAction
+    data class AnimationChanged(val enabled: Boolean) : SettingsAction
+    data class SoundChanged(val enabled: Boolean) : SettingsAction
+    data class ReinforcementChanged(val enabled: Boolean) : SettingsAction
+    data object RetryClicked : SettingsAction
+    data object YoutubeClicked : SettingsAction
+    data object OtherAppsClicked : SettingsAction
     data class Observed(val source: SettingsSnapshotState) : SettingsAction
     data object Loading : SettingsAction
     data class Loaded(val snapshot: SettingsSnapshot) : SettingsAction
@@ -30,20 +41,4 @@ sealed interface SettingsAction {
     data object WriteStarted : SettingsAction
     data object WriteSucceeded : SettingsAction
     data object WriteFailed : SettingsAction
-}
-
-fun reduceSettings(state: SettingsUiState, action: SettingsAction): SettingsUiState = when (action) {
-    is SettingsAction.Observed -> {
-        val loaded = action.source.snapshot?.let { reduceSettings(state, SettingsAction.Loaded(it)) } ?: state
-        loaded.copy(loading = action.source.loading, readFailure = action.source.readFailure)
-    }
-    SettingsAction.Loading -> state.copy(loading = true)
-    is SettingsAction.Loaded -> state.copy(
-        tokens = TokenSettingsState(action.snapshot.board.count, action.snapshot.board.color),
-        effects = action.snapshot.effects, reinforcement = action.snapshot.reinforcement,
-        loading = false, readFailure = false)
-    SettingsAction.ReadFailed -> state.copy(loading = false, readFailure = true)
-    SettingsAction.WriteStarted -> state.copy(saving = true, writeFailure = false)
-    SettingsAction.WriteSucceeded -> state.copy(saving = false, writeFailure = false)
-    SettingsAction.WriteFailed -> state.copy(saving = false, writeFailure = true)
 }

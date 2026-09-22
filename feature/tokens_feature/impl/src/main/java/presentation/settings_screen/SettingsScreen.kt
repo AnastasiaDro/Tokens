@@ -28,7 +28,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,44 +55,31 @@ import com.cerebus.tokens.core.ui.R as CoreR
 @Composable
 internal fun SettingsRoute(
     viewModel: SettingsViewModel,
-    onSelectCount: (Int) -> Unit,
-    onSelectColor: () -> Unit,
-    onYoutube: () -> Unit,
-    onDonate: () -> Unit,
+    onNavigate: (SettingsNavigator.Destination) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val currentOnNavigate by rememberUpdatedState(onNavigate)
+    DisposableEffect(viewModel.navigator) {
+        val binding = viewModel.navigator.bind { currentOnNavigate(it) }
+        onDispose { binding.close() }
+    }
     SettingsScreen(
         state = state,
-        onSelectCount = { state.tokens?.let { onSelectCount(it.count) } },
-        onSelectColor = onSelectColor,
-        onAnimationChanged = viewModel::changeAnimation,
-        onSoundChanged = viewModel::changeSound,
-        onReinforcementChanged = viewModel::changeReinforcement,
-        onRetry = viewModel::retry,
-        onYoutube = onYoutube,
-        onDonate = onDonate,
+        onAction = viewModel::onAction,
     )
 }
 
 @Composable
 internal fun SettingsScreen(
     state: SettingsUiState,
-    onSelectCount: () -> Unit,
-    onSelectColor: () -> Unit,
-    onAnimationChanged: (Boolean) -> Unit,
-    onSoundChanged: (Boolean) -> Unit,
-    onReinforcementChanged: (Boolean) -> Unit,
-    onRetry: () -> Unit,
-    onYoutube: () -> Unit,
-    onDonate: () -> Unit,
+    onAction: (SettingsAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val verticalSpacing = if (isLandscape) SETTINGS_COMPACT_SPACING else TokensDimensions.SmallSpacing
     val verticalContentPadding = if (isLandscape) SETTINGS_COMPACT_SPACING else TokensDimensions.ContentPadding
     val controls: @Composable () -> Unit = {
-        SettingsControls(state, onSelectCount, onSelectColor,
-            onAnimationChanged, onSoundChanged, onReinforcementChanged, onRetry, verticalSpacing)
+        SettingsControls(state, onAction, verticalSpacing)
     }
     BoxWithConstraints(
         modifier.fillMaxSize()
@@ -102,7 +91,7 @@ internal fun SettingsScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(TokensDimensions.ContentPadding)) {
                 Column(Modifier.weight(PANE_WEIGHT).verticalScroll(rememberScrollState())) { controls() }
                 Column(Modifier.weight(PANE_WEIGHT).verticalScroll(rememberScrollState())) {
-                    AboutApp(onYoutube, onDonate, verticalSpacing)
+                    AboutApp(onAction, verticalSpacing)
                 }
             }
         } else {
@@ -111,7 +100,7 @@ internal fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(verticalSpacing),
             ) {
                 controls()
-                AboutApp(onYoutube, onDonate, verticalSpacing)
+                AboutApp(onAction, verticalSpacing)
             }
         }
     }
@@ -120,19 +109,14 @@ internal fun SettingsScreen(
 @Composable
 private fun SettingsControls(
     state: SettingsUiState,
-    onSelectCount: () -> Unit,
-    onSelectColor: () -> Unit,
-    onAnimationChanged: (Boolean) -> Unit,
-    onSoundChanged: (Boolean) -> Unit,
-    onReinforcementChanged: (Boolean) -> Unit,
-    onRetry: () -> Unit,
+    onAction: (SettingsAction) -> Unit,
     verticalSpacing: Dp,
 ) {
-    val enabled = !state.loading && !state.saving && state.tokens != null && state.error != StorageFailure.READ
+    val enabled = state.editable
     Column(verticalArrangement = Arrangement.spacedBy(verticalSpacing)) {
         SectionTitle(stringResource(R.string.settings), verticalSpacing)
         when {
-            state.error != null -> Button(onClick = onRetry, enabled = !state.saving && !state.loading) {
+            state.error != null -> Button(onClick = { onAction(SettingsAction.RetryClicked) }, enabled = !state.saving && !state.loading) {
                 Text(stringResource(if (state.error == StorageFailure.READ) CoreR.string.storage_read_error else CoreR.string.storage_write_error))
             }
             state.loading -> Text(stringResource(CoreR.string.storage_loading))
@@ -144,7 +128,7 @@ private fun SettingsControls(
             SettingsActionButton(
                 text = stringResource(CoreR.string.change),
                 enabled = enabled,
-                onClick = onSelectCount,
+                onClick = { onAction(SettingsAction.SelectCountClicked) },
             )
         }
         HorizontalDivider()
@@ -158,16 +142,16 @@ private fun SettingsControls(
             SettingsActionButton(
                 text = stringResource(R.string.select_button_text),
                 enabled = enabled,
-                onClick = onSelectColor,
+                onClick = { onAction(SettingsAction.SelectColorClicked) },
             )
         }
         HorizontalDivider()
         SettingsSwitch(stringResource(R.string.settings_animation), state.effects?.animation, enabled,
-            onAnimationChanged, verticalSpacing)
+            { onAction(SettingsAction.AnimationChanged(it)) }, verticalSpacing)
         SettingsSwitch(stringResource(R.string.settings_sound), state.effects?.sound, enabled,
-            onSoundChanged, verticalSpacing)
+            { onAction(SettingsAction.SoundChanged(it)) }, verticalSpacing)
         SettingsSwitch(stringResource(R.string.reinforcement_image), state.reinforcement?.enabled,
-            enabled, onReinforcementChanged, verticalSpacing)
+            enabled, { onAction(SettingsAction.ReinforcementChanged(it)) }, verticalSpacing)
     }
 }
 
@@ -228,19 +212,19 @@ private fun SectionTitle(text: String, verticalPadding: Dp) {
 }
 
 @Composable
-private fun AboutApp(onYoutube: () -> Unit, onDonate: () -> Unit, verticalSpacing: Dp) {
+private fun AboutApp(onAction: (SettingsAction) -> Unit, verticalSpacing: Dp) {
     Column(verticalArrangement = Arrangement.spacedBy(verticalSpacing)) {
         SectionTitle(stringResource(R.string.aboutAppTitle), verticalSpacing)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.me1), contentDescription = null,
                 contentScale = ContentScale.Crop, modifier = Modifier.size(AUTHOR_PHOTO_SIZE_DP.dp).clip(CircleShape))
             Column {
-                TextButton(onClick = onYoutube, contentPadding = LINK_CONTENT_PADDING) {
+                TextButton(onClick = { onAction(SettingsAction.YoutubeClicked) }, contentPadding = LINK_CONTENT_PADDING) {
                     Text(stringResource(R.string.youtube_link),
                         style = MaterialTheme.typography.link,
                         modifier = Modifier.offset(y = LINK_TEXT_OFFSET))
                 }
-                TextButton(onClick = onDonate, contentPadding = LINK_CONTENT_PADDING) {
+                TextButton(onClick = { onAction(SettingsAction.OtherAppsClicked) }, contentPadding = LINK_CONTENT_PADDING) {
                     Text(stringResource(R.string.other_apps),
                         style = MaterialTheme.typography.link,
                         modifier = Modifier.offset(y = -LINK_TEXT_OFFSET))

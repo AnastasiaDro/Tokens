@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import presentation.state.SettingsSnapshotSource
 import presentation.settings_screen.SettingsViewModel
+import presentation.settings_screen.SettingsNavigator
 import presentation.settings_screen.SelectColorViewModel
 import presentation.tokens_screen.SelectTokensNumberViewModel
 import presentation.tokens_screen.TokensViewModel
@@ -32,7 +33,8 @@ val tokensFeatureModule = module {
     } onClose { it?.close() }
     factory { TokensNavigator() }
     viewModel { TokensViewModel(get(), get(), get()) }
-    viewModel { SettingsViewModel(get(), get(), get()) }
+    factory { SettingsNavigator() }
+    viewModel { SettingsViewModel(get(), get(), get(), get()) }
     viewModel { SelectTokensNumberViewModel(get(), get()) }
     viewModel { SelectColorViewModel(get(), get()) }
 }

@@ -25,6 +25,7 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import presentation.settings_screen.SettingsAction
 import presentation.settings_screen.SettingsScreen
 import presentation.settings_screen.SettingsUiState
 import presentation.settings_screen.TokenSettingsState
@@ -45,7 +46,7 @@ class SettingsScreenTest {
         val state = mutableStateOf(SettingsUiState())
         compose.mainClock.autoAdvance = false
         compose.setContent { TokensTheme {
-            SettingsScreen(state.value, {}, {}, {}, {}, {}, {}, {}, {})
+            SettingsScreen(state.value, {})
         } }
         compose.onAllNodes(isToggleable()).assertCountEquals(NO_SWITCHES)
         compose.onNodeWithText(context.getString(R.string.settings_sound)).assertExists()
@@ -72,11 +73,11 @@ class SettingsScreenTest {
         sound.assertIsOn().assertIsNotEnabled()
     }
 
-    @Test fun loadingDoesNotExposeFalseToggleSemanticsOrInvokeCallbacks() {
+    @Test fun loadingDoesNotExposeFalseToggleSemanticsOrEmitActions() {
         val state = mutableStateOf(SettingsUiState())
-        val changes = mutableListOf<Boolean>()
+        val changes = mutableListOf<SettingsAction>()
         compose.setContent { TokensTheme {
-            SettingsScreen(state.value, {}, {}, { changes += it }, { changes += it }, { changes += it }, {}, {}, {})
+            SettingsScreen(state.value, { changes += it })
         } }
         compose.onAllNodes(isToggleable()).assertCountEquals(NO_SWITCHES)
         compose.runOnIdle { state.value = ready().copy(effects = EffectsSettings(animation = false, sound = true)) }
@@ -87,32 +88,28 @@ class SettingsScreenTest {
 
     @Test fun switchRendersStateWithoutWritingAndClickOnlyDelegates() {
         val state = mutableStateOf(ready())
-        val changes = mutableListOf<Boolean>()
+        val changes = mutableListOf<SettingsAction>()
         compose.setContent {
             TokensTheme {
-                SettingsScreen(state.value, onSelectCount = {}, onSelectColor = {},
-                    onAnimationChanged = {}, onSoundChanged = { changes += it }, onReinforcementChanged = {},
-                    onRetry = {}, onYoutube = {}, onDonate = {})
+                SettingsScreen(state.value, onAction = { changes += it })
             }
         }
         val sound = compose.onNodeWithText(context.getString(R.string.settings_sound))
         sound.performScrollTo().assertIsOn().performClick().assertIsOn()
         compose.runOnIdle {
-            assertEquals(listOf(false), changes)
+            assertEquals(listOf(SettingsAction.SoundChanged(false)), changes)
             state.value = state.value.copy(effects = EffectsSettings(sound = false))
         }
         sound.assertIsOff()
-        compose.runOnIdle { assertEquals(listOf(false), changes) }
+        compose.runOnIdle { assertEquals(listOf(SettingsAction.SoundChanged(false)), changes) }
     }
 
     @Test fun loadingReadFailureAndSavingDisableChangesAndRetryIsExplicit() {
         val state = mutableStateOf(SettingsUiState())
-        val retries = mutableListOf<Unit>()
+        val retries = mutableListOf<SettingsAction>()
         compose.setContent {
             TokensTheme {
-                SettingsScreen(state.value, onSelectCount = {}, onSelectColor = {},
-                    onAnimationChanged = {}, onSoundChanged = {}, onReinforcementChanged = {},
-                    onRetry = { retries += Unit }, onYoutube = {}, onDonate = {})
+                SettingsScreen(state.value, onAction = { retries += it })
             }
         }
         val change = compose.onNodeWithText(context.getString(CoreR.string.change))
@@ -122,7 +119,7 @@ class SettingsScreenTest {
         change.assertIsNotEnabled()
         compose.onNodeWithText(context.getString(CoreR.string.storage_read_error)).performScrollTo().performClick()
         compose.runOnIdle {
-            assertEquals(listOf(Unit), retries)
+            assertEquals(listOf(SettingsAction.RetryClicked), retries)
             state.value = ready()
         }
         val enabledButton = change.performScrollTo().assertIsEnabled().captureToImage().toPixelMap()
@@ -166,34 +163,44 @@ class SettingsScreenTest {
     }
 
     @Test fun reinforcementSwitchUsesStoredSettingWithoutCameraCapability() {
-        val changes = mutableListOf<Boolean>()
+        val changes = mutableListOf<SettingsAction>()
         compose.setContent { TokensTheme {
             SettingsScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = true)),
-                onSelectCount = {}, onSelectColor = {}, onAnimationChanged = {}, onSoundChanged = {},
-                onReinforcementChanged = { changes += it }, onRetry = {}, onYoutube = {}, onDonate = {})
+                onAction = { changes += it })
         } }
         compose.onNodeWithText(context.getString(R.string.reinforcement_image)).performScrollTo()
             .assertIsOn().assertIsEnabled().performClick().assertIsOn()
-        compose.runOnIdle { assertEquals(listOf(false), changes) }
+        compose.runOnIdle { assertEquals(listOf(SettingsAction.ReinforcementChanged(false)), changes) }
     }
 
     @Test fun narrowLayoutWithLargeFontKeepsAboutLinksReachable() {
-        val clicks = mutableListOf<String>()
+        val clicks = mutableListOf<SettingsAction>()
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, LARGE_FONT_SCALE)) {
                 TokensTheme {
                     Box(Modifier.width(NARROW_WIDTH_DP.dp)) {
-                        SettingsScreen(ready(), onSelectCount = {}, onSelectColor = {},
-                            onAnimationChanged = {}, onSoundChanged = {}, onReinforcementChanged = {}, onRetry = {},
-                            onYoutube = { clicks += YOUTUBE }, onDonate = { clicks += OTHER_APPS })
+                        SettingsScreen(ready(), onAction = { clicks += it })
                     }
                 }
             }
         }
         compose.onNodeWithText(context.getString(R.string.youtube_link)).performScrollTo().assertIsDisplayed().performClick()
         compose.onNodeWithText(context.getString(R.string.other_apps)).performScrollTo().assertIsDisplayed().performClick()
-        compose.runOnIdle { assertEquals(listOf(YOUTUBE, OTHER_APPS), clicks) }
+        compose.runOnIdle { assertEquals(listOf(SettingsAction.YoutubeClicked, SettingsAction.OtherAppsClicked), clicks) }
+    }
+
+    @Test fun countColorAndAnimationEmitActionsWithoutChangingDisplayedState() {
+        val actions = mutableListOf<SettingsAction>()
+        compose.setContent { TokensTheme { SettingsScreen(ready(), { actions += it }) } }
+        compose.onNodeWithText(context.getString(CoreR.string.change)).performScrollTo().performClick()
+        compose.onNodeWithText(context.getString(R.string.select_button_text)).performScrollTo().performClick()
+        compose.onNodeWithText(context.getString(R.string.settings_animation)).performScrollTo()
+            .assertIsOn().performClick().assertIsOn()
+        compose.runOnIdle {
+            assertEquals(listOf(SettingsAction.SelectCountClicked, SettingsAction.SelectColorClicked,
+                SettingsAction.AnimationChanged(false)), actions)
+        }
     }
 
     @Test fun countWheelAndPresetsDelegateDraftWithoutSaving() {
@@ -260,8 +267,6 @@ class SettingsScreenTest {
         const val TOKEN_COLOR = -65536
         const val LARGE_FONT_SCALE = 2f
         const val NARROW_WIDTH_DP = 320
-        const val YOUTUBE = "youtube"
-        const val OTHER_APPS = "other_apps"
         val PRESET_COUNTS = listOf(MIN_TOKEN_COUNT, SELECTED_COUNT, PRESET_TEN, PRESET_FIFTEEN, MAX_TOKEN_COUNT)
     }
 }

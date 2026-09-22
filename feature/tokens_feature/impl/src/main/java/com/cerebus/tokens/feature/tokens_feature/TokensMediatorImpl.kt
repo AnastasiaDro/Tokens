@@ -38,10 +38,14 @@ internal class TokensMediatorImpl : TokensMediator {
             composable<TokensSettings>(deepLinks = listOf(navDeepLink { uriPattern = SETTINGS_DEEP_LINK })) {
                 val vm = navigationViewModel<SettingsViewModel>(it)
                 val context = LocalContext.current
-                SettingsRoute(vm, { count -> navController.navigate(CountDestination(count)) },
-                    { navController.navigate(ColorDestination) },
-                    { context.openSettingsLink(R.string.youtube_link) },
-                    { context.openSettingsLink(R.string.other_apps) })
+                SettingsRoute(vm) { destination ->
+                    when (destination) {
+                        is SettingsNavigator.Destination.SelectCount -> navController.navigate(CountDestination(destination.count))
+                        SettingsNavigator.Destination.SelectColor -> navController.navigate(ColorDestination)
+                        SettingsNavigator.Destination.Youtube -> context.openSettingsLink(R.string.youtube_link)
+                        SettingsNavigator.Destination.OtherApps -> context.openSettingsLink(R.string.other_apps)
+                    }
+                }
             }
             dialog<CountDestination>(dialogProperties = GuardedDialogProperties) { entry ->
                 val vm = navigationViewModel<SelectTokensNumberViewModel>(entry)

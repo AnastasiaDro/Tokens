@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.cerebus.tokens.feature.tokens_feature.ColorDestination
+import com.cerebus.tokens.feature.tokens_feature.api.TokensSettings
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.pressBack
@@ -122,6 +123,18 @@ class SettingsFlowTest {
             compose.onNodeWithText(context.getString(CoreR.string.OK)).performClick()
             compose.onNodeWithTag(SETTINGS_COUNT_TAG).assertTextEquals(CHANGED_COUNT.toString())
             assertEquals(CHANGED_COUNT, board.board.value.count)
+            assertEquals(SINGLE_WRITE, board.writes.get())
+            scenario.recreate()
+            compose.onNodeWithTag(SETTINGS_COUNT_TAG).assertTextEquals(CHANGED_COUNT.toString())
+            scenario.onActivity { activity ->
+                assertTrue(activity.navController.currentDestination!!.hasRoute<TokensSettings>())
+            }
+            compose.onNodeWithText(context.getString(CoreR.string.change)).performScrollTo().performClick()
+            compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(CHANGED_COUNT.toString())
+            compose.onNodeWithText(context.getString(CoreR.string.cancel)).performClick()
+            scenario.onActivity { activity ->
+                assertTrue(activity.navController.currentDestination!!.hasRoute<TokensSettings>())
+            }
             assertEquals(SINGLE_WRITE, board.writes.get())
         }
     }

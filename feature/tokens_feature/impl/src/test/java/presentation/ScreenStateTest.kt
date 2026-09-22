@@ -12,6 +12,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
 import presentation.settings_screen.*
+import presentation.settings_screen.SettingsReducer.snapshotLoaded
+import presentation.settings_screen.SettingsReducer.writeFailed
 import presentation.tokens_screen.*
 import presentation.tokens_screen.TokensReducer.snapshotLoaded
 import presentation.tokens_screen.TokensReducer.writeFailed
@@ -34,7 +36,7 @@ class ScreenStateTest {
 
     @Test fun twoScreensAndLateSubscriberSeeSameSavedSettings() = runTest(dispatcher) {
         val board = track(TokensViewModel(tokens, source, TokensNavigator()))
-        val settings = track(SettingsViewModel(source, effects, reinforcement))
+        val settings = track(SettingsViewModel(source, effects, reinforcement, SettingsNavigator()))
         assertTrue(board.state.value.loading)
         runCurrent()
         val dialog = track(SelectTokensNumberViewModel(tokens, SavedStateHandle()))
@@ -46,10 +48,10 @@ class ScreenStateTest {
         assertEquals(SHRUNK_COUNT, settings.state.value.tokens?.count)
         assertEquals(SHRUNK_COUNT, board.state.value.board?.count)
         reinforcement.setPhotoUri(PHOTO_URI)
-        settings.changeReinforcement(true)
-        settings.changeSound(false)
+        settings.onAction(SettingsAction.ReinforcementChanged(true))
+        settings.onAction(SettingsAction.SoundChanged(false))
         runCurrent()
-        val late = track(SettingsViewModel(source, effects, reinforcement))
+        val late = track(SettingsViewModel(source, effects, reinforcement, SettingsNavigator()))
         // No dispatcher advancement: the constructor must use the already loaded snapshot.
         assertEquals(settings.state.value, late.state.value)
         assertEquals(PHOTO_URI, board.state.value.reinforcement?.photoUri)
@@ -63,7 +65,7 @@ class ScreenStateTest {
         runCurrent()
         assertFalse(board.state.value.loading)
 
-        val first = track(SettingsViewModel(source, effects, reinforcement))
+        val first = track(SettingsViewModel(source, effects, reinforcement, SettingsNavigator()))
         assertFalse(first.state.value.loading)
         assertFalse(first.state.value.effects!!.animation)
         assertTrue(first.state.value.effects!!.sound)
@@ -72,7 +74,7 @@ class ScreenStateTest {
         store.clear()
         effects.setSound(false)
         runCurrent()
-        val reopened = track(SettingsViewModel(source, effects, reinforcement))
+        val reopened = track(SettingsViewModel(source, effects, reinforcement, SettingsNavigator()))
         assertFalse(reopened.state.value.loading)
         assertFalse(reopened.state.value.effects!!.sound)
         assertTrue(reopened.state.value.reinforcement!!.enabled)
@@ -83,14 +85,14 @@ class ScreenStateTest {
         val cached = source.state.value.snapshot!!
         effects.failRead = true
         runCurrent()
-        val settings = track(SettingsViewModel(source, effects, reinforcement))
+        val settings = track(SettingsViewModel(source, effects, reinforcement, SettingsNavigator()))
         assertEquals(cached.effects, settings.state.value.effects)
         assertTrue(settings.state.value.readFailure)
-        settings.changeSound(false)
+        settings.onAction(SettingsAction.SoundChanged(false))
         runCurrent()
         assertEquals(FakeBoardRepository.NO_WRITES, effects.writeAttempts)
         effects.failRead = false
-        settings.retry()
+        settings.onAction(SettingsAction.RetryClicked)
         assertTrue(settings.state.value.loading)
         assertTrue(settings.state.value.readFailure)
         assertEquals(cached.effects, settings.state.value.effects)
@@ -113,15 +115,15 @@ class ScreenStateTest {
     }
 
     @Test fun failedSettingsWriteKeepsSavedValueAndRetries() = runTest(dispatcher) {
-        val vm = track(SettingsViewModel(source, effects, reinforcement))
+        val vm = track(SettingsViewModel(source, effects, reinforcement, SettingsNavigator()))
         runCurrent()
         effects.failWrite = true
-        vm.changeSound(false)
+        vm.onAction(SettingsAction.SoundChanged(false))
         runCurrent()
         assertTrue(vm.state.value.effects!!.sound)
         assertEquals(StorageFailure.WRITE, vm.state.value.error)
         effects.failWrite = false
-        vm.retry()
+        vm.onAction(SettingsAction.RetryClicked)
         runCurrent()
         assertFalse(vm.state.value.effects!!.sound)
         assertNull(vm.state.value.error)
@@ -172,17 +174,17 @@ class ScreenStateTest {
         assertNull(initial.board)
         assertEquals(loaded.board, failed.board)
         assertNull(loaded.error)
-        val settings = reduceSettings(SettingsUiState(), SettingsAction.Loaded(snapshot))
-        assertEquals(settings.tokens, reduceSettings(settings, SettingsAction.WriteFailed).tokens)
+        val settings = SettingsUiState().snapshotLoaded(snapshot)
+        assertEquals(settings.tokens, settings.writeFailed().tokens)
     }
 
     @Test fun readRecoveryRetriesFailedSettingsWriteOnceAndKeepsObserving() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         effects.beforeWrite = { gate.await() }
-        val vm = track(SettingsViewModel(source, effects, reinforcement))
+        val vm = track(SettingsViewModel(source, effects, reinforcement, SettingsNavigator()))
         runCurrent()
 
-        vm.changeSound(false)
+        vm.onAction(SettingsAction.SoundChanged(false))
         runCurrent()
         effects.failRead = true
         runCurrent()
@@ -199,7 +201,7 @@ class ScreenStateTest {
         effects.beforeWrite = {}
         effects.failRead = false
         effects.failWrite = false
-        vm.retry()
+        vm.onAction(SettingsAction.RetryClicked)
         runCurrent()
 
         assertFalse(effects.values.value.sound)
@@ -217,15 +219,15 @@ class ScreenStateTest {
     @Test fun readRetryDoesNotDuplicateWriteStillInProgress() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         effects.beforeWrite = { gate.await() }
-        val vm = track(SettingsViewModel(source, effects, reinforcement))
+        val vm = track(SettingsViewModel(source, effects, reinforcement, SettingsNavigator()))
         runCurrent()
 
-        vm.changeSound(false)
+        vm.onAction(SettingsAction.SoundChanged(false))
         runCurrent()
         effects.failRead = true
         runCurrent()
         effects.failRead = false
-        vm.retry()
+        vm.onAction(SettingsAction.RetryClicked)
         runCurrent()
 
         gate.complete(Unit)
