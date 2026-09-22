@@ -177,7 +177,7 @@ class TokensScreenTest {
             // The tight-window test separately verifies hiding the photo when space is insufficient.
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
                 TokensTheme {
-                    Box(Modifier.size((BOARD_WIDTH + DESIGN_PADDING + DESIGN_PADDING).dp, SCREEN_HEIGHT.dp)
+                    Box(Modifier.size((BOARD_WIDTH + DESIGN_PADDING + MENU_VISIBLE_END_PADDING).dp, SCREEN_HEIGHT.dp)
                         .consumeWindowInsets(WindowInsets.systemBars)) {
                         TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = enabled.value)),
                             {}, {}, {}, {}, {}, { photos += Unit })
@@ -231,7 +231,7 @@ class TokensScreenTest {
         }
     }
 
-    @Test fun landscapeContentUsesMaximumOfDesignPaddingAndEachSafeInset() {
+    @Test fun landscapePhotoAlignsWithVisibleMenuDotsAcrossWidthsAndSafeInsets() {
         val window = mutableStateOf(LANDSCAPE_WINDOW)
         val safeEdges = mutableStateOf(NO_SAFE_INSET to NO_SAFE_INSET)
         compose.setContent {
@@ -264,9 +264,12 @@ class TokensScreenTest {
                     .fetchSemanticsNode().boundsInRoot
                 val tokens = assertTokensFit(MAX_TOKEN_COUNT)
                 val leftPadding = maxOf(DESIGN_PADDING, edges.first).toFloat()
-                val rightPadding = maxOf(DESIGN_PADDING, edges.second).toFloat()
                 assertEquals(leftPadding, board.left - viewport.left, PIXEL_TOLERANCE)
-                assertEquals(rightPadding, viewport.right - photo.right, PIXEL_TOLERANCE)
+                assertPhotoAlignedWithMenu(photo)
+                val menu = compose.onNodeWithContentDescription(context.getString(R.string.tokens_menu))
+                    .fetchSemanticsNode().boundsInRoot
+                assertEquals(edges.second.toFloat(), viewport.right - menu.right, PIXEL_TOLERANCE)
+                assertTrue(viewport.right - photo.right >= maxOf(DESIGN_PADDING, edges.second))
                 assertTrue(tokens.minOf { it.left } >= viewport.left + leftPadding)
                 assertEquals(TOP_SAFE_INSET.toFloat(), board.top - viewport.top, PIXEL_TOLERANCE)
                 assertEquals(BOTTOM_SAFE_INSET.toFloat(), viewport.bottom - board.bottom, PIXEL_TOLERANCE)
@@ -310,11 +313,32 @@ class TokensScreenTest {
         assertTrue(tokens.first().width < originalTokens.first().width)
         assertTrue(photo.width < originalPhoto.width)
         assertEquals(DESIGN_PADDING.toFloat(), board.left - viewport.left, PIXEL_TOLERANCE)
-        assertEquals(DESIGN_PADDING.toFloat(), viewport.right - photo.right, PIXEL_TOLERANCE)
+        assertPhotoAlignedWithMenu(photo)
         assertEquals(viewport.center.y, photo.center.y, PIXEL_TOLERANCE)
         assertEquals(viewport.center.y,
             (tokens.minOf { it.top } + tokens.maxOf { it.bottom }) / CENTER_DIVISOR, PIXEL_TOLERANCE)
         tokens.forEach { assertFalse(photo.overlaps(it)) }
+    }
+
+    @Test fun lowLandscapePhotoStaysAlignedWithMenuWithoutOverlappingItsTouchTarget() {
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
+                TokensTheme {
+                    Box(Modifier.size(LOW_LANDSCAPE_WINDOW).testTag(WINDOW_TAG)) {
+                        TokensScreen(ready().copy(
+                            board = BoardState(tokens().take(SINGLE_SIZE), COLOR, REVISION),
+                            reinforcement = ReinforcementSettings(enabled = true)),
+                            {}, {}, {}, {}, {}, {}, safeDrawingInsets = WindowInsets(NO_SAFE_INSET))
+                    }
+                }
+            }
+        }
+        val photo = compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot
+        val viewport = compose.onNodeWithTag(WINDOW_TAG).fetchSemanticsNode().boundsInRoot
+        assertPhotoAlignedWithMenu(photo)
+        assertEquals(viewport.center.y, photo.center.y, PIXEL_TOLERANCE)
+        assertTokensFit(SINGLE_SIZE).forEach { assertFalse(photo.overlaps(it)) }
     }
 
     @Test fun adaptiveScreenFitsEveryCountWithPhotoAndLargeFontAcrossWindowSizes() {
@@ -398,6 +422,16 @@ class TokensScreenTest {
         compose.runOnIdle { assertEquals(listOf(Unit), photos) }
     }
 
+    private fun assertPhotoAlignedWithMenu(photo: androidx.compose.ui.geometry.Rect) {
+        val icon = compose.onNodeWithTag(TOKEN_MENU_ICON_TAG, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val menu = compose.onNodeWithContentDescription(context.getString(R.string.tokens_menu))
+            .fetchSemanticsNode().boundsInRoot
+        // The vector's visible dots occupy x=10..14 inside its 24 dp viewport.
+        assertEquals(icon.center.x + MENU_DOT_RADIUS, photo.right, PIXEL_TOLERANCE)
+        assertFalse("Photo $photo overlaps menu touch target $menu", photo.overlaps(menu))
+    }
+
     private fun assertTokensFit(count: Int): List<androidx.compose.ui.geometry.Rect> {
         val board = compose.onNodeWithTag(TOKEN_BOARD_TAG).fetchSemanticsNode().boundsInRoot
         val bounds = tokens().take(count).map { token ->
@@ -422,6 +456,7 @@ class TokensScreenTest {
         const val BOARD_WIDTH = 320
         const val BOARD_HEIGHT = 140
         const val SCREEN_HEIGHT = 240
+        const val COMPACT_WINDOW_HEIGHT = 180
         const val COLOR = -65536
         const val REVISION = 0L
         const val SINGLE_SIZE = 1
@@ -442,6 +477,8 @@ class TokensScreenTest {
         const val PIXEL_TOLERANCE = 1f
         const val MENU_TOUCH_SIZE = 48
         const val MENU_ICON_SIZE = 24
+        const val MENU_DOT_RADIUS = 2f
+        const val MENU_VISIBLE_END_PADDING = 22
         const val MENU_LOWER_TOUCH_FRACTION = 0.75f
         const val MENU_SURFACE_SAMPLE_Y = 2
         const val TABLET_PHOTO_SIZE = 300
@@ -457,8 +494,9 @@ class TokensScreenTest {
         val LANDSCAPE_WINDOW = DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp)
         val WIDE_PHONE_WINDOW = DpSize(840.dp, BOARD_WIDTH.dp)
         val COMPACT_LANDSCAPE_WINDOW = DpSize(420.dp, SCREEN_HEIGHT.dp)
+        val LOW_LANDSCAPE_WINDOW = DpSize(TABLET_HEIGHT.dp, COMPACT_WINDOW_HEIGHT.dp)
         val TABLET_WINDOW = DpSize(1000.dp, TABLET_HEIGHT.dp)
-        val TIGHT_WINDOW = DpSize(220.dp, 180.dp)
+        val TIGHT_WINDOW = DpSize(220.dp, COMPACT_WINDOW_HEIGHT.dp)
         val WINDOWS = listOf(PHONE_WINDOW, TABLET_WINDOW, TIGHT_WINDOW, DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp))
     }
 }

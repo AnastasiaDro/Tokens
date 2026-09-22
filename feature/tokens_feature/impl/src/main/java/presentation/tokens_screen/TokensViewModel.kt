@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import presentation.state.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class TokensViewModel(
     private val tokens: TokenBoardRepository,
@@ -85,7 +86,7 @@ class TokensViewModel(
                 celebrationId += GENERATION_STEP
                 dispatch(TokensAction.Effects(WinEffectsState(flags.animation, flags.sound, celebrationId)))
                 timer = viewModelScope.launch {
-                    delay(WIN_EFFECTS_DURATION_MS)
+                    delay(WIN_EFFECTS_DURATION_MS.milliseconds)
                     stopWinEffects()
                 }
             }

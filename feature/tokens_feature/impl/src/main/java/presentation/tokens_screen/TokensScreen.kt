@@ -15,6 +15,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -89,10 +90,18 @@ private fun TokensContent(
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(safeDrawingInsets)) {
         val layoutWidth = maxWidth
+        val landscape = maxWidth > maxHeight
         val statusMaxHeight = maxHeight / STATUS_HEIGHT_DIVISOR
         // union takes the maximum per edge; the parent's consumed safe insets are not added again.
-        val contentInsets = safeDrawingInsets.union(WindowInsets(
-            left = TokensDimensions.MediumSpacing, right = TokensDimensions.MediumSpacing))
+        val designInsets = WindowInsets(
+            left = TokensDimensions.MediumSpacing, right = TokensDimensions.MediumSpacing)
+        // Match the visible dots, not the edge of their larger icon or touch target.
+        val menuEndInset = TokensDimensions.MinimumTouchTarget / MENU_CENTERING_DIVISOR - MENU_DOT_RADIUS_DP.dp
+        val menuInsets = if (LocalLayoutDirection.current == LayoutDirection.Ltr) WindowInsets(right = menuEndInset)
+        else WindowInsets(left = menuEndInset)
+        val contentInsets = if (landscape && showPhoto) {
+            safeDrawingInsets.add(menuInsets).union(designInsets)
+        } else safeDrawingInsets.union(designInsets)
         Column(Modifier.fillMaxSize().windowInsetsPadding(contentInsets)) {
             if (state.loading || state.error != null) {
                 TextButton(onClick = onRetry, enabled = state.error != null && !state.saving,
@@ -108,12 +117,16 @@ private fun TokensContent(
             BoxWithConstraints(Modifier.fillMaxWidth().weight(CONTENT_WEIGHT)) {
                 val density = LocalDensity.current
                 val preferredDiameter = dimensionResource(R.dimen.token_width)
+                // Keep a centered side photo below the menu instead of shifting its right edge.
+                val preferredPhotoSize = if (landscape) minOf(PHOTO_MAX_SIZE_DP.dp,
+                    (maxHeight - TokensDimensions.MinimumTouchTarget * CENTER_DIVISOR).coerceAtLeast(NO_SIZE.dp))
+                else PHOTO_MAX_SIZE_DP.dp
                 fun planForWidth(width: Int) = with(density) {
                     boardContentGeometry(width, maxHeight.roundToPx(), state.board?.count ?: NO_SIZE,
                         preferredDiameter.roundToPx(), TokensDimensions.SmallSpacing.roundToPx(),
                         TokensDimensions.MinimumTouchTarget.roundToPx(),
                         layoutWidth >= WIDE_WINDOW_MIN_WIDTH_DP.dp && maxHeight >= WIDE_WINDOW_MIN_HEIGHT_DP.dp,
-                        showPhoto, PHOTO_MAX_SIZE_DP.dp.roundToPx(),
+                        showPhoto, preferredPhotoSize.roundToPx(),
                         largePortraitLayout = layoutWidth >= TABLET_MIN_WIDTH_DP.dp && maxHeight > layoutWidth)
                 }
                 val widthPx = with(density) { maxWidth.roundToPx() }
@@ -342,6 +355,8 @@ internal const val TOKEN_MENU_ICON_TAG = "board-menu-icon"
 internal const val TOKEN_MENU_POPUP_TAG = "board-menu-popup"
 internal const val TOKEN_MENU_DIVIDER_TAG = "board-menu-divider"
 private const val MENU_ICON_SIZE_DP = 24
+// Visible circles in ic_more_vert.xml; their center matches the touch target's center.
+private const val MENU_DOT_RADIUS_DP = 2
 private const val MENU_CENTERING_DIVISOR = 2
 private const val CONTENT_WEIGHT = 1f
 private const val PHOTO_MAX_SIZE_DP = 150
