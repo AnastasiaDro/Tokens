@@ -65,13 +65,14 @@ internal fun TokensScreen(
     onSettings: () -> Unit,
     onPhoto: () -> Unit,
     modifier: Modifier = Modifier,
+    safeDrawingInsets: WindowInsets = WindowInsets.safeDrawing,
 ) {
     val ready = !state.loading && state.board != null && state.error != StorageFailure.READ
     val showPhoto = state.reinforcement?.enabled == true
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TokensContent(state, ready, showPhoto, onTokenClick, onClear, onRetry, onPhoto)
+        TokensContent(state, ready, showPhoto, onTokenClick, onClear, onRetry, onPhoto, safeDrawingInsets)
         BoardMenu(ready, { state.board?.let { onSelectCount(it.count) } }, onClear, onSettings, showPhoto, onPhoto,
-            Modifier.align(Alignment.TopEnd).safeDrawingPadding())
+            Modifier.align(Alignment.TopEnd).windowInsetsPadding(safeDrawingInsets))
     }
 }
 
@@ -84,10 +85,15 @@ private fun TokensContent(
     onClear: () -> Unit,
     onRetry: () -> Unit,
     onPhoto: () -> Unit,
+    safeDrawingInsets: WindowInsets,
 ) {
-    BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
+    BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(safeDrawingInsets)) {
+        val layoutWidth = maxWidth
         val statusMaxHeight = maxHeight / STATUS_HEIGHT_DIVISOR
-        Column(Modifier.fillMaxSize()) {
+        // union takes the maximum per edge; the parent's consumed safe insets are not added again.
+        val contentInsets = safeDrawingInsets.union(WindowInsets(
+            left = TokensDimensions.MediumSpacing, right = TokensDimensions.MediumSpacing))
+        Column(Modifier.fillMaxSize().windowInsetsPadding(contentInsets)) {
             if (state.loading || state.error != null) {
                 TextButton(onClick = onRetry, enabled = state.error != null && !state.saving,
                     modifier = Modifier.padding(end = TokensDimensions.MinimumTouchTarget + TokensDimensions.SmallSpacing)
@@ -106,9 +112,9 @@ private fun TokensContent(
                     boardContentGeometry(width, maxHeight.roundToPx(), state.board?.count ?: NO_SIZE,
                         preferredDiameter.roundToPx(), TokensDimensions.SmallSpacing.roundToPx(),
                         TokensDimensions.MinimumTouchTarget.roundToPx(),
-                        maxWidth >= WIDE_WINDOW_MIN_WIDTH_DP.dp && maxHeight >= WIDE_WINDOW_MIN_HEIGHT_DP.dp,
+                        layoutWidth >= WIDE_WINDOW_MIN_WIDTH_DP.dp && maxHeight >= WIDE_WINDOW_MIN_HEIGHT_DP.dp,
                         showPhoto, PHOTO_MAX_SIZE_DP.dp.roundToPx(),
-                        largePortraitLayout = maxWidth >= TABLET_MIN_WIDTH_DP.dp && maxHeight > maxWidth)
+                        largePortraitLayout = layoutWidth >= TABLET_MIN_WIDTH_DP.dp && maxHeight > layoutWidth)
                 }
                 val widthPx = with(density) { maxWidth.roundToPx() }
                 val heightPx = with(density) { maxHeight.roundToPx() }

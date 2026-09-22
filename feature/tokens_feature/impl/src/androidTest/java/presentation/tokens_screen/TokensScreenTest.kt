@@ -177,7 +177,7 @@ class TokensScreenTest {
             // The tight-window test separately verifies hiding the photo when space is insufficient.
             CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
                 TokensTheme {
-                    Box(Modifier.size(BOARD_WIDTH.dp, SCREEN_HEIGHT.dp)
+                    Box(Modifier.size((BOARD_WIDTH + DESIGN_PADDING + DESIGN_PADDING).dp, SCREEN_HEIGHT.dp)
                         .consumeWindowInsets(WindowInsets.systemBars)) {
                         TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = enabled.value)),
                             {}, {}, {}, {}, {}, { photos += Unit })
@@ -217,8 +217,10 @@ class TokensScreenTest {
             val photo = compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed()
                 .fetchSemanticsNode().boundsInRoot
             val top = after.minOf { it.top }
-            // Resource dimensions retain the host density; the photo may shrink above a tall grid.
-            val expectedPhotoSize = minOf(TABLET_PHOTO_SIZE.toFloat(), top - viewport.top - TABLET_PHOTO_GAP)
+            val board = compose.onNodeWithTag(TOKEN_BOARD_TAG).fetchSemanticsNode().boundsInRoot
+            // The photo adapts to the padded width and the free height above the centered grid.
+            val expectedPhotoSize = minOf(TABLET_PHOTO_SIZE.toFloat(), board.width / CENTER_DIVISOR,
+                top - viewport.top - TABLET_PHOTO_GAP)
             assertEquals(expectedPhotoSize, photo.width, PIXEL_TOLERANCE)
             assertEquals(photo.width, photo.height, PIXEL_TOLERANCE)
             assertEquals(viewport.center.y, (top + after.maxOf { it.bottom }) / CENTER_DIVISOR, PIXEL_TOLERANCE)
@@ -227,6 +229,92 @@ class TokensScreenTest {
             assertTrue(photo.top >= viewport.top)
             after.forEach { assertFalse(photo.overlaps(it)) }
         }
+    }
+
+    @Test fun landscapeContentUsesMaximumOfDesignPaddingAndEachSafeInset() {
+        val window = mutableStateOf(LANDSCAPE_WINDOW)
+        val safeEdges = mutableStateOf(NO_SAFE_INSET to NO_SAFE_INSET)
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
+                TokensTheme {
+                    Box(Modifier.size(window.value).testTag(WINDOW_TAG)) {
+                        TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = true)),
+                            {}, {}, {}, {}, {}, {}, safeDrawingInsets = WindowInsets(
+                                left = safeEdges.value.first.dp, right = safeEdges.value.second.dp,
+                                top = TOP_SAFE_INSET.dp, bottom = BOTTOM_SAFE_INSET.dp))
+                    }
+                }
+            }
+        }
+        listOf(LANDSCAPE_WINDOW, WIDE_PHONE_WINDOW).forEach { size ->
+            var originalTokenSize: Float? = null
+            var originalPhotoSize: Float? = null
+            listOf(
+                NO_SAFE_INSET to NO_SAFE_INSET,
+                SMALL_SAFE_INSET to SMALL_SAFE_INSET,
+                DESIGN_PADDING to DESIGN_PADDING,
+                LARGE_SAFE_INSET to LARGE_SAFE_INSET,
+                SMALL_SAFE_INSET to LARGE_SAFE_INSET,
+                LARGE_SAFE_INSET to SMALL_SAFE_INSET,
+            ).forEach { edges ->
+                compose.runOnIdle { window.value = size; safeEdges.value = edges }
+                val viewport = compose.onNodeWithTag(WINDOW_TAG).fetchSemanticsNode().boundsInRoot
+                val board = compose.onNodeWithTag(TOKEN_BOARD_TAG).fetchSemanticsNode().boundsInRoot
+                val photo = compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed()
+                    .fetchSemanticsNode().boundsInRoot
+                val tokens = assertTokensFit(MAX_TOKEN_COUNT)
+                val leftPadding = maxOf(DESIGN_PADDING, edges.first).toFloat()
+                val rightPadding = maxOf(DESIGN_PADDING, edges.second).toFloat()
+                assertEquals(leftPadding, board.left - viewport.left, PIXEL_TOLERANCE)
+                assertEquals(rightPadding, viewport.right - photo.right, PIXEL_TOLERANCE)
+                assertTrue(tokens.minOf { it.left } >= viewport.left + leftPadding)
+                assertEquals(TOP_SAFE_INSET.toFloat(), board.top - viewport.top, PIXEL_TOLERANCE)
+                assertEquals(BOTTOM_SAFE_INSET.toFloat(), viewport.bottom - board.bottom, PIXEL_TOLERANCE)
+                assertEquals(board.center.y, photo.center.y, PIXEL_TOLERANCE)
+                assertEquals(board.center.y,
+                    (tokens.minOf { it.top } + tokens.maxOf { it.bottom }) / CENTER_DIVISOR, PIXEL_TOLERANCE)
+                assertEquals(board.center.x,
+                    (tokens.minOf { it.left } + tokens.maxOf { it.right }) / CENTER_DIVISOR, PIXEL_TOLERANCE)
+                tokens.forEach { assertFalse(photo.overlaps(it)) }
+                if (originalTokenSize == null) {
+                    originalTokenSize = tokens.first().width
+                    originalPhotoSize = photo.width
+                }
+                assertEquals(originalTokenSize!!, tokens.first().width, PIXEL_TOLERANCE)
+                assertEquals(originalPhotoSize!!, photo.width, PIXEL_TOLERANCE)
+            }
+        }
+    }
+
+    @Test fun smallerLandscapeWindowShrinksElementsWhileKeepingOuterPaddingAndAllTokensVisible() {
+        val window = mutableStateOf(LANDSCAPE_WINDOW)
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(TEST_DENSITY)) {
+                TokensTheme {
+                    Box(Modifier.size(window.value).testTag(WINDOW_TAG)) {
+                        TokensScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = true)),
+                            {}, {}, {}, {}, {}, {}, safeDrawingInsets = WindowInsets(NO_SAFE_INSET))
+                    }
+                }
+            }
+        }
+        val originalTokens = assertTokensFit(MAX_TOKEN_COUNT)
+        val originalPhoto = compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot
+        compose.runOnIdle { window.value = COMPACT_LANDSCAPE_WINDOW }
+        val tokens = assertTokensFit(MAX_TOKEN_COUNT)
+        val photo = compose.onNodeWithTag(REINFORCEMENT_TAG).assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot
+        val viewport = compose.onNodeWithTag(WINDOW_TAG).fetchSemanticsNode().boundsInRoot
+        val board = compose.onNodeWithTag(TOKEN_BOARD_TAG).fetchSemanticsNode().boundsInRoot
+        assertTrue(tokens.first().width < originalTokens.first().width)
+        assertTrue(photo.width < originalPhoto.width)
+        assertEquals(DESIGN_PADDING.toFloat(), board.left - viewport.left, PIXEL_TOLERANCE)
+        assertEquals(DESIGN_PADDING.toFloat(), viewport.right - photo.right, PIXEL_TOLERANCE)
+        assertEquals(viewport.center.y, photo.center.y, PIXEL_TOLERANCE)
+        assertEquals(viewport.center.y,
+            (tokens.minOf { it.top } + tokens.maxOf { it.bottom }) / CENTER_DIVISOR, PIXEL_TOLERANCE)
+        tokens.forEach { assertFalse(photo.overlaps(it)) }
     }
 
     @Test fun adaptiveScreenFitsEveryCountWithPhotoAndLargeFontAcrossWindowSizes() {
@@ -358,9 +446,17 @@ class TokensScreenTest {
         const val MENU_SURFACE_SAMPLE_Y = 2
         const val TABLET_PHOTO_SIZE = 300
         const val TABLET_PHOTO_GAP = 16f
+        const val NO_SAFE_INSET = 0
+        const val SMALL_SAFE_INSET = 8
+        const val DESIGN_PADDING = 16
+        const val LARGE_SAFE_INSET = 28
+        const val TOP_SAFE_INSET = 24
+        const val BOTTOM_SAFE_INSET = 12
         val PORTRAIT_TABLET_WINDOW = DpSize(600.dp, 1000.dp)
         val PHONE_WINDOW = DpSize(BOARD_WIDTH.dp, 600.dp)
         val LANDSCAPE_WINDOW = DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp)
+        val WIDE_PHONE_WINDOW = DpSize(840.dp, BOARD_WIDTH.dp)
+        val COMPACT_LANDSCAPE_WINDOW = DpSize(420.dp, SCREEN_HEIGHT.dp)
         val TABLET_WINDOW = DpSize(1000.dp, TABLET_HEIGHT.dp)
         val TIGHT_WINDOW = DpSize(220.dp, 180.dp)
         val WINDOWS = listOf(PHONE_WINDOW, TABLET_WINDOW, TIGHT_WINDOW, DpSize(TABLET_HEIGHT.dp, BOARD_WIDTH.dp))
