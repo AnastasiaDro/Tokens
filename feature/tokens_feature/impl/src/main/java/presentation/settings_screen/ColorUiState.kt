@@ -7,6 +7,8 @@ data class ColorUiState(
     val loading: Boolean = true,
     val readError: Boolean = false,
     val save: SaveState = SaveState.IDLE,
+    // Newest first. Persistence and updates are supplied by the history implementation separately.
+    val recentColors: List<Int> = emptyList(),
 ) {
     val cancellable: Boolean get() = save != SaveState.SAVING && save != SaveState.SAVED
     val editable: Boolean get() = color != null && !loading && !readError && cancellable

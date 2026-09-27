@@ -46,4 +46,8 @@
     <string name="selected_color_preview">Selected color</string>
     <string name="color_palette">Color palette</string>
     <string name="color_brightness">Brightness</string>
+    <string name="quick_color_selection">Quick selection</string>
+    <string name="recent_colors">Recent colors</string>
+    <string name="no_recent_colors">no colors yet</string>
+    <string name="close_color_dialog">Close color selection</string>
 </resources>

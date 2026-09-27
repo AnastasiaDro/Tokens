@@ -12,6 +12,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
+import com.cerebus.tokens.core.ui.NAVIGATION_DIALOG_TAG
+import presentation.settings_screen.COLOR_CLOSE_TAG
+import presentation.settings_screen.quickColorTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.cerebus.tokens.feature.tokens_feature.ColorDestination
@@ -107,7 +114,7 @@ class SettingsFlowTest {
             scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
             compose.waitUntil(SCREENSHOT_TIMEOUT_MS) { context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
             assertEquals(selected, previewColor())
-            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertIsDisplayed().performClick()
             assertEquals(selected, settingsColor())
             assertEquals(SINGLE_WRITE, board.writes.get())
         }
@@ -157,13 +164,75 @@ class SettingsFlowTest {
                 assertTrue(activity.navController.currentDestination!!.hasRoute<ColorDestination>())
             }
             changeColor()
-            compose.onNodeWithText(context.getString(CoreR.string.cancel)).performScrollTo().performClick()
+            compose.onNodeWithText(context.getString(CoreR.string.cancel)).performClick()
             compose.onNodeWithTag(SETTINGS_COUNT_TAG).assertTextEquals(INITIAL_COUNT.toString())
             assertEquals(NO_WRITES, board.writes.get())
             openColor()
             assertEquals(TOKEN_COLOR, previewColor())
         }
     }
+
+    @Test fun colorPresetsAreDraftUntilConfirmAndAllDismissActionsDiscardThem() {
+        launch().use {
+            val dismissActions: List<() -> Unit> = listOf(
+                { compose.onNodeWithText(context.getString(CoreR.string.cancel)).performClick() },
+                { compose.onNodeWithTag(COLOR_CLOSE_TAG).performClick() },
+                { onView(isRoot()).inRoot(isDialog()).perform(pressBack()) },
+                { compose.onNodeWithTag(NAVIGATION_DIALOG_TAG).performTouchInput { click(Offset(OUTSIDE_POINT, OUTSIDE_POINT)) } },
+            )
+            dismissActions.forEach { dismiss ->
+                openColor()
+                assertEquals(TOKEN_COLOR, draftColor())
+                compose.onNodeWithTag(quickColorTag(ORANGE_SWATCH_INDEX)).performScrollTo().performClick()
+                assertEquals(ORANGE_COLOR, draftColor())
+                assertEquals(NO_WRITES, board.writes.get())
+                dismiss()
+                compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertDoesNotExist()
+                assertEquals(TOKEN_COLOR, board.board.value.color)
+            }
+            openColor()
+            compose.onNodeWithTag(quickColorTag(ORANGE_SWATCH_INDEX)).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertIsDisplayed().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertDoesNotExist()
+            assertEquals(ORANGE_COLOR, board.board.value.color)
+            assertEquals(SINGLE_WRITE, board.writes.get())
+        }
+    }
+
+    @Test fun colorDraftSurvivesRotationAndSavingFailureKeepsDialogOpen() {
+        val gate = CompletableDeferred<Unit>()
+        board.beforeWrite = { gate.await() }
+        board.failWrite = true
+        launch().use { scenario ->
+            openColor()
+            compose.onNodeWithTag(quickColorTag(ORANGE_SWATCH_INDEX)).performScrollTo().performClick()
+            listOf(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE).forEach { orientation ->
+                scenario.onActivity { it.requestedOrientation = orientation }
+                val configuration = if (orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                    Configuration.ORIENTATION_PORTRAIT else Configuration.ORIENTATION_LANDSCAPE
+                compose.waitUntil(SCREENSHOT_TIMEOUT_MS) { context.resources.configuration.orientation == configuration }
+                assertEquals(ORANGE_COLOR, draftColor())
+                compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertIsDisplayed()
+            }
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performClick()
+            compose.onNodeWithTag(COLOR_CLOSE_TAG).assertIsNotEnabled()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertIsNotEnabled()
+            onView(isRoot()).inRoot(isDialog()).perform(pressBack())
+            scenario.recreate()
+            assertEquals(ORANGE_COLOR, draftColor())
+            compose.runOnIdle { gate.complete(Unit) }
+            compose.onNodeWithText(context.getString(CoreR.string.storage_save_error)).performScrollTo().assertIsDisplayed()
+            assertEquals(TOKEN_COLOR, board.board.value.color)
+            compose.runOnIdle { board.failWrite = false }
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertIsDisplayed().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertDoesNotExist()
+            assertEquals(ORANGE_COLOR, board.board.value.color)
+            assertEquals(RETRY_WRITES, board.writes.get())
+        }
+    }
+
+    private fun draftColor(): Int = compose.onNodeWithTag(COLOR_PREVIEW_TAG).fetchSemanticsNode()
+        .config[SemanticsProperties.StateDescription].removePrefix("#").toLong(HEX_RADIX).toInt()
 
     private fun openColor() {
         compose.onNodeWithText(context.getString(R.string.select_button_text)).performScrollTo().performClick()
@@ -197,7 +266,11 @@ class SettingsFlowTest {
     }
 
     private fun changeColor(): Int {
-        compose.onNodeWithTag(COLOR_PICKER_TAG).performScrollTo().performTouchInput {
+        val picker = compose.onNodeWithTag(COLOR_PICKER_TAG)
+        if (compose.onAllNodes(hasTestTag(COLOR_PICKER_TAG) and hasAnyAncestor(hasScrollAction())).fetchSemanticsNodes().isNotEmpty()) {
+            picker.performScrollTo()
+        }
+        picker.performTouchInput {
             click(Offset(width * PICKER_X_FRACTION, height * PICKER_Y_FRACTION))
         }
         val selected = previewColor()
@@ -212,7 +285,7 @@ class SettingsFlowTest {
             assertEquals(NO_WRITES, board.writes.get())
             scenario.recreate()
             assertEquals(selected, previewColor())
-            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performClick()
             compose.onNodeWithTag(SETTINGS_COUNT_TAG).assertExists()
             assertEquals(selected, board.board.value.color)
             assertEquals(selected, settingsColor())
@@ -229,7 +302,7 @@ class SettingsFlowTest {
         launch().use { scenario ->
             openColor()
             val selected = changeColor()
-            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performClick()
             compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertIsNotEnabled()
             compose.onNodeWithText(context.getString(CoreR.string.cancel)).assertIsNotEnabled()
             scenario.recreate()
@@ -243,7 +316,7 @@ class SettingsFlowTest {
             assertEquals(selected, previewColor())
             assertEquals(TOKEN_COLOR, board.board.value.color)
             compose.runOnIdle { board.failWrite = false }
-            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performClick()
             compose.onNodeWithTag(SETTINGS_COUNT_TAG).assertExists()
             assertEquals(selected, board.board.value.color)
             assertEquals(RETRY_WRITES, board.writes.get())
@@ -257,7 +330,7 @@ class SettingsFlowTest {
             assertEquals(DARK_COLOR, previewColor())
             scenario.recreate()
             assertEquals(DARK_COLOR, previewColor())
-            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performClick()
             compose.onNodeWithTag(SETTINGS_COUNT_TAG).assertExists()
             assertEquals(DARK_COLOR, board.board.value.color)
         }
@@ -328,6 +401,10 @@ class SettingsFlowTest {
     }
 
     private companion object {
+        const val HEX_RADIX = 16
+        const val ORANGE_SWATCH_INDEX = 1
+        const val ORANGE_COLOR = -26624
+        const val OUTSIDE_POINT = 2f
         const val INITIAL_COUNT = 5
         const val CHANGED_COUNT = 6
         const val TOKEN_COLOR = -65536

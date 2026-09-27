@@ -47,4 +47,8 @@
     <string name="selected_color_preview">Выбранный цвет</string>
     <string name="color_palette">Палитра цветов</string>
     <string name="color_brightness">Яркость</string>
+    <string name="quick_color_selection">Быстрый выбор</string>
+    <string name="recent_colors">Недавние цвета</string>
+    <string name="no_recent_colors">пока нет цветов</string>
+    <string name="close_color_dialog">Закрыть выбор цвета</string>
 </resources>
