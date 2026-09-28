@@ -1,5 +1,9 @@
 package presentation.tokens_screen
 
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.TargetedFlingBehavior
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +18,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerSnapDistance
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.selection.selectable
@@ -33,6 +38,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -51,6 +57,7 @@ import com.cerebus.tokens.feature.tokens_feature.R
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import presentation.state.SaveState
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import com.cerebus.tokens.core.ui.R as CoreR
 
@@ -191,10 +198,7 @@ private fun TokenCountWheel(
             .testTag(COUNT_WHEEL_TAG),
         pageSize = PageSize.Fixed(WHEEL_ITEM_HEIGHT_DP.dp),
         contentPadding = PaddingValues(vertical = WHEEL_ITEM_HEIGHT_DP.dp),
-        flingBehavior = PagerDefaults.flingBehavior(
-            state = pagerState,
-            pagerSnapDistance = PagerSnapDistance.atMost(MAX_PAGES_PER_FLING),
-        ),
+        flingBehavior = rememberCountWheelFlingBehavior(pagerState),
         userScrollEnabled = enabled,
     ) { page ->
         val count = page + minimum
@@ -225,6 +229,36 @@ private fun TokenCountWheel(
                         fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun rememberCountWheelFlingBehavior(pagerState: PagerState): TargetedFlingBehavior {
+    val flingBehavior = PagerDefaults.flingBehavior(
+        state = pagerState,
+        pagerSnapDistance = PagerSnapDistance.atMost(MAX_PAGES_PER_FLING),
+    )
+    val nearestNumberSnap = rememberSnapFlingBehavior(remember(pagerState) {
+        object : SnapLayoutInfoProvider {
+            override fun calculateApproachOffset(velocity: Float, decayOffset: Float) = NO_SNAP_APPROACH_PX
+
+            // Match the highlighted page using its actual position, not the gesture distance
+            // (which also includes touch slop and can send Pager's default snap one page back).
+            override fun calculateSnapOffset(velocity: Float): Float =
+                -pagerState.currentPageOffsetFraction * (pagerState.layoutInfo.pageSize + pagerState.layoutInfo.pageSpacing)
+        }
+    })
+    val flingThresholdPx = with(LocalDensity.current) { WHEEL_FLING_THRESHOLD_DP.dp.toPx() }
+    return remember(flingBehavior, nearestNumberSnap, flingThresholdPx) {
+        object : TargetedFlingBehavior {
+            override suspend fun ScrollScope.performFling(
+                initialVelocity: Float,
+                onRemainingDistanceUpdated: (Float) -> Unit,
+            ): Float {
+                val behavior = if (abs(initialVelocity) < flingThresholdPx) nearestNumberSnap else flingBehavior
+                return with(behavior) { performFling(initialVelocity, onRemainingDistanceUpdated) }
             }
         }
     }
@@ -357,4 +391,7 @@ private const val FIRST_PAGE = 0
 private const val NO_STEPS = 0
 private const val RANGE_INCLUSIVE_ITEM_COUNT = 1
 private const val MAX_PAGES_PER_FLING = 1
+// Match Compose's distinction between a slow release and a directional fling.
+private const val WHEEL_FLING_THRESHOLD_DP = 400
+private const val NO_SNAP_APPROACH_PX = 0f
 private const val DISABLED_ACTION_ALPHA = 0.38f
