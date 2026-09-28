@@ -18,11 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
@@ -36,6 +39,7 @@ import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import presentation.state.SaveState
 import kotlin.math.roundToInt
+import androidx.compose.ui.graphics.Canvas as GraphicsCanvas
 import com.cerebus.tokens.core.ui.R as CoreR
 
 @Composable
@@ -195,6 +199,7 @@ private fun ColorControls(state: ColorUiState, controller: ColorPickerController
                     initialColor = initialColor,
                     borderSize = NO_SLIDER_BORDER_DP.dp,
                     borderRadius = SLIDER_CORNER_RADIUS_DP.dp,
+                    wheelImageBitmap = brightnessMarker(requireNotNull(state.color)),
                 )
             }
         }
@@ -221,6 +226,22 @@ private fun ColorControls(state: ColorUiState, controller: ColorPickerController
         }
         if (state.save == SaveState.ERROR) {
             Text(stringResource(CoreR.string.storage_save_error), color = MaterialTheme.colorScheme.error)
+        }
+    }
+}
+
+@Composable
+private fun brightnessMarker(color: Int): ImageBitmap {
+    val density = LocalDensity.current
+    val sizePx = with(density) { MARKER_SIZE_DP.dp.roundToPx() }
+    val borderPx = with(density) { MARKER_BORDER_DP.dp.toPx() }
+    return remember(color, sizePx, borderPx) {
+        ImageBitmap(sizePx, sizePx).also { bitmap ->
+            val canvas = GraphicsCanvas(bitmap)
+            val radius = sizePx / MARKER_DIAMETER_DIVISOR
+            val center = Offset(radius, radius)
+            canvas.drawCircle(center, radius, Paint().apply { this.color = Color.White })
+            canvas.drawCircle(center, radius - borderPx, Paint().apply { this.color = Color(color) })
         }
     }
 }
@@ -337,6 +358,7 @@ private const val CLOSE_ICON_STROKE_DP = 2
 private const val MARKER_SIZE_DP = 24
 private const val MARKER_RADIUS_DP = 12
 private const val MARKER_BORDER_DP = 2
+private const val MARKER_DIAMETER_DIVISOR = 2f
 private const val SWATCH_SIZE_DP = 28
 private const val COLOR_CONTROL_HEIGHT_DP = 32
 private const val CONTROL_GROUP_SPACING_DP = 3
