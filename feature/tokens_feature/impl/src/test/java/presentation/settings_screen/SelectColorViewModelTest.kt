@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -50,6 +51,41 @@ class SelectColorViewModelTest {
         runCurrent()
         assertEquals(SELECTED_COLOR, vm.state.value.color)
         assertEquals(EXTERNAL_COLOR, tokens.values.value.color)
+        assertEquals(listOf(EXTERNAL_COLOR), vm.state.value.recentColors)
+    }
+
+    @Test fun draftIsNotAddedToHistoryUntilSuccessfulConfirmation() = runTest(dispatcher) {
+        tokens.setColor(EXTERNAL_COLOR)
+        val vm = viewModel()
+        runCurrent()
+        assertEquals(listOf(EXTERNAL_COLOR), vm.state.value.recentColors)
+        vm.selectColor(SELECTED_COLOR)
+        assertEquals(listOf(EXTERNAL_COLOR), vm.state.value.recentColors)
+        assertEquals(listOf(EXTERNAL_COLOR), tokens.colorSettings.first().recentColors)
+        tokens.failWrite = true
+        vm.save()
+        runCurrent()
+        assertEquals(SaveState.ERROR, vm.state.value.save)
+        assertEquals(listOf(EXTERNAL_COLOR), vm.state.value.recentColors)
+        assertEquals(listOf(EXTERNAL_COLOR), tokens.colorSettings.first().recentColors)
+        tokens.failWrite = false
+        vm.save()
+        runCurrent()
+        assertEquals(SaveState.SAVED, vm.state.value.save)
+        assertEquals(listOf(SELECTED_COLOR, EXTERNAL_COLOR), vm.state.value.recentColors)
+        assertEquals(listOf(SELECTED_COLOR, EXTERNAL_COLOR), tokens.colorSettings.first().recentColors)
+    }
+
+    @Test fun reopeningDiscardsUnsavedDraftAndLoadsPersistedHistory() = runTest(dispatcher) {
+        tokens.setColor(EXTERNAL_COLOR)
+        val vm = viewModel()
+        runCurrent()
+        vm.selectColor(SELECTED_COLOR)
+        store.clear()
+        val reopened = viewModel()
+        runCurrent()
+        assertEquals(EXTERNAL_COLOR, reopened.state.value.color)
+        assertEquals(listOf(EXTERNAL_COLOR), reopened.state.value.recentColors)
     }
 
     @Test fun restoredDraftWaitsForReadAndNeverWritesAutomatically() = runTest(dispatcher) {

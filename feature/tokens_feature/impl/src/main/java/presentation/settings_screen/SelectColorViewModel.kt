@@ -28,7 +28,7 @@ class SelectColorViewModel(
         observation?.cancel()
         dispatch(ColorAction.ReadStarted)
         observation = viewModelScope.launch {
-            try { tokens.board.collect { dispatch(ColorAction.Loaded(it.color)) } }
+            try { tokens.colorSettings.collect { dispatch(ColorAction.Loaded(it.color, it.recentColors)) } }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { dispatch(ColorAction.ReadFailed) }
         }

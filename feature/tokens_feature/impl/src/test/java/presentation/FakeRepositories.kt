@@ -2,6 +2,8 @@ package presentation
 
 import com.cerebus.tokens.data.reinforcement.*
 import domain.models.Token
+import domain.models.TokenColorSettings
+import domain.models.recentColorsAfterConfirmation
 import domain.models.resizeTokenProgress
 import domain.repository.*
 import kotlinx.coroutines.flow.*
@@ -22,6 +24,8 @@ class FakeBoardRepository : TokenBoardRepository {
         if (failed) throw IOException("Read failed")
         board
     }
+    private val recentColors = MutableStateFlow<List<Int>>(emptyList())
+    override val colorSettings = combine(board, recentColors) { board, history -> TokenColorSettings(board.color, history) }
     override suspend fun toggle(id: String) = change(id) { !it }
     override suspend fun setChecked(id: String, checked: Boolean) = change(id) { checked }
     private suspend fun change(id: String, transform: (Boolean) -> Boolean): TokenChange {
@@ -51,6 +55,7 @@ class FakeBoardRepository : TokenBoardRepository {
         if (failWrite) throw IOException("Write failed")
         values.update { it.copy(color = color, tokens = it.tokens.map { token -> token.copy(checkedColor = color) },
             revision = it.revision + REVISION_STEP) }
+        recentColors.update { recentColorsAfterConfirmation(it, color) }
     }
     override suspend fun clear() {
         beforeWrite()

@@ -1,6 +1,7 @@
 package domain.repository
 
 import domain.models.Token
+import domain.models.TokenColorSettings
 import kotlinx.coroutines.flow.Flow
 
 const val MIN_TOKEN_COUNT = 1
@@ -16,9 +17,11 @@ data class TokenChange(val board: TokenBoard, val changed: Boolean, val complete
 
 interface TokenBoardRepository {
     val board: Flow<TokenBoard>
+    val colorSettings: Flow<TokenColorSettings>
     suspend fun toggle(id: String): TokenChange
     suspend fun setChecked(id: String, checked: Boolean): TokenChange
     suspend fun resize(count: Int)
+    /** Atomically applies the color and remembers it among the latest confirmed colors. */
     suspend fun setColor(color: Int)
     suspend fun clear()
 }

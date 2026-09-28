@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -19,6 +20,7 @@ import androidx.compose.ui.test.hasTestTag
 import com.cerebus.tokens.core.ui.NAVIGATION_DIALOG_TAG
 import presentation.settings_screen.COLOR_CLOSE_TAG
 import presentation.settings_screen.quickColorTag
+import presentation.settings_screen.recentColorTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.cerebus.tokens.feature.tokens_feature.ColorDestination
@@ -35,9 +37,12 @@ import com.cerebus.tokens.data.reinforcement.ReinforcementSettings
 import com.cerebus.tokens.feature.tokens_feature.R
 import com.cerebus.tokens.feature.tokens_feature.di.tokensFeatureModule
 import domain.models.Token
+import domain.models.TokenColorSettings
+import domain.models.recentColorsAfterConfirmation
 import domain.repository.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -196,6 +201,39 @@ class SettingsFlowTest {
             compose.onNodeWithTag(COLOR_CONFIRM_TAG).assertDoesNotExist()
             assertEquals(ORANGE_COLOR, board.board.value.color)
             assertEquals(SINGLE_WRITE, board.writes.get())
+        }
+    }
+
+    @Test fun confirmedColorsReopenInHistoryAndSelectingRecentColorRemainsDraftUntilConfirm() {
+        launch().use {
+            openColor()
+            compose.onNodeWithTag(quickColorTag(ORANGE_SWATCH_INDEX)).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performClick()
+            openColor()
+            compose.onNodeWithTag(recentColorTag(FIRST_RECENT_INDEX)).assertIsSelected()
+            assertEquals(ORANGE_COLOR, draftColor())
+
+            compose.onNodeWithTag(quickColorTag(RED_SWATCH_INDEX)).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performClick()
+            openColor()
+            compose.onNodeWithTag(recentColorTag(FIRST_RECENT_INDEX)).assertIsSelected()
+            compose.onNodeWithTag(recentColorTag(SECOND_RECENT_INDEX)).performScrollTo().performClick()
+            assertEquals(ORANGE_COLOR, draftColor())
+            assertEquals(TOKEN_COLOR, board.board.value.color)
+            compose.onNodeWithTag(recentColorTag(SECOND_RECENT_INDEX)).assertIsSelected()
+            compose.onNodeWithText(context.getString(CoreR.string.cancel)).performClick()
+
+            openColor()
+            assertEquals(TOKEN_COLOR, draftColor())
+            compose.onNodeWithTag(recentColorTag(FIRST_RECENT_INDEX)).assertIsSelected()
+            assertEquals(RETRY_WRITES, board.writes.get())
+            compose.onNodeWithTag(recentColorTag(SECOND_RECENT_INDEX)).performScrollTo().performClick()
+            compose.onNodeWithTag(COLOR_CONFIRM_TAG).performClick()
+            openColor()
+            assertEquals(ORANGE_COLOR, draftColor())
+            compose.onNodeWithTag(recentColorTag(FIRST_RECENT_INDEX)).assertIsSelected()
+            compose.onNodeWithTag(recentColorTag(SECOND_RECENT_INDEX)).performScrollTo().performClick()
+            assertEquals(TOKEN_COLOR, draftColor())
         }
     }
 
@@ -371,6 +409,8 @@ class SettingsFlowTest {
             List(INITIAL_COUNT) { Token(false, TOKEN_COLOR, "test-token-$it") }, TOKEN_COLOR, INITIAL_BOARD_REVISION,
         ))
         val writes = AtomicInteger()
+        private val recentColors = MutableStateFlow<List<Int>>(emptyList())
+        override val colorSettings = combine(board, recentColors) { board, history -> TokenColorSettings(board.color, history) }
         var beforeWrite: suspend () -> Unit = {}
         var failWrite = false
         override suspend fun resize(count: Int) {
@@ -386,6 +426,7 @@ class SettingsFlowTest {
             beforeWrite()
             if (failWrite) throw IOException("Expected test failure")
             board.update { it.copy(color = color, tokens = it.tokens.map { token -> token.copy(checkedColor = color) }) }
+            recentColors.update { recentColorsAfterConfirmation(it, color) }
         }
         override suspend fun toggle(id: String): TokenChange = error("Not used in settings tests")
         override suspend fun setChecked(id: String, checked: Boolean): TokenChange = error("Not used in settings tests")
@@ -407,6 +448,9 @@ class SettingsFlowTest {
     private companion object {
         const val HEX_RADIX = 16
         const val ORANGE_SWATCH_INDEX = 1
+        const val RED_SWATCH_INDEX = 0
+        const val FIRST_RECENT_INDEX = 0
+        const val SECOND_RECENT_INDEX = 1
         const val ORANGE_COLOR = -26624
         const val OUTSIDE_POINT = 2f
         const val INITIAL_COUNT = 5

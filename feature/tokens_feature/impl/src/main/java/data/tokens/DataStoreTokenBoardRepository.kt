@@ -5,6 +5,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStoreFile
 import data.persistence.*
 import domain.models.Token
+import domain.models.TokenColorSettings
+import domain.models.MAX_RECENT_COLORS
+import domain.models.recentColorsAfterConfirmation
 import domain.models.resizeTokenProgress
 import domain.repository.TokenBoard
 import domain.repository.TokenBoardRepository
@@ -25,6 +28,9 @@ class DataStoreTokenBoardRepository internal constructor(
     ))
 
     override val board = store.data.map { it.toBoard() }.distinctUntilChanged()
+    override val colorSettings = store.data.map {
+        TokenColorSettings(it.color, it.recentColors.distinct().take(MAX_RECENT_COLORS))
+    }.distinctUntilChanged()
 
     override suspend fun toggle(id: String) = mark(id) { !it }
     override suspend fun setChecked(id: String, checked: Boolean) = mark(id) { checked }
@@ -54,7 +60,14 @@ class DataStoreTokenBoardRepository internal constructor(
     }
 
     override suspend fun setColor(color: Int) {
-        store.updateData { if (it.color == color) it else it.copy(color = color, revision = it.revision + REVISION_STEP) }
+        store.updateData { current ->
+            current.copy(
+                color = color,
+                recentColors = recentColorsAfterConfirmation(current.recentColors, color),
+                // History-only changes must not look like a change to the game board.
+                revision = if (current.color == color) current.revision else current.revision + REVISION_STEP,
+            )
+        }
     }
 
     override suspend fun clear() {
@@ -67,4 +80,3 @@ class DataStoreTokenBoardRepository internal constructor(
 
     private fun TokensDocument.toBoard() = TokenBoard(tokens.map { Token(it.checked, color, it.id) }, color, revision)
 }
-

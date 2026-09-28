@@ -38,6 +38,7 @@ import com.github.skydoves.colorpicker.compose.ColorPickerController
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import presentation.state.SaveState
+import domain.models.MAX_RECENT_COLORS
 import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.Canvas as GraphicsCanvas
 import com.cerebus.tokens.core.ui.R as CoreR
@@ -185,7 +186,7 @@ private fun ColorPicker(
 @Composable
 private fun ColorControls(state: ColorUiState, controller: ColorPickerController, initialColor: Color) {
     val brightnessDescription = stringResource(R.string.color_brightness)
-    val recentColors = state.recentColors.distinct().take(MAX_COLOR_SWATCHES)
+    val recentColors = state.recentColors.distinct().take(MAX_RECENT_COLORS)
     Column(verticalArrangement = Arrangement.spacedBy(CONTROL_GROUP_SPACING_DP.dp)) {
         Column {
             Text(brightnessDescription, style = MaterialTheme.typography.titleSmall)

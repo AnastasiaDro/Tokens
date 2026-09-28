@@ -27,6 +27,8 @@ internal data class TokensDocument(
     @Required val tokens: List<StoredToken> = List(DEFAULT_TOKENS) { StoredToken() },
     @Required val color: Int = DEFAULT_COLOR,
     @Required val revision: Long = INITIAL_REVISION,
+    // Optional for compatibility with existing version-1 documents.
+    val recentColors: List<Int> = emptyList(),
 )
 
 @Serializable

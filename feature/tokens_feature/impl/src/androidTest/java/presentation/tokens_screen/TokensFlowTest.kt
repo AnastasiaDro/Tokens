@@ -285,6 +285,7 @@ class TokensFlowTest {
         override suspend fun setPhotoUri(uri: String) { settings.update { it.copy(photoUri = uri) } }
     }
     private class BoardRepository : TokenBoardRepository {
+        override val colorSettings = kotlinx.coroutines.flow.flow<domain.models.TokenColorSettings> { error("Not used in board tests") }
         override val board = MutableStateFlow(TokenBoard(
             listOf(Token(false, COLOR, FIRST_ID), Token(false, COLOR, LAST_ID)), COLOR, INITIAL_BOARD_REVISION,
         ))
