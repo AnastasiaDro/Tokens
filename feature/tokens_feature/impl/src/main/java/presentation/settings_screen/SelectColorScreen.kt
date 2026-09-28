@@ -151,14 +151,14 @@ private fun ColorPicker(
             val actions: @Composable () -> Unit = {
                 ColorDialogActions(state.editable, state.cancellable, onConfirm, onCancel)
             }
-            val compactPaletteSize = minOf(availableWidth, COMPACT_PALETTE_MAX_SIZE_DP.dp)
+            val compactPaletteSize = minOf(availableWidth, COMPACT_PALETTE_MAX_SIZE_DP.dp) * PALETTE_SIZE_FRACTION
             if (useTwoColumns) {
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(TokensDimensions.ContentPadding)) {
                     BoxWithConstraints(
                         Modifier.weight(PALETTE_WEIGHT).fillMaxHeight(),
                         contentAlignment = Alignment.CenterStart,
                     ) {
-                        palette(Modifier.size(minOf(maxWidth, maxHeight)))
+                        palette(Modifier.size(minOf(maxWidth, maxHeight) * PALETTE_SIZE_FRACTION))
                     }
                     Column(Modifier.weight(CONTROLS_WEIGHT).fillMaxHeight()) {
                         Column(Modifier.weight(CONTENT_WEIGHT).verticalScroll(rememberScrollState())) { controls() }
@@ -349,6 +349,7 @@ private const val MAX_COLOR_SWATCHES = 6
 private const val COLOR_DIALOG_MAX_WIDTH_DP = 720
 private const val COLOR_DIALOG_MAX_HEIGHT_DP = 440
 private const val DIALOG_SIZE_FRACTION = 0.95f
+private const val PALETTE_SIZE_FRACTION = 0.95f
 private const val TWO_COLUMN_MIN_WIDTH_DP = 520
 private const val COMPACT_PALETTE_MAX_SIZE_DP = 220
 private const val HEADER_ACTION_SIZE_DP = 40
