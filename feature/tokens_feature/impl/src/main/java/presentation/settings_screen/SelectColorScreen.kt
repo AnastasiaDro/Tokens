@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -284,11 +285,12 @@ private fun SelectedColorIndicator(color: Int, controller: ColorPickerController
 private fun ColorSwatches(colors: List<Color>, state: ColorUiState, tag: String, onSelect: (Color) -> Unit) {
     Row(Modifier.fillMaxWidth().testTag(tag).selectableGroup()) {
         colors.forEachIndexed { index, color ->
+            val selected = color.toArgb() == state.color
             Box(
                 modifier = Modifier.weight(CONTENT_WEIGHT).height(COLOR_CONTROL_HEIGHT_DP.dp)
                     .testTag(swatchTag(tag, index))
                     .selectable(
-                        selected = color.toArgb() == state.color,
+                        selected = selected,
                         enabled = state.editable,
                         role = Role.RadioButton,
                         onClick = { onSelect(color) },
@@ -297,11 +299,19 @@ private fun ColorSwatches(colors: List<Color>, state: ColorUiState, tag: String,
                 contentAlignment = Alignment.Center,
             ) {
                 Surface(
-                    Modifier.size(SWATCH_SIZE_DP.dp),
+                    Modifier.size(SWATCH_SIZE_DP.dp).then(
+                        if (selected) Modifier.shadow(
+                            elevation = SELECTED_SWATCH_SHADOW_DP.dp,
+                            shape = CircleShape,
+                            clip = false,
+                            ambientColor = Color.Gray,
+                            spotColor = Color.Gray,
+                        ) else Modifier,
+                    ),
                     shape = CircleShape,
                     color = color,
-                    border = if (color.toArgb() == state.color) {
-                        BorderStroke(SELECTED_BORDER_DP.dp, MaterialTheme.colorScheme.onSurface)
+                    border = if (selected) {
+                        BorderStroke(SELECTED_BORDER_DP.dp, Color.White)
                     } else {
                         BorderStroke(UNSELECTED_BORDER_DP.dp, MaterialTheme.colorScheme.outlineVariant)
                     },
@@ -365,6 +375,7 @@ private const val SWATCH_SIZE_DP = 28
 private const val COLOR_CONTROL_HEIGHT_DP = 32
 private const val CONTROL_GROUP_SPACING_DP = 3
 private const val SELECTED_BORDER_DP = 2
+private const val SELECTED_SWATCH_SHADOW_DP = 2
 private const val UNSELECTED_BORDER_DP = 1
 private const val NO_SLIDER_BORDER_DP = 0
 private const val SLIDER_CORNER_RADIUS_DP = 6
