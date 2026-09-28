@@ -240,7 +240,11 @@ class SettingsFlowTest {
     }
 
     private fun previewColor(): Int {
-        val node = compose.onNodeWithTag(COLOR_PREVIEW_TAG).performScrollTo().fetchSemanticsNode()
+        val marker = compose.onNodeWithTag(COLOR_PREVIEW_TAG)
+        if (compose.onAllNodes(hasTestTag(COLOR_PREVIEW_TAG) and hasAnyAncestor(hasScrollAction())).fetchSemanticsNodes().isNotEmpty()) {
+            marker.performScrollTo()
+        }
+        val node = marker.fetchSemanticsNode()
         val windowOrigin = IntArray(POINT_DIMENSIONS)
         onView(isRoot()).inRoot(isDialog()).check { view, error ->
             if (error != null) throw error

@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cerebus.tokens.core.ui.theme.TokensDimensions
 import com.cerebus.tokens.feature.tokens_feature.R
@@ -34,6 +35,7 @@ import com.github.skydoves.colorpicker.compose.ColorPickerController
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import presentation.state.SaveState
+import kotlin.math.roundToInt
 import com.cerebus.tokens.core.ui.R as CoreR
 
 @Composable
@@ -54,12 +56,12 @@ internal fun SelectColorScreen(
     // NavigationDialog consumes system bars; this adds only the remaining safe insets (e.g. cutout).
     BoxWithConstraints(modifier.safeDrawingPadding().fillMaxWidth(), contentAlignment = Alignment.Center) {
         Surface(
-            modifier = Modifier.widthIn(max = COLOR_DIALOG_MAX_WIDTH_DP.dp).fillMaxWidth()
-                .heightIn(max = minOf(maxHeight, COLOR_DIALOG_MAX_HEIGHT_DP.dp))
+            modifier = Modifier.widthIn(max = COLOR_DIALOG_MAX_WIDTH_DP.dp).fillMaxWidth(DIALOG_SIZE_FRACTION)
+                .heightIn(max = minOf(maxHeight, COLOR_DIALOG_MAX_HEIGHT_DP.dp) * DIALOG_SIZE_FRACTION)
                 .testTag(COLOR_DIALOG_TAG),
             shape = MaterialTheme.shapes.extraLarge,
         ) {
-            Column(Modifier.padding(TokensDimensions.SmallSpacing)) {
+            Column(Modifier.padding(horizontal = TokensDimensions.ContentPadding, vertical = TokensDimensions.SmallSpacing)) {
                 ColorDialogHeader(state.cancellable, onCancel)
                 if (state.color != null && !state.loading && !state.readError) {
                     ColorPicker(state, onColorChange, onConfirm, onCancel, Modifier.weight(CONTENT_WEIGHT))
@@ -83,7 +85,7 @@ private fun ColorDialogHeader(cancellable: Boolean, onCancel: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
             stringResource(R.string.select_color),
-            modifier = Modifier.weight(CONTENT_WEIGHT),
+            modifier = Modifier.weight(CONTENT_WEIGHT).testTag(COLOR_TITLE_TAG),
             style = MaterialTheme.typography.titleLarge,
         )
         val closeDescription = stringResource(R.string.close_color_dialog)
@@ -132,11 +134,13 @@ private fun ColorPicker(
                         },
                         controller = controller,
                         initialColor = initialColor,
+                        drawDefaultWheelIndicator = false,
                         onColorChanged = { envelope ->
                             // Controller initialization must not edit the draft.
                             if (editable && envelope.fromUser) currentOnColorChange(envelope.color.toArgb())
                         },
                     )
+                    SelectedColorIndicator(requireNotNull(state.color), controller)
                 }
             }
             val controls: @Composable () -> Unit = { ColorControls(state, controller, initialColor) }
@@ -148,7 +152,7 @@ private fun ColorPicker(
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(TokensDimensions.ContentPadding)) {
                     BoxWithConstraints(
                         Modifier.weight(PALETTE_WEIGHT).fillMaxHeight(),
-                        contentAlignment = Alignment.Center,
+                        contentAlignment = Alignment.CenterStart,
                     ) {
                         palette(Modifier.size(minOf(maxWidth, maxHeight)))
                     }
@@ -180,10 +184,7 @@ private fun ColorControls(state: ColorUiState, controller: ColorPickerController
     val recentColors = state.recentColors.distinct().take(MAX_COLOR_SWATCHES)
     Column(verticalArrangement = Arrangement.spacedBy(CONTROL_GROUP_SPACING_DP.dp)) {
         Column {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(brightnessDescription, Modifier.weight(CONTENT_WEIGHT), style = MaterialTheme.typography.titleSmall)
-                SelectedColorIndicator(requireNotNull(state.color))
-            }
+            Text(brightnessDescription, style = MaterialTheme.typography.titleSmall)
             BlockPickerInput(state.editable, Modifier.fillMaxWidth().height(COLOR_CONTROL_HEIGHT_DP.dp)) {
                 BrightnessSlider(
                     modifier = Modifier.fillMaxSize().testTag(COLOR_BRIGHTNESS_TAG).semantics {
@@ -240,17 +241,21 @@ private fun BlockPickerInput(enabled: Boolean, modifier: Modifier, content: @Com
 }
 
 @Composable
-private fun SelectedColorIndicator(color: Int) {
+private fun SelectedColorIndicator(color: Int, controller: ColorPickerController) {
     val description = stringResource(R.string.selected_color_preview)
-    Surface(
-        modifier = Modifier.size(PREVIEW_SIZE_DP.dp).testTag(COLOR_PREVIEW_TAG).semantics {
+    Canvas(
+        modifier = Modifier.absoluteOffset {
+            val radius = MARKER_RADIUS_DP.dp.toPx()
+            val point = controller.selectedPoint.value
+            IntOffset((point.x - radius).roundToInt(), (point.y - radius).roundToInt())
+        }.size(MARKER_SIZE_DP.dp).testTag(COLOR_PREVIEW_TAG).semantics {
             contentDescription = description
             stateDescription = colorHex(color)
         },
-        shape = CircleShape,
-        color = Color(color),
-        border = BorderStroke(UNSELECTED_BORDER_DP.dp, MaterialTheme.colorScheme.outline),
-    ) {}
+    ) {
+        drawCircle(Color.White)
+        drawCircle(Color(color), radius = (MARKER_RADIUS_DP - MARKER_BORDER_DP).dp.toPx())
+    }
 }
 
 @Composable
@@ -304,6 +309,7 @@ private fun ColorDialogActions(
 }
 
 internal const val COLOR_DIALOG_TAG = "color-dialog"
+internal const val COLOR_TITLE_TAG = "color-title"
 internal const val COLOR_ACTIONS_TAG = "color-actions"
 internal const val COLOR_CLOSE_TAG = "color-close"
 internal const val COLOR_PICKER_TAG = "color-picker"
@@ -321,21 +327,24 @@ private val QUICK_COLORS = listOf(Color.Red, Color(ORANGE_COLOR), Color.Yellow, 
 private const val MAX_COLOR_SWATCHES = 6
 private const val COLOR_DIALOG_MAX_WIDTH_DP = 720
 private const val COLOR_DIALOG_MAX_HEIGHT_DP = 440
+private const val DIALOG_SIZE_FRACTION = 0.95f
 private const val TWO_COLUMN_MIN_WIDTH_DP = 520
 private const val COMPACT_PALETTE_MAX_SIZE_DP = 220
 private const val HEADER_ACTION_SIZE_DP = 40
 private const val CLOSE_ICON_SIZE_DP = 24
 private const val CLOSE_ICON_INSET = 0.2f
 private const val CLOSE_ICON_STROKE_DP = 2
-private const val PREVIEW_SIZE_DP = 20
+private const val MARKER_SIZE_DP = 24
+private const val MARKER_RADIUS_DP = 12
+private const val MARKER_BORDER_DP = 2
 private const val SWATCH_SIZE_DP = 28
 private const val COLOR_CONTROL_HEIGHT_DP = 32
-private const val CONTROL_GROUP_SPACING_DP = 4
+private const val CONTROL_GROUP_SPACING_DP = 3
 private const val SELECTED_BORDER_DP = 2
 private const val UNSELECTED_BORDER_DP = 1
 private const val NO_SLIDER_BORDER_DP = 0
 private const val SLIDER_CORNER_RADIUS_DP = 6
-private const val PALETTE_WEIGHT = 0.85f
+private const val PALETTE_WEIGHT = 0.75f
 private const val CONTROLS_WEIGHT = 1f
 private const val CONTENT_WEIGHT = 1f
 private const val HEX_RADIX = 16

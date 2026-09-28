@@ -48,6 +48,11 @@ class ColorPickerTest {
         reveal(COLOR_PICKER_TAG).performTouchInput {
             click(Offset(width * PICKER_X_FRACTION, height * PICKER_Y_FRACTION))
         }
+        val paletteBounds = compose.onNodeWithTag(COLOR_PICKER_TAG).fetchSemanticsNode().boundsInRoot
+        val markerBounds = compose.onNodeWithTag(COLOR_PREVIEW_TAG).fetchSemanticsNode().boundsInRoot
+        assertEquals(paletteBounds.left + paletteBounds.width * PICKER_X_FRACTION, markerBounds.center.x, BOUNDS_TOLERANCE)
+        assertEquals(paletteBounds.top + paletteBounds.height * PICKER_Y_FRACTION, markerBounds.center.y, BOUNDS_TOLERANCE)
+        assertEquals(state.value.color, previewColor())
         compose.runOnIdle {
             assertFalse(selections.isEmpty())
             assertNotEquals(DARK_COLOR, state.value.color)
@@ -91,6 +96,7 @@ class ColorPickerTest {
             assertTrue(confirmations.isEmpty())
         }
         compose.onNodeWithTag(quickColorTag(ORANGE_SWATCH_INDEX)).assertIsSelected()
+        assertEquals(ORANGE_COLOR, previewColor())
     }
 
     @Test fun loadingAndReadFailureHidePickerWhileSavingKeepsItDisabled() {
@@ -195,6 +201,15 @@ class ColorPickerTest {
             val safeBounds = compose.onNodeWithTag(SAFE_REGION_TAG).fetchSemanticsNode().boundsInRoot
             val dialog = compose.onNodeWithTag(COLOR_DIALOG_TAG).fetchSemanticsNode().boundsInRoot
             assertEquals(safeBounds.center.x, dialog.center.x, BOUNDS_TOLERANCE)
+            assertEquals(minOf(safeBounds.width, PREVIOUS_MAX_DIALOG_WIDTH) * DIALOG_SIZE_FRACTION,
+                dialog.width, BOUNDS_TOLERANCE)
+            assertEquals(minOf(safeBounds.height, PREVIOUS_MAX_DIALOG_HEIGHT) * DIALOG_SIZE_FRACTION,
+                dialog.height, BOUNDS_TOLERANCE)
+            if (case.width > NARROW_WIDTH) {
+                val title = compose.onNodeWithTag(COLOR_TITLE_TAG).fetchSemanticsNode().boundsInRoot
+                val palette = compose.onNodeWithTag(COLOR_PICKER_TAG).fetchSemanticsNode().boundsInRoot
+                assertEquals(palette.left, title.left, BOUNDS_TOLERANCE)
+            }
             listOf(COLOR_CONFIRM_TAG, COLOR_CLOSE_TAG, COLOR_ACTIONS_TAG).forEach { tag ->
                 val node = compose.onNodeWithTag(tag).assertIsDisplayed()
                 node.assert(hasAnyAncestor(hasScrollAction()).not())
@@ -273,6 +288,9 @@ class ColorPickerTest {
         const val PHONE_HEIGHT = 280
         const val NARROW_WIDTH = 320
         const val FULL_BRIGHTNESS = 1f
+        const val PREVIOUS_MAX_DIALOG_WIDTH = 720f
+        const val PREVIOUS_MAX_DIALOG_HEIGHT = 440f
+        const val DIALOG_SIZE_FRACTION = 0.95f
         val TEST_COLORS = listOf(RED_COLOR, ORANGE_COLOR, -256, -16711936, -16776961, -10011977)
     }
 }
