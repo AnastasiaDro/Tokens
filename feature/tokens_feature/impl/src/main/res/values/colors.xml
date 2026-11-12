@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="baseColor">#808080</color>
+    <color name="checkedColor">#cc0000</color>
+    <color name="colorTransparent">#00FFFFFF</color>
+    <color name="linkColor">#008B8B</color>
+    <color name="switchThumbColor">#81FB68</color>
+    <color name="switchTrackColor">#32CD32</color>
+    <color name="switchTrackColorOff">#E0E0E0</color>
+</resources>

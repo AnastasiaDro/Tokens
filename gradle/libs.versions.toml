@@ -1,0 +1,55 @@
+[versions]
+agp = "9.0.1"
+kotlin = "2.2.10"
+navigation = "2.9.6"
+androidxCore = "1.17.0"
+appcompat = "1.7.1"
+lifecycle = "2.6.1"
+activity = "1.8.1"
+colorPickerCompose = "1.1.2"
+lottie = "6.6.7"
+koin = "3.5.0"
+junit = "4.13.2"
+androidxTestJunit = "1.3.0"
+espresso = "3.7.0"
+composeBom = "2025.08.00"
+coroutines = "1.9.0"
+datastore = "1.2.1"
+serialization = "1.9.0"
+
+[libraries]
+datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
+serializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+androidxCoreKtx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
+androidxAppcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidxLifecycleRuntimeKtx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidxLifecycleRuntimeCompose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidxLifecycleViewmodelKtx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+androidxActivityKtx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
+navigationCompose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
+activityCompose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
+koinCore = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koinAndroid = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+koinTest = { module = "io.insert-koin:koin-test", version.ref = "koin" }
+lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
+lottieCompose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
+colorPickerCompose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorPickerCompose" }
+junit = { module = "junit:junit", version.ref = "junit" }
+coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+androidxTestJunit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }
+androidxTestEspresso = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
+composeBom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+composeUi = { module = "androidx.compose.ui:ui" }
+composeFoundation = { module = "androidx.compose.foundation:foundation" }
+composeMaterial3 = { module = "androidx.compose.material3:material3" }
+composeUiToolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" }
+composeUiTooling = { module = "androidx.compose.ui:ui-tooling" }
+composeUiTestJunit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+composeUiTestManifest = { module = "androidx.compose.ui:ui-test-manifest" }
+
+[plugins]
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

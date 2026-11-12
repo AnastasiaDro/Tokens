@@ -1,0 +1,53 @@
+<resources>
+    <string name="app_name">TokensApp</string>
+    <string name="settings">Settings</string>
+    <string name="tokens_menu">Board menu</string>
+    <string name="changeChips">Tokens number</string>
+    <string name="clearChecked">Unmark</string>
+    <string name="aboutAppTV">""</string>
+
+<!-- Settings -->
+    <string name="settings_saving">Saving…</string>
+    <string name="decrease_tokens_count">Decrease token count</string>
+    <string name="increase_tokens_count">Increase token count</string>
+    <string name="quick_count_selection">Quick selection</string>
+    <string name="token_count_range">You can select from %1$d to %2$d</string>
+    <string name="link_open_error">No app is available to open this link.</string>
+    <!-- About app -->
+    <string name="aboutAppTitle">About app</string>
+    <string name="aboutAppText">Hello everyone!
+        My name is Anastasia Drogunova. I am working as neiropsychologist and ontogenetic kinesitherapist with children with ASD about 12 years.
+        One of my dreams is making good and useful apps for my students. That\'s why I started to learn mobileDev. I became an Ecole 42 student in 2020 and now I am working as a professional Android Developer.
+        It is simple but very useful I hope =)
+        </string>
+
+    <string name="my_channel">My youtube channel</string>
+    <string name="my_fb">My facebook profile</string>
+    <string name="about_therapy">About Ontogenetic Kinesitherapy</string>
+
+    <string name="donate_description">Even creating such a simple application requires effort and time. You can support me by sending a donation =)</string>
+    <string name="other_apps"><a href="https://hablotech.ru">Other Apps</a></string>
+    <string name="youtube_link"><a href="https://www.youtube.com/channel/UCy-bYj7AH7QcmMxWWFklfkg">My YouTube channel</a></string>
+
+    <!-- Tokens -->
+    <string name="token_description">Token</string>
+    <string name="token_checked">Marked</string>
+    <string name="token_unchecked">Unmarked</string>
+    <string name="settings_tokens_color">Tokens color</string>
+    <string name="select_button_text">Select</string>
+
+    <!-- Effects -->
+    <string name="settings_animation">Win animation</string>
+    <string name="settings_sound">Win sound</string>
+
+    <string name="reinforcement_image">Reinforcement image</string>
+    <!-- Dialog -->
+    <string name="select_color">Select a color</string>
+    <string name="selected_color_preview">Selected color</string>
+    <string name="color_palette">Color palette</string>
+    <string name="color_brightness">Brightness</string>
+    <string name="quick_color_selection">Quick selection</string>
+    <string name="recent_colors">Recent colors</string>
+    <string name="no_recent_colors">no colors yet</string>
+    <string name="close_color_dialog">Close color selection</string>
+</resources>

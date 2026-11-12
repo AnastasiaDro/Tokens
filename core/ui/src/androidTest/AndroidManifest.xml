@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <provider android:name="com.cerebus.tokens.core.ui.DeniedPhotoProvider"
+            android:authorities="com.cerebus.tokens.core.ui.test.denied"
+            android:exported="false" />
+    </application>
+</manifest>

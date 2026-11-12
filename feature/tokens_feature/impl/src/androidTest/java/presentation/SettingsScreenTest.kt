@@ -1,0 +1,272 @@
+package presentation
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.cerebus.tokens.core.ui.theme.TokensTheme
+import com.cerebus.tokens.data.reinforcement.ReinforcementSettings
+import com.cerebus.tokens.feature.tokens_feature.R
+import domain.repository.EffectsSettings
+import domain.repository.MAX_TOKEN_COUNT
+import domain.repository.MIN_TOKEN_COUNT
+import org.junit.Assert.*
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import presentation.settings_screen.SettingsAction
+import presentation.settings_screen.SettingsScreen
+import presentation.settings_screen.SettingsUiState
+import presentation.settings_screen.TokenSettingsState
+import presentation.state.SaveState
+import presentation.tokens_screen.COUNT_VALUE_TAG
+import presentation.tokens_screen.COUNT_WHEEL_TAG
+import presentation.tokens_screen.SelectTokensNumberScreen
+import presentation.tokens_screen.SelectTokensNumberUiState
+import presentation.tokens_screen.countPresetTag
+import com.cerebus.tokens.core.ui.R as CoreR
+
+@RunWith(AndroidJUnit4::class)
+class SettingsScreenTest {
+    @get:Rule val compose = createComposeRule()
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    @Test fun firstLoadedSwitchIsAlreadyAtItsFinalPositionAndRetryKeepsValue() {
+        val state = mutableStateOf(SettingsUiState())
+        compose.mainClock.autoAdvance = false
+        compose.setContent { TokensTheme {
+            SettingsScreen(state.value, {})
+        } }
+        compose.onAllNodes(isToggleable()).assertCountEquals(NO_SWITCHES)
+        compose.onNodeWithText(context.getString(R.string.settings_sound)).assertExists()
+
+        compose.runOnIdle { state.value = ready() }
+        compose.mainClock.advanceTimeByFrame()
+        val sound = compose.onNodeWithText(context.getString(R.string.settings_sound))
+        sound.assertIsOn()
+        val firstFrame = sound.captureToImage().toPixelMap()
+        compose.mainClock.advanceTimeBy(SWITCH_SETTLE_MILLIS)
+        val settled = sound.captureToImage().toPixelMap()
+        assertEquals(firstFrame.width, settled.width)
+        assertEquals(firstFrame.height, settled.height)
+        // Compare rendered pixels, not just checked semantics: a moving thumb has checked=true too.
+        for (x in FIRST_PIXEL until firstFrame.width) {
+            for (y in FIRST_PIXEL until firstFrame.height) {
+                assertEquals("Switch moved after first frame at ($x,$y)",
+                    firstFrame[x, y].toArgb(), settled[x, y].toArgb())
+            }
+        }
+
+        compose.runOnIdle { state.value = state.value.copy(loading = true, readFailure = true) }
+        compose.mainClock.advanceTimeByFrame()
+        sound.assertIsOn().assertIsNotEnabled()
+    }
+
+    @Test fun loadingDoesNotExposeFalseToggleSemanticsOrEmitActions() {
+        val state = mutableStateOf(SettingsUiState())
+        val changes = mutableListOf<SettingsAction>()
+        compose.setContent { TokensTheme {
+            SettingsScreen(state.value, { changes += it })
+        } }
+        compose.onAllNodes(isToggleable()).assertCountEquals(NO_SWITCHES)
+        compose.runOnIdle { state.value = ready().copy(effects = EffectsSettings(animation = false, sound = true)) }
+        compose.onNodeWithText(context.getString(R.string.settings_animation)).performScrollTo().assertIsOff()
+        compose.onNodeWithText(context.getString(R.string.settings_sound)).performScrollTo().assertIsOn()
+        compose.runOnIdle { assertTrue(changes.isEmpty()) }
+    }
+
+    @Test fun switchRendersStateWithoutWritingAndClickOnlyDelegates() {
+        val state = mutableStateOf(ready())
+        val changes = mutableListOf<SettingsAction>()
+        compose.setContent {
+            TokensTheme {
+                SettingsScreen(state.value, onAction = { changes += it })
+            }
+        }
+        val sound = compose.onNodeWithText(context.getString(R.string.settings_sound))
+        sound.performScrollTo().assertIsOn().performClick().assertIsOn()
+        compose.runOnIdle {
+            assertEquals(listOf(SettingsAction.SoundChanged(false)), changes)
+            state.value = state.value.copy(effects = EffectsSettings(sound = false))
+        }
+        sound.assertIsOff()
+        compose.runOnIdle { assertEquals(listOf(SettingsAction.SoundChanged(false)), changes) }
+    }
+
+    @Test fun loadingReadFailureAndSavingDisableChangesAndRetryIsExplicit() {
+        val state = mutableStateOf(SettingsUiState())
+        val retries = mutableListOf<SettingsAction>()
+        compose.setContent {
+            TokensTheme {
+                SettingsScreen(state.value, onAction = { retries += it })
+            }
+        }
+        val change = compose.onNodeWithText(context.getString(CoreR.string.change))
+        val select = compose.onNodeWithText(context.getString(R.string.select_button_text))
+        change.performScrollTo().assertIsNotEnabled()
+        compose.runOnIdle { state.value = ready().copy(readFailure = true, writeFailure = true) }
+        change.assertIsNotEnabled()
+        compose.onNodeWithText(context.getString(CoreR.string.storage_read_error)).performScrollTo().performClick()
+        compose.runOnIdle {
+            assertEquals(listOf(SettingsAction.RetryClicked), retries)
+            state.value = ready()
+        }
+        val enabledButton = change.performScrollTo().assertIsEnabled().captureToImage().toPixelMap()
+        val sound = compose.onNodeWithText(context.getString(R.string.settings_sound))
+        val enabledCheckedSwitch = sound.performScrollTo().assertIsEnabled().assertIsOn()
+            .captureToImage().toPixelMap()
+        val reinforcement = compose.onNodeWithText(context.getString(R.string.reinforcement_image))
+        val enabledUncheckedSwitch = reinforcement.performScrollTo().assertIsEnabled().assertIsOff()
+            .captureToImage().toPixelMap()
+        compose.runOnIdle {
+            state.value = ready().copy(saving = true)
+        }
+        change.performScrollTo().assertIsNotEnabled()
+        select.performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText(context.getString(R.string.settings_saving)).assertDoesNotExist()
+        val disabledButton = change.captureToImage().toPixelMap()
+        val disabledCheckedSwitch = sound.performScrollTo().assertIsNotEnabled().assertIsOn()
+            .captureToImage().toPixelMap()
+        val disabledUncheckedSwitch = reinforcement.performScrollTo().assertIsNotEnabled().assertIsOff()
+            .captureToImage().toPixelMap()
+        listOf(
+            Triple("Settings action", enabledButton, disabledButton),
+            Triple("Checked switch", enabledCheckedSwitch, disabledCheckedSwitch),
+            Triple("Unchecked switch", enabledUncheckedSwitch, disabledUncheckedSwitch),
+        ).forEach { (component, enabledImage, disabledImage) ->
+            assertEquals(enabledImage.width, disabledImage.width)
+            assertEquals(enabledImage.height, disabledImage.height)
+            for (x in FIRST_PIXEL until enabledImage.width) {
+                for (y in FIRST_PIXEL until enabledImage.height) {
+                    assertEquals(
+                        "$component changed color at ($x,$y)",
+                        enabledImage[x, y].toArgb(),
+                        disabledImage[x, y].toArgb(),
+                    )
+                }
+            }
+        }
+        compose.runOnIdle { state.value = ready().copy(writeFailure = true) }
+        compose.onNodeWithText(context.getString(CoreR.string.storage_write_error)).performScrollTo().assertIsEnabled()
+        change.assertIsEnabled()
+    }
+
+    @Test fun reinforcementSwitchUsesStoredSettingWithoutCameraCapability() {
+        val changes = mutableListOf<SettingsAction>()
+        compose.setContent { TokensTheme {
+            SettingsScreen(ready().copy(reinforcement = ReinforcementSettings(enabled = true)),
+                onAction = { changes += it })
+        } }
+        compose.onNodeWithText(context.getString(R.string.reinforcement_image)).performScrollTo()
+            .assertIsOn().assertIsEnabled().performClick().assertIsOn()
+        compose.runOnIdle { assertEquals(listOf(SettingsAction.ReinforcementChanged(false)), changes) }
+    }
+
+    @Test fun narrowLayoutWithLargeFontKeepsAboutLinksReachable() {
+        val clicks = mutableListOf<SettingsAction>()
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, LARGE_FONT_SCALE)) {
+                TokensTheme {
+                    Box(Modifier.width(NARROW_WIDTH_DP.dp)) {
+                        SettingsScreen(ready(), onAction = { clicks += it })
+                    }
+                }
+            }
+        }
+        compose.onNodeWithText(context.getString(R.string.youtube_link)).performScrollTo().assertIsDisplayed().performClick()
+        compose.onNodeWithText(context.getString(R.string.other_apps)).performScrollTo().assertIsDisplayed().performClick()
+        compose.runOnIdle { assertEquals(listOf(SettingsAction.YoutubeClicked, SettingsAction.OtherAppsClicked), clicks) }
+    }
+
+    @Test fun countColorAndAnimationEmitActionsWithoutChangingDisplayedState() {
+        val actions = mutableListOf<SettingsAction>()
+        compose.setContent { TokensTheme { SettingsScreen(ready(), { actions += it }) } }
+        compose.onNodeWithText(context.getString(CoreR.string.change)).performScrollTo().performClick()
+        compose.onNodeWithText(context.getString(R.string.select_button_text)).performScrollTo().performClick()
+        compose.onNodeWithText(context.getString(R.string.settings_animation)).performScrollTo()
+            .assertIsOn().performClick().assertIsOn()
+        compose.runOnIdle {
+            assertEquals(listOf(SettingsAction.SelectCountClicked, SettingsAction.SelectColorClicked,
+                SettingsAction.AnimationChanged(false)), actions)
+        }
+    }
+
+    @Test fun countWheelAndPresetsDelegateDraftWithoutSaving() {
+        val state = mutableStateOf(SelectTokensNumberUiState(count = MIN_TOKEN_COUNT))
+        val selections = mutableListOf<Int>()
+        val confirmations = mutableListOf<Unit>()
+        compose.setContent {
+            TokensTheme {
+                SelectTokensNumberScreen(state.value, {
+                    selections += it
+                    state.value = state.value.copy(count = it)
+                }, { confirmations += Unit }, {})
+            }
+        }
+        compose.onNodeWithTag(countPresetTag(MIN_TOKEN_COUNT)).assertIsSelected()
+        compose.onNodeWithTag(COUNT_WHEEL_TAG).performSemanticsAction(SemanticsActions.SetProgress) { setProgress ->
+            assertTrue(setProgress(NON_PRESET_COUNT.toFloat()))
+        }
+        compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(NON_PRESET_COUNT.toString())
+        compose.onNodeWithText(PREVIOUS_COUNT.toString()).assertIsDisplayed()
+        compose.onNodeWithText(NEXT_COUNT.toString()).assertIsDisplayed()
+        PRESET_COUNTS.forEach { count -> compose.onNodeWithTag(countPresetTag(count)).assertIsNotSelected() }
+        compose.onNodeWithTag(countPresetTag(MAX_TOKEN_COUNT)).performClick().assertIsSelected()
+        compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(MAX_TOKEN_COUNT.toString())
+        compose.runOnIdle {
+            assertEquals(listOf(NON_PRESET_COUNT, MAX_TOKEN_COUNT), selections)
+            assertTrue(confirmations.isEmpty())
+        }
+    }
+
+    @Test fun countSaveBlocksAllActionsAndErrorKeepsSelection() {
+        val state = mutableStateOf(SelectTokensNumberUiState(count = SELECTED_COUNT, save = SaveState.SAVING))
+        val confirmations = mutableListOf<Unit>()
+        compose.setContent {
+            TokensTheme { SelectTokensNumberScreen(state.value, {}, { confirmations += Unit }, {}) }
+        }
+        compose.onNodeWithText(context.getString(CoreR.string.OK)).assertIsNotEnabled()
+        compose.onNodeWithText(context.getString(CoreR.string.cancel)).assertIsNotEnabled()
+        compose.onNodeWithTag(COUNT_WHEEL_TAG).assertIsNotEnabled()
+        compose.onNodeWithTag(countPresetTag(SELECTED_COUNT)).assertIsNotEnabled()
+        compose.runOnIdle { state.value = state.value.copy(save = SaveState.ERROR) }
+        compose.onNodeWithTag(COUNT_VALUE_TAG).assertTextEquals(SELECTED_COUNT.toString())
+        compose.onNodeWithText(context.getString(CoreR.string.storage_save_error)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(CoreR.string.OK)).performClick()
+        compose.runOnIdle { assertEquals(listOf(Unit), confirmations) }
+    }
+
+    private fun ready() = SettingsUiState(
+        tokens = TokenSettingsState(SELECTED_COUNT, TOKEN_COLOR), effects = EffectsSettings(),
+        reinforcement = ReinforcementSettings(), loading = false,
+    )
+
+    private companion object {
+        const val NO_SWITCHES = 0
+        const val FIRST_PIXEL = 0
+        const val SWITCH_SETTLE_MILLIS = 400L
+        const val SELECTED_COUNT = 5
+        const val NON_PRESET_COUNT = 7
+        const val COUNT_STEP = 1
+        const val PREVIOUS_COUNT = NON_PRESET_COUNT - COUNT_STEP
+        const val NEXT_COUNT = NON_PRESET_COUNT + COUNT_STEP
+        const val PRESET_TEN = 10
+        const val PRESET_FIFTEEN = 15
+        const val TOKEN_COLOR = -65536
+        const val LARGE_FONT_SCALE = 2f
+        const val NARROW_WIDTH_DP = 320
+        val PRESET_COUNTS = listOf(MIN_TOKEN_COUNT, SELECTED_COUNT, PRESET_TEN, PRESET_FIFTEEN, MAX_TOKEN_COUNT)
+    }
+}

@@ -1,0 +1,254 @@
+package presentation.tokens_screen
+
+import androidx.lifecycle.ViewModelStore
+import domain.repository.WIN_EFFECTS_DURATION_MS
+import kotlinx.coroutines.*
+import kotlinx.coroutines.test.*
+import org.junit.After
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
+import presentation.*
+import presentation.state.StorageFailure
+import presentation.state.SettingsSnapshotSource
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class TokensViewModelTest {
+    private val dispatcher = StandardTestDispatcher()
+    private val store = ViewModelStore()
+    private val tokens = FakeBoardRepository()
+    private val effects = FakeEffectsRepository()
+    private val reinforcement = FakeReinforcementRepository()
+    private val navigator = TokensNavigator()
+    private val destinations = mutableListOf<TokensNavigator.Destination>()
+    private lateinit var navigationBinding: AutoCloseable
+    private lateinit var vm: TokensViewModel
+    private lateinit var source: SettingsSnapshotSource
+    @Before fun setUp() {
+        Dispatchers.setMain(dispatcher)
+        source = SettingsSnapshotSource(tokens, effects, reinforcement,
+            CoroutineScope(SupervisorJob() + dispatcher))
+        navigationBinding = navigator.bind { destinations += it }
+        vm = TokensViewModel(tokens, source, navigator)
+        store.put("tokens", vm)
+        vm.onStart()
+    }
+    @After fun tearDown() { store.clear(); source.close(); navigationBinding.close(); Dispatchers.resetMain() }
+
+    private fun win() { tokens.values.value.tokens.forEach { vm.onAction(TokensAction.TokenClicked(it.id)) } }
+
+    @Test fun victorySurvivesAbsentSubscriberAndExpires() = runTest(dispatcher) {
+        runCurrent()
+        win()
+        runCurrent()
+        assertTrue(vm.state.value.effects.isSoundPlaying)
+        assertTrue(vm.state.value.effects.isAnimationRunning)
+        advanceTimeBy(WIN_EFFECTS_DURATION_MS)
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+    }
+
+    @Test fun independentSoundAndAnimationSettings() = runTest(dispatcher) {
+        runCurrent()
+        for (animation in listOf(false, true)) for (sound in listOf(false, true)) {
+            vm.onAction(TokensAction.ClearClicked)
+            effects.setAnimation(animation)
+            effects.setSound(sound)
+            runCurrent()
+            win()
+            runCurrent()
+            assertEquals(animation, vm.state.value.effects.isAnimationRunning)
+            assertEquals(sound, vm.state.value.effects.isSoundPlaying)
+        }
+    }
+
+    @Test fun newVictoryCancelsOldTimerAndGetsFullDuration() = runTest(dispatcher) {
+        runCurrent()
+        win()
+        runCurrent()
+        val first = vm.state.value.effects.celebrationId
+        advanceTimeBy(RESTART_DELAY_MS)
+        val id = tokens.values.value.tokens.last().id
+        vm.onAction(TokensAction.TokenClicked(id))
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+        vm.onAction(TokensAction.TokenClicked(id))
+        runCurrent()
+        assertTrue(vm.state.value.effects.celebrationId > first)
+        advanceTimeBy(WIN_EFFECTS_DURATION_MS - RESTART_DELAY_MS)
+        runCurrent()
+        assertTrue(vm.state.value.effects.isSoundPlaying)
+        advanceTimeBy(RESTART_DELAY_MS)
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+    }
+
+    @Test fun leavingScreenPreventsPendingSaveFromStartingEffects() = runTest(dispatcher) {
+        runCurrent()
+        val gate = CompletableDeferred<Unit>()
+        tokens.beforeWrite = { gate.await() }
+        win()
+        runCurrent()
+        vm.onStop()
+        gate.complete(Unit)
+        runCurrent()
+        vm.onStart()
+        runCurrent()
+        assertTrue(tokens.values.value.completed)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+    }
+
+    @Test fun restoringFullBoardAndResizingNeverStartsVictory() = runTest(dispatcher) {
+        tokens.values.value.tokens.forEach { tokens.setChecked(it.id, true) }
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        assertTrue(tokens.values.value.completed)
+        assertFalse(vm.state.value.effects.isAnimationRunning)
+    }
+
+    @Test fun rapidClicksToggleLatestValueAndIgnoreStaleId() = runTest(dispatcher) {
+        runCurrent()
+        val id = tokens.values.value.tokens.first().id
+        vm.onAction(TokensAction.TokenClicked(id))
+        vm.onAction(TokensAction.TokenClicked(id))
+        vm.onAction(TokensAction.TokenClicked("removed"))
+        runCurrent()
+        assertTrue(tokens.values.value.tokens.none { it.isChecked })
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+    }
+
+    @Test fun failedWriteNeverWinsAndCanRetry() = runTest(dispatcher) {
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        tokens.failWrite = true
+        vm.onAction(TokensAction.TokenClicked(tokens.values.value.tokens.single().id))
+        runCurrent()
+        assertEquals(StorageFailure.WRITE, vm.state.value.error)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+        tokens.failWrite = false
+        vm.onAction(TokensAction.RetryClicked)
+        runCurrent()
+        assertTrue(vm.state.value.effects.isSoundPlaying)
+    }
+
+    @Test fun clearAndExternalResizeStopEffects() = runTest(dispatcher) {
+        runCurrent()
+        win()
+        runCurrent()
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+        vm.onAction(TokensAction.ClearClicked)
+        runCurrent()
+        assertFalse(tokens.values.value.completed)
+    }
+
+    @Test fun effectReadFailureCannotMakeCommittedToggleRetryable() = runTest(dispatcher) {
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        tokens.failReadAfterWrite = true
+        vm.onAction(TokensAction.TokenClicked(tokens.values.value.tokens.single().id))
+        runCurrent()
+        assertTrue(tokens.values.value.completed)
+        assertNotEquals(StorageFailure.WRITE, vm.state.value.error)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+    }
+
+    @Test fun readRecoveryRetriesFailedToggleOnceAndKeepsObserving() = runTest(dispatcher) {
+        runCurrent()
+        val gate = CompletableDeferred<Unit>()
+        tokens.beforeWrite = { gate.await() }
+        val id = tokens.values.value.tokens.first().id
+
+        vm.onAction(TokensAction.TokenClicked(id))
+        runCurrent()
+        tokens.failRead = true
+        runCurrent()
+        assertTrue(vm.state.value.readFailure)
+        assertTrue(vm.state.value.saving)
+
+        tokens.failWrite = true
+        gate.complete(Unit)
+        runCurrent()
+        assertTrue(vm.state.value.readFailure)
+        assertTrue(vm.state.value.writeFailure)
+        assertEquals(StorageFailure.READ, vm.state.value.error)
+
+        tokens.beforeWrite = {}
+        tokens.failRead = false
+        tokens.failWrite = false
+        vm.onAction(TokensAction.RetryClicked)
+        runCurrent()
+
+        assertTrue(tokens.values.value.tokens.first().isChecked)
+        assertTrue(vm.state.value.board!!.tokens.first().checked)
+        assertEquals(EXPECTED_RETRY_ATTEMPTS, tokens.writeAttempts)
+        assertEquals(EXPECTED_SUCCESSFUL_WRITES, tokens.successfulWrites)
+        assertFalse(vm.state.value.effects.isSoundPlaying)
+
+        tokens.resize(SINGLE_TOKEN)
+        runCurrent()
+        assertEquals(SINGLE_TOKEN, vm.state.value.board!!.count)
+    }
+
+    @Test fun actionExecutesOneWriteWithoutSubscribersOrReplayOnObservation() = runTest(dispatcher) {
+        runCurrent()
+        val id = tokens.values.value.tokens.first().id
+        vm.onAction(TokensAction.TokenClicked(id))
+        runCurrent()
+        assertEquals(EXPECTED_SUCCESSFUL_WRITES, tokens.writeAttempts)
+        assertTrue(vm.state.value.board!!.tokens.first().checked)
+        vm.onAction(TokensAction.Observed(source.state.value))
+        vm.onAction(TokensAction.TokenClicked("removed-token"))
+        runCurrent()
+        assertEquals(EXPECTED_SUCCESSFUL_WRITES, tokens.writeAttempts)
+        assertTrue(vm.state.value.board!!.tokens.first().checked)
+    }
+
+    @Test fun navigationUsesInjectedNavigatorAndLatestStateWithoutWritingOrReplay() = runTest(dispatcher) {
+        vm.onAction(TokensAction.SelectCountClicked)
+        assertTrue(destinations.isEmpty())
+        vm.onAction(TokensAction.SettingsClicked)
+        assertEquals(listOf(TokensNavigator.Destination.Settings), destinations)
+        runCurrent()
+        vm.onAction(TokensAction.SelectCountClicked)
+        tokens.resize(SINGLE_TOKEN)
+        reinforcement.setEnabled(true)
+        runCurrent()
+        vm.onAction(TokensAction.SelectCountClicked)
+        vm.onAction(TokensAction.PhotoClicked)
+        vm.onAction(TokensAction.Observed(source.state.value))
+        reinforcement.setEnabled(false)
+        runCurrent()
+        vm.onAction(TokensAction.PhotoClicked)
+        assertEquals(listOf(TokensNavigator.Destination.Settings,
+            TokensNavigator.Destination.SelectCount(FakeBoardRepository.BOARD_SIZE),
+            TokensNavigator.Destination.SelectCount(SINGLE_TOKEN), TokensNavigator.Destination.Photo), destinations)
+        assertEquals(FakeBoardRepository.NO_WRITES, tokens.writeAttempts)
+    }
+
+    @Test fun actionsRejectUnavailableBoardButKeepSettingsAccessible() = runTest(dispatcher) {
+        val id = tokens.values.value.tokens.first().id
+        vm.onAction(TokensAction.TokenClicked(id))
+        vm.onAction(TokensAction.ClearClicked)
+        tokens.failRead = true
+        runCurrent()
+        vm.onAction(TokensAction.TokenClicked(id))
+        vm.onAction(TokensAction.ClearClicked)
+        runCurrent()
+        assertEquals(FakeBoardRepository.NO_WRITES, tokens.writeAttempts)
+        vm.onAction(TokensAction.SelectCountClicked)
+        assertTrue(destinations.isEmpty())
+        vm.onAction(TokensAction.SettingsClicked)
+        assertEquals(listOf(TokensNavigator.Destination.Settings), destinations)
+    }
+
+    private companion object {
+        const val RESTART_DELAY_MS = 1000L
+        const val SINGLE_TOKEN = 1
+        const val EXPECTED_RETRY_ATTEMPTS = 2
+        const val EXPECTED_SUCCESSFUL_WRITES = 1
+    }
+}
