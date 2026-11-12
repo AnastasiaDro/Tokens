@@ -105,7 +105,7 @@ class OrientationNavigationTest {
 
             compose.onNodeWithText(context.getString(TokensR.string.select_button_text))
                 .performScrollTo().performClick()
-            compose.onNodeWithText(context.getString(CoreR.string.cancel)).performScrollTo().fetchSemanticsNode()
+            compose.onNodeWithText(context.getString(CoreR.string.cancel)).fetchSemanticsNode()
             waitForRequestedOrientation(scenario, boardOrientation)
         }
     }
