@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.cerebus.tokens_new"
         minSdk = 28
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 11
         versionName = "3.2"
 

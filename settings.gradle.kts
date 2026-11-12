@@ -5,7 +5,7 @@ pluginManagement {
         gradlePluginPortal()
     }
     plugins {
-        id("com.android.settings") version "9.0.1" apply false
+        id("com.android.settings") version "9.4.1" apply false
     }
 }
 
@@ -15,7 +15,7 @@ plugins {
 
 android {
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 }
 
